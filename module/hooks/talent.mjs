@@ -218,6 +218,9 @@ HOOKS.battlefocus00000 = {
 /* -------------------------------------------- */
 
 HOOKS.berserker0000000 = {
+  prepareAction(_item, action) {
+    if ( !action.tags.has("spell") ) action.usage.focusBlock.enraged = false; // Berserkers spend Focus while enraged
+  },
   prepareAttack(_item, action, _target, rollData) {
     if ( !this.effects.has(SYSTEM.EFFECTS.getEffectId("berserkerRage")) ) return;
     if ( !action.tags.has("melee") ) return;
@@ -1547,6 +1550,24 @@ HOOKS.swarm00000000000 = {
     if ( !roll.hasDamage || (dmg.total <= 0) ) return;
     dmg.resistance += this.abilities.toughness.value;
     dmg.total = crucible.api.models.CrucibleAction.computeDamage(dmg);
+  }
+};
+
+/* -------------------------------------------- */
+
+HOOKS.swashbuckler0000 = {
+  receiveAttack(item, action, roll) {
+    const T = roll.constructor.RESULT_TYPES;
+    if ( ![T.DODGE, T.PARRY].includes(roll.data.result) ) return;
+    const attacker = action.actor;
+    if ( !attacker ) return;
+    const morale = this.system.abilities.presence.value;
+    if ( morale <= 0 ) return;
+    action.recordEvent({
+      target: attacker,
+      resources: [{resource: "morale", delta: -morale}],
+      statusText: [{text: item.name, fillColor: SYSTEM.RESOURCES.morale.color.high.css}]
+    });
   }
 };
 

@@ -110,6 +110,21 @@ export const RUNE_SOUNDS = {
       {src: "LifeMiss2.ogg", duration: 1.215}
     ]
   },
+  death: {
+    prefix: "systems/crucible/assets/sfx/death",
+    charge: [{src: "DeathChargeUp.ogg", duration: 1.915}],
+    passive: [{src: "DeathLoopPassive.ogg", loop: true}],
+    damage: [{src: "DeathLoopDamage.ogg", loop: true}],
+    impact: [
+      {src: "DeathImpact1.ogg", duration: 2.895},
+      {src: "DeathImpact2.ogg", duration: 3.018},
+      {src: "DeathImpact3.ogg", duration: 3.058}
+    ],
+    miss: [
+      {src: "DeathMiss1.ogg", duration: 2.545},
+      {src: "DeathMiss2.ogg", duration: 2.710}
+    ]
+  },
   generic: {
     prefix: "systems/crucible/assets/sfx/generic",
     charge: [{src: "MagicChargeUp.ogg", duration: 1.819}],
