@@ -176,9 +176,15 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       incomplete: {},
       inventory,
       isEditable: this.isEditable,
+      knowledge: this._prepareBackgroundDetailSet({
+        type: "knowledge",
+        tooltip: "ACTOR.LABELS.BackgroundKnowledgeTooltip",
+        hints: {hero: "ACTOR.LABELS.KnowledgeHint", adversary: "ACTOR.LABELS.KnowledgeHintAdversary"}
+      }),
       languages: this._prepareBackgroundDetailSet({
         type: "languages",
-        tooltip: "ACTOR.LABELS.BackgroundLanguageTooltip"
+        tooltip: "ACTOR.LABELS.BackgroundLanguageTooltip",
+        hints: {hero: "ACTOR.LABELS.LanguagesHint", adversary: "ACTOR.LABELS.LanguagesHintAdversary"}
       }),
       resistances: this.#prepareResistances(),
       resources: this.#prepareResources(),
@@ -224,11 +230,12 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
    * @returns {Promise<{object}>}
    */
   async #prepareBiography() {
+    const isOwner = this.document.isOwner;
     const fields = this.document.system.schema.fields.details.fields.biography.fields;
     const {appearance: appearanceSrc, public: publicSrc, private: privateSrc} = this.document.system.details.biography;
-    const context = {relativeTo: this.document, secrets: this.document.isOwner};
+    const context = {relativeTo: this.document, secrets: isOwner};
     const editorCls = CONFIG.ux.TextEditor;
-    return {
+    const biography = {
       appearanceField: fields.appearance,
       appearanceSrc,
       appearanceHTML: await editorCls.enrichHTML(appearanceSrc, context),
@@ -236,12 +243,17 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       publicField: fields.public,
       publicSrc,
       publicHTML: await editorCls.enrichHTML(publicSrc, context),
-      publicClass: publicSrc ? "public-biography" : "public-biography empty",
+      publicClass: publicSrc ? "public-biography" : "public-biography empty"
+    };
+
+    // Only include private biography fields for owners
+    if ( isOwner ) Object.assign(biography, {
       privateField: fields.private,
       privateSrc,
       privateHTML: await editorCls.enrichHTML(privateSrc, context),
       privateClass: privateSrc ? "private-biography" : "private-biography empty"
-    };
+    });
+    return biography;
   }
 
   /* -------------------------------------------- */
@@ -643,11 +655,14 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
 
   /**
    * Prepare the set of language or knowledge areas known, identifying ones that originate from a background.
-   * @param {string} type
-   * @returns {{label: string, fromBackground: boolean, tooltip: string}[]}
+   * @param {object} options
+   * @param {string} [options.type]                   Which detail set to prepare
+   * @param {string} [options.tooltip]                Localization key for the background-granted tooltip
+   * @param {Record<string, string>} [options.hints]  Empty-state hint localization keys, by Actor subtype
+   * @returns {{known: {label: string, fromBackground: boolean, tooltip: string}[], hint: string}}
    * @protected
    */
-  _prepareBackgroundDetailSet({type="languages", tooltip}) {
+  _prepareBackgroundDetailSet({type="languages", tooltip, hints={}}) {
     const known = [];
     const backgroundKnown = this.document.system.details.background?.[type] ?? new Set();
     for ( const id of this.document.system.details[type] ) {
@@ -661,7 +676,8 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       if ( b.fromBackground && !a.fromBackground ) return 1;
       return a.label.localeCompare(b.label);
     });
-    return known;
+    const hintKey = hints[this.document.type];
+    return {known, hint: hintKey ? _loc(hintKey) : ""};
   }
 
   /* -------------------------------------------- */
@@ -771,6 +787,7 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
   #prepareSkills() {
     const skills = this.document.system.skills;
     const categories = foundry.utils.deepClone(SYSTEM.SKILL.CATEGORIES);
+    const signed = n => `${n < 0 ? "-" : "+"} ${Math.abs(n)}`; // Pretty formatting for signed addition
     for ( const skill of Object.values(SYSTEM.SKILLS) ) {
       const s = foundry.utils.mergeObject(skill, skills[skill.id], {inplace: false});
       const category = categories[skill.category];
@@ -786,10 +803,15 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       s.rankTags = [rank.label];
       s.hexClass = skill.abilities.toSorted().join("-");
 
-      // Tooltips
+      // Tooltips annotate each term of the formula with the value it contributes
+      const abilities = this.actor.system.abilities;
       s.tooltips = {
-        value: _loc("SKILL.TooltipCheck", {a1: a1.label, a2: a2.label}),
-        passive: _loc("SKILL.TooltipPassive")
+        value: _loc("SKILL.TooltipCheck", {
+          a1: a1.label, v1: abilities[skill.abilities[0]].value,
+          a2: a2.label, v2: abilities[skill.abilities[1]].value,
+          rank: rank.label, skill: signed(s.skillBonus), enchantment: signed(s.enchantmentBonus)
+        }),
+        passive: _loc("SKILL.TooltipPassive", {score: s.score})
       };
 
       // Add to category

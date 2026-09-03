@@ -12,6 +12,7 @@ import ActionUseDialog from "./action-use-dialog.mjs";
  * @property {string} damageType              The type of damage dealt (e.g. "slashing", "fire")
  * @property {number} damageBonus             Additive damage bonus
  * @property {number} multiplier              Damage overflow multiplier
+ * @property {number} flanked                 The degree to which the target is flanked by the attacker
  * @property {number} [result]                The result code in AttackRoll.RESULT_TYPES, undefined before evaluation
  * @property {DamageData} [damage]            The resolved damage of the roll, undefined before evaluation
  */
@@ -48,6 +49,7 @@ export default class AttackRoll extends StandardCheck {
     newTarget: false,  // TODO it would be good to handle this a different way
     multiplier: 1,
     damageBonus: 0,
+    flanked: 0,
     resource: "health",
     damageType: undefined
   });
@@ -168,7 +170,8 @@ export default class AttackRoll extends StandardCheck {
     if ( defense ) cardData.defenseType = defense.shortLabel ?? defense.label;
     else if ( dt in SYSTEM.SKILLS ) cardData.defenseType = SYSTEM.SKILLS[dt].label;
     else cardData.defenseType = _loc("DICE.DC");
-    if ( game.user.isGM ) cardData.targetLabel = `${cardData.defenseType} ${cardData.dc}`;
+    cardData.targetLabel = cardData.defenseType;
+    if ( game.user.isGM ) cardData.targetLabel += ` ${cardData.dc}`;
 
     // Roll result
     const isCritHit = (this.data.result === this.constructor.RESULT_TYPES.HIT) && this.isCriticalSuccess;

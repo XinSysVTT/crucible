@@ -39,7 +39,7 @@
                 <a class="control icon fa-solid fa-gear" data-action="editDetailsProperty" data-property="knowledge"></a>
             </h3>
             <div class="tags knowledge-areas">
-                {{#each knowledge}}
+                {{#each knowledge.known}}
                 <span
                     class="larger tag knowledge-area{{#if fromBackground}} background-granted{{/if}}"
                     {{#if tooltip}} data-tooltip="{{tooltip}}"{{/if}}
@@ -47,7 +47,7 @@
                     {{label}}
                 </span>
                 {{else}}
-                <p class="hint">{{localize "ACTOR.LABELS.KnowledgeHint"}}</p>
+                <p class="hint">{{knowledge.hint}}</p>
                 {{/each}}
             </div>
         </div>
@@ -57,7 +57,7 @@
                 <a class="control icon fa-solid fa-gear" data-action="editDetailsProperty" data-property="languages"></a>
             </h3>
             <div class="tags languages">
-                {{#each languages}}
+                {{#each languages.known}}
                 <span
                     class="larger tag language{{#if fromBackground}} background-granted{{/if}}"
                     {{#if tooltip}} data-tooltip="{{tooltip}}"{{/if}}
@@ -65,7 +65,7 @@
                     {{label}}
                 </span>
                 {{else}}
-                <p class="hint">{{localize "ACTOR.LABELS.LanguagesHint"}}</p>
+                <p class="hint">{{languages.hint}}</p>
                 {{/each}}
             </div>
         </div>

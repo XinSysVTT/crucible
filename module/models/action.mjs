@@ -1,6 +1,7 @@
 import StandardCheck from "../dice/standard-check.mjs";
 import ActionUseDialog from "../dice/action-use-dialog.mjs";
 import CrucibleActionConfig from "../applications/config/action-config.mjs";
+import {resolveReferences} from "../enrichers.mjs";
 
 /**
  * @import {DataModelConstructionContext} from "@common/abstract/_types.mjs"
@@ -550,8 +551,8 @@ class CrucibleActionTags extends Set {
  * - `CrucibleAction##settleRollOutcomes` - Flag critical successes/failures and report whether damage or healing landed.
  *    - Actor hooks called: `applyCriticalEffects` - Critical hit effects are recorded into the event stream when
  *      the action damages or heals another target.
- * - `CrucibleAction##resolveEventStream` - Simulate the stream on an actor clone to compute final resource deltas
- *      (overflow, clamps, constraints, point-in-time statuses) and write the realized deltas back.
+ * - {@linkcode CrucibleAction#_resolveEventStream} - Simulate the stream on an actor clone to compute final
+ *      resource deltas (overflow, clamps, constraints, point-in-time statuses) and write the realized deltas back.
  * - Actor hooks called: `finalizeAction`
  * - `CrucibleAction##finalizeEvents` - Final authority over the event stream: invisibility, movement statuses, spell
  *      provenance on new effects, and effect-change snapshots for reversal.
@@ -1137,16 +1138,6 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
 
     // Prepare Summons
     this.usage.summons = this.summon?.actorUuid ? [{...this.summon}] : [];
-
-    // Reset bonuses
-    Object.assign(this.usage.bonuses, {
-      ability: 0,
-      skill: 0,
-      enchantment: 0,
-      damageBonus: 0,
-      multiplier: 1,
-      criticalSuccessThreshold: 0
-    });
   }
 
   /* -------------------------------------------- */
@@ -1405,7 +1396,7 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
     await this._post();
     const dealsDamage = this.#settleRollOutcomes();
     if ( dealsDamage ) this.actor.callActorHooks("applyCriticalEffects", this);
-    await this.#resolveEventStream();
+    await this._resolveEventStream();
     this.actor.callActorHooks("finalizeAction", this);
     this.#finalizeEvents();
 
@@ -1461,6 +1452,7 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
    * @property {string} name
    * @property {string} uuid
    * @property {string} [error]
+   * @property {number} [flanked]   The degree to which this target is flanked by the acting actor
    */
 
   /**
@@ -1475,15 +1467,15 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
    */
   acquireTargets({strict=true}={}) {
     if ( this.usage.forcedTargets?.length ) {
-      return this.targets = new Map(this.usage.forcedTargets.map(actor => {
+      return this.#assignTargets(this.usage.forcedTargets.map(actor => {
         const token = actor.getActiveTokens?.(true, true)[0] ?? null;
-        return [actor, {actor, uuid: actor.uuid, name: actor.name, token}];
+        return {actor, uuid: actor.uuid, name: actor.name, token};
       }));
     }
     let targets;
     let targetType = this.target.type;
     const targetCfg = SYSTEM.ACTION.TARGET_TYPES[targetType];
-    if ( targetType === "summon" ) return this.targets = new Map();
+    if ( targetType === "summon" ) return this.#assignTargets([]);
 
     // Acquire Region Targets
     if ( targetCfg.region ) targets = this.#acquireTargetsFromRegion();
@@ -1495,7 +1487,7 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
       }
       switch ( targetType ) {
         case "none":
-          return this.targets = new Map();
+          return this.#assignTargets([]);
         case "self":
           const tokenTargets = this.actor.getActiveTokens(true, true).map(CrucibleAction.#getTargetFromToken);
           targets = tokenTargets.length
@@ -1523,8 +1515,20 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
       if ( target.error && strict ) throw new Error(target.error);
     }
 
-    // Build and return the targets map
-    return this.targets = new Map(targets.map(t => [t.actor, t]));
+    return this.#assignTargets(targets);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Record the targets acquired by this Action and derive the target-dependent portion of its usage.
+   * @param {ActionUseTarget[]} targets   The acquired targets
+   * @returns {Map<CrucibleActor, ActionUseTarget>}
+   */
+  #assignTargets(targets) {
+    this._configureFlanking(targets);
+    this.targets = new Map(targets.map(t => [t.actor, t]));
+    return this.targets;
   }
 
   /* -------------------------------------------- */
@@ -1775,6 +1779,42 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
   /* -------------------------------------------- */
 
   /**
+   * Compute the degree to which a target is flanked by this Action's actor.
+   * @param {CrucibleActor} target      An actor which this Action targets
+   * @param {CrucibleToken} [token]     The Token being targeted, required before this Action's targets are assigned
+   * @returns {number}                  The flanked stage which applies to this attacker, zero if none applies
+   */
+  computeFlanking(target, token=this.targets.get(target)?.token) {
+    const attacker = this.token?.object;
+    const defender = token?.object;
+    if ( attacker && (attacker === defender) ) return 0; // A creature never flanks itself
+    if ( !attacker || !defender ) return target.imposedFlanking;
+    return attacker.getFlankingAgainst(defender, {includeSelf: this.target.type === "movement"}).flanked;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Record the flanking each acquired target affords, and preview the boon it will award before the Action is used.
+   * The best flanking among the targets is previewed, while each target is still rolled against its own.
+   * Usage is shared between clones of a bound Action, so a boon which no longer applies is actively removed.
+   * @param {Iterable<ActionUseTarget>} [targets]   Targets to annotate with flanking stages
+   * @internal
+   */
+  _configureFlanking(targets=this.targets.values()) {
+    delete this.usage.boons.flanked;
+    let best = 0;
+    for ( const target of targets ) {
+      target.flanked = this.computeFlanking(target.actor, target.token);
+      best = Math.max(best, target.flanked);
+    }
+    if ( !best || !this.usage.isAttack || this.usage.isRanged ) return;
+    this.usage.boons.flanked = {label: SYSTEM.RULES.condition.flanked.name, number: best};
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Pre-create the self actorUpdate and activation events before preActivate hooks run.
    * Drains any pre-accumulated usage.actorUpdates and usage.itemSnapshots into the events.
    */
@@ -1828,6 +1868,7 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
     let regionEffectRequired = this.region
       && (SYSTEM.ACTION.TARGET_TYPES[this.target.type]?.region?.ephemeral === false);
     if ( !this.effects.length && !regionEffectRequired ) return;
+    const description = resolveReferences(this.description, this); // Bake @ref annotations now, last chance to do so
     const eventsByActor = this.eventsByActor;
     const allActors = Array.from(this.targets.keys());
     if ( !this.targets.has(this.actor) ) allActors.push(this.actor);
@@ -1845,7 +1886,7 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
         const effect = {
           _id: _id || SYSTEM.EFFECTS.getEffectId(this.id, {suffix: String(i)}),
           name: name || this.name,
-          description: this.description,
+          description,
           img: this.img,
           origin: this.actor.uuid,
           duration: effectDuration,
@@ -1875,7 +1916,7 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
         this.recordEvent({type: "effect", target, effects: [{
           _id: SYSTEM.EFFECTS.getEffectId(this.gesture?.id ?? this.id),
           name: this.name,
-          description: this.description,
+          description,
           img: this.img,
           origin: this.actor.uuid,
           showIcon: CONST.ACTIVE_EFFECT_SHOW_ICON.ALWAYS,
@@ -1989,15 +2030,16 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
    * Resolve the event stream against an ephemeral simulation of each affected actor. Each event's intended resource
    * deltas are applied to the actor's clone in chronological order - honoring pool overflow, clamps, status- and
    * action-scoped constraints, and statuses applied by earlier events - and the realized change is written back so the
-   * recorded stream is exact and reverses accurately. Subsumes per-roll allocation. See GH #820, #1271.
+   * recorded stream is exact and reverses accurately.
+   * @internal
    */
-  async #resolveEventStream() {
+  async _resolveEventStream() {
     const clones = new Map();
     const cloneFor = actor => {
       if ( !clones.has(actor) ) {
         const clone = actor.clone({}, {keepId: true});
 
-        // Prevent unintended side-effects on dependent tokens (like specialStatusEffects)
+        // Prevent unintended side effects on dependent tokens (like specialStatusEffects)
         for ( const scene of clone._dependentTokens.keys() ) clone._dependentTokens.delete(scene);
         clones.set(actor, clone);
       }
@@ -2315,7 +2357,8 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
    * @protected
    */
   _configureUsage() {
-    this.usage.hasDice = false; // Actions don't involve a roll unless otherwise configured
+    // Reset flags that are determined during action preparation
+    this.usage.hasDice = this.usage.isAttack = this.usage.isMelee = this.usage.isRanged = false;
 
     // Reset cost fields to their source values so that repeated prepare() calls do not accumulate costs
     const sc = this._source.cost;
@@ -2323,6 +2366,16 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
     this.cost.focus = sc.focus;
     this.cost.heroism = sc.heroism;
     this.cost.hands = sc.hands;
+
+    // Reset bonuses for the same reason; tag and hook contributions below are accumulated onto these baselines
+    Object.assign(this.usage.bonuses, {
+      ability: 0,
+      skill: 0,
+      enchantment: 0,
+      damageBonus: 0,
+      multiplier: 1,
+      criticalSuccessThreshold: 0
+    });
 
     // Configure tags
     if ( this.target.type === "movement" ) this.tags.add("movement");
@@ -3438,6 +3491,9 @@ export default class CrucibleAction extends foundry.abstract.DataModel {
    * @param {boolean} [options.reverse=false]
    */
   static async confirmMessage(message, {action, reverse=false}={}) {
+    // Confirming twice would apply the events twice, which auto-confirmation can otherwise race a caller into doing
+    if ( !reverse && message?.getFlag("crucible", "confirmed") ) return;
+
     // Bail if a reverse-confirm is already in flight for this message.
     if ( reverse && message?._reversing ) return;
     if ( reverse && message ) message._reversing = true;

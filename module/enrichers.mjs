@@ -1,6 +1,12 @@
 import { chooseActorsDialog } from "./interaction.mjs";
 
 /**
+ * The pattern which matches `@ref` annotations, shared by the registered enricher and {@link resolveReferences}.
+ * @type {RegExp}
+ */
+const REFERENCE_PATTERN = /@ref\[([\w.]+)](?:{([^}]+)})?/g;
+
+/**
  * Register custom text editor enrichers that are applied to Crucible content.
  */
 export function registerEnrichers() {
@@ -78,7 +84,7 @@ export function registerEnrichers() {
     },
     {
       id: "reference",
-      pattern: /@ref\[([\w.]+)](?:{([^}]+)})?/g,
+      pattern: REFERENCE_PATTERN,
       enricher: enrichRef
     },
     {
@@ -504,23 +510,33 @@ function enrichHazard([_match, terms, name]) {
   action.prepare();
   const {damageType, defenseType, resource, restoration} = action.usage;
 
-  // Prepare label
+  // Prepare label. Severity is the one tag kept inline; readers need it before they decide to hover
+  const listFormatter = game.i18n.getListFormatter({style: "short", type: "unit"});
   const hazardRank = _loc("HAZARD.Rank", {danger});
   const parenthetical = name ? [hazardRank] : [];
-  for ( const t of tags ) {
-    const cfg = SYSTEM.ACTION.TAGS[t];
-    if ( cfg && cfg.label && !cfg.internal ) parenthetical.push(_loc(cfg.label));
-  }
+  if ( tags.includes("severe") ) parenthetical.push(_loc(SYSTEM.ACTION.TAGS.severe.label));
   let label = name || hazardRank;
-  const listFormatter = new Intl.ListFormat(game.i18n.lang, {style: "short", type: "unit"});
   if ( parenthetical.length ) label = _loc("HAZARD.Parenthetical", {label, tags: listFormatter.format(parenthetical)});
+
   // Prepare tooltip
   const defenseLabel = _loc(SYSTEM.DEFENSES[defenseType]?.label);
   const resourceLabel = _loc(SYSTEM.RESOURCES[resource]?.label);
   const damageLabel = _loc(SYSTEM.DAMAGE_TYPES[damageType]?.label) || "";
-  const tooltip = restoration
+  let tooltip = restoration
     ? _loc("HAZARD.TooltipRestoration", {rank: hazardRank, defense: defenseLabel, resource: resourceLabel})
     : _loc("HAZARD.TooltipDamage", {rank: hazardRank, defense: defenseLabel, damage: damageLabel, resource: resourceLabel});
+
+  // Append any tag not already conveyed by the sentence above or by the inline label, so nothing is silently dropped
+  const conveyedTags = new Set([defenseType, damageType, resource, "severe"].filter(Boolean));
+  const extraTags = [];
+  for ( const t of tags ) {
+    if ( conveyedTags.has(t) ) continue;
+    const cfg = SYSTEM.ACTION.TAGS[t];
+    if ( !cfg?.label || cfg.internal ) continue; // Unrecognized tags are dropped rather than shown as raw identifiers
+    const tagLabel = _loc(cfg.label);
+    extraTags.push(cfg.tooltip ? _loc("HAZARD.TooltipTag", {label: tagLabel, tooltip: _loc(cfg.tooltip)}) : tagLabel);
+  }
+  if ( extraTags.length ) tooltip = _loc("HAZARD.TooltipTags", {tooltip, tags: listFormatter.format(extraTags)});
 
   // Return the enriched content tag
   const tag = document.createElement("enriched-content");
@@ -876,6 +892,21 @@ function enrichRef([match, path, fallback], options) {
   if ( !doc ) return new Text(fallback || match);
   const attr = foundry.utils.getProperty(doc, path);
   return new Text(attr || fallback || match);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Resolve `@ref` annotations to literal text eagerly, rather than deferring them to display-time enrichment.
+ * Used when text is copied onto another document which would otherwise become the referent, see GH #1310.
+ * @param {string} text           Source text which may contain `@ref` annotations
+ * @param {object} relativeTo     The document against which property paths are resolved
+ * @returns {string}              The text with every reference replaced by its resolved value
+ */
+export function resolveReferences(text, relativeTo) {
+  if ( !text ) return text;
+  return text.replace(REFERENCE_PATTERN, (match, path, fallback) =>
+    enrichRef([match, path, fallback], {relativeTo}).textContent);
 }
 
 /* -------------------------------------------- */
