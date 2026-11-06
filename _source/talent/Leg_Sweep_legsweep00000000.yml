@@ -3,16 +3,15 @@ type: talent
 img: icons/skills/melee/strike-sword-slashing-red.webp
 system:
   description: >-
-    <p>You use a weapon which scales using <strong>Strength </strong>to sweep
-    your enemy off balance, swinging low to knock them from their feet.</p>
+    <p>You use a weapon which scales using @Rule[ability.strength] to sweep your
+    enemy off balance, swinging low to knock them from their feet.</p>
   actions:
     - id: legSweep
       condition: ''
       description: >-
         <p>You make a <strong>Strike</strong> attack with your mainhand weapon.
-        This technique is <strong>Difficult</strong> to execute and deals
-        reduced damage, but if successful renders your target
-        @Condition[prone].</p>
+        This technique is @Rule[action.difficult] to execute and deals reduced
+        damage, but if successful renders your target @Condition[prone].</p>
       tags:
         - brute
         - melee
@@ -40,27 +39,31 @@ system:
           system:
             changes: []
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
+            properties: []
+          duration:
+            value: null
+            units: ''
+            expiry: null
+            expired: false
       name: Leg Sweep
       img: icons/skills/melee/strike-sword-slashing-red.webp
       range:
         maximum: null
         weapon: true
         minimum: null
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
+  keywords:
+    - playstyle.melee
+    - weapon.heavy
   nodes:
-    - str1b
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - str0a
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: athletics
 effects: []
 ownership:
   default: 0
@@ -69,11 +72,11 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160137
-  modifiedTime: 1773514792592
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789488779082
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: Item.legsweep00000000
   duplicateSource: null
   exportSource: null

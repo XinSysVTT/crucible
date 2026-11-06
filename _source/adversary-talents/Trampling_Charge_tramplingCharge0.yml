@@ -2,6 +2,12 @@ name: Trampling Charge
 type: talent
 img: icons/magic/sonic/explosion-impact-shock-wave.webp
 system:
+  keywords:
+    - playstyle.melee
+    - weapon.natural
+    - action.movement
+    - damageType.bludgeoning
+    - target.reflex
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} uses its prodigious size to charge
@@ -13,16 +19,18 @@ system:
       condition: ''
       description: >-
         <p>The @ref[actor.name]{creature} moves forward up to twice its
-        <strong>Stride</strong>, attacking the <strong>Reflex</strong> defense
-        of all creatures in its path. Targets who are half the creature's size
-        or smaller are @Condition[stunned] until the end of their next turn as
-        they are slammed aside.</p>
+        @Rule[movement.stride], attacking the @Rule[defense.reflex] defense of
+        all creatures in its path. Targets who are half the creature's size or
+        smaller are @Condition[stunned] until the end of their next turn as they
+        are slammed aside.</p><p>This action uses the lowest-cost natural weapon
+        the creature has equipped, preferring one that deals Bludgeoning
+        damage.</p>
       cost:
-        action: 4
+        action: 0
         focus: 0
         heroism: 0
         hands: 0
-        weapon: false
+        weapon: true
       range:
         minimum: null
         maximum: null
@@ -32,9 +40,7 @@ system:
         number: 1
         scope: 4
         self: false
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
       effects:
         - name: ''
           scope: 4
@@ -47,25 +53,26 @@ system:
             value: 1
             units: rounds
             expiry: turnEnd
+            expired: false
           system:
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
             changes: []
+            lights: []
+            properties: []
       tags:
-        - movement
         - melee
         - natural
         - reflex
         - bludgeoning
-  rune: ''
-  gesture: ''
-  inflection: ''
+        - movement
+      persistRegion: false
+      regionBehavior: null
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 7OugQFMnRfIZEXcY
 ownership:
@@ -76,12 +83,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.368'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.11.0
   createdTime: 1772307157338
-  modifiedTime: 1773514792191
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1790269447900
+  lastModifiedBy: LN1mJpYcJI40HRfK
 _id: tramplingCharge0
 sort: 0
 _key: '!items!tramplingCharge0'

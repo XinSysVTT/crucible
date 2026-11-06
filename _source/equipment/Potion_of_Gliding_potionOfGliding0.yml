@@ -1,0 +1,143 @@
+name: Potion of Gliding
+type: consumable
+_id: potionOfGliding0
+img: icons/consumables/potions/potion-bottle-fumes-blue.webp
+system:
+  identifier: potionOfGliding
+  category: flask
+  quantity: 1
+  weight: 1
+  price: 160
+  quality: standard
+  broken: false
+  equipped: false
+  invested: false
+  properties:
+    - stackable
+  description:
+    public: >-
+      <p>A slender vial of shimmering pale-blue liquid that feels almost
+      weightless in the hand, its contents swirling gently as though caught in
+      an unseen updraft.</p>
+    private: ''
+  actions:
+    - id: potionGliding
+      name: Potion of Gliding
+      img: icons/consumables/potions/potion-bottle-fumes-blue.webp
+      condition: ''
+      description: >-
+        <p>For the duration of this potion's effect, its drinker benefits from
+        the
+        @UUID[Compendium.crucible.adversary-talents.Item.glider0000000000]{Glider}
+        talent as if they were a creature that possessed that trait, turning
+        what would otherwise be falls into controlled
+        <strong>Glides</strong>.</p><p>The potion's quality determines the
+        duration of this effect:</p><ul><li><p><strong>Shoddy</strong>- 10
+        minutes</p></li><li><p><strong>Standard</strong> - 1
+        hour</p></li><li><p><strong>Fine</strong> - 4
+        hours</p></li><li><p><strong>Superior</strong> - 12
+        hours</p></li><li><p><strong>Masterwork</strong>- 24 hours</p></li></ul>
+      cost:
+        action: 2
+        focus: 0
+        heroism: 0
+        weapon: false
+        hands: 0
+      range:
+        minimum: null
+        maximum: 1
+        weapon: false
+      target:
+        type: single
+        number: 1
+        scope: 1
+        self: true
+      effects:
+        - name: ''
+          scope: 1
+          result:
+            type: success
+            all: false
+          statuses: []
+          duration:
+            value: 0
+            units: minutes
+            expiry: null
+            expired: false
+          system:
+            changes: []
+            dot: []
+            maintenance:
+              cost: null
+              hands: 0
+            properties: []
+            regions: []
+            summons: []
+            lights: []
+      tags:
+        - consume
+      summon: null
+      persistRegion: false
+      regionBehavior: null
+    - id: fallGlide
+      name: Glide
+      img: icons/svg/wing.svg
+      condition: ''
+      description: >-
+        <p>You glide rather than fall, flying downward under control. The
+        movement must descend and suffers no falling damage. If you end your
+        glide while still aloft you gain the @Condition[flying] condition.</p>
+      cost:
+        action: 0
+        focus: 0
+        heroism: 0
+        weapon: false
+        hands: 0
+      range:
+        minimum: null
+        maximum: null
+        weapon: false
+      target:
+        type: self
+        number: 0
+        scope: 1
+        self: false
+      effects: []
+      tags:
+        - movement
+        - fly
+      summon: null
+      persistRegion: false
+      regionBehavior: null
+  uses:
+    value: 1
+    max: 1
+  scroll:
+    runes: []
+    gestures: []
+    inflections: []
+effects: []
+folder: WqUGvC0ubhjrpvz9
+sort: 450000
+ownership:
+  default: 0
+  ZXJsFnFZuf21WDAk: 3
+flags:
+  ember:
+    crucibleOverride: true
+_stats:
+  coreVersion: '14.368'
+  systemId: crucible
+  systemVersion: 0.11.1
+  createdTime: 1790640622176
+  modifiedTime: 1790640628761
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+  compendiumSource: null
+  duplicateSource: null
+  exportSource:
+    worldId: ember-crucible
+    uuid: Item.potionOfGliding0
+    coreVersion: '14.368'
+    systemId: crucible
+    systemVersion: 0.11.1
+_key: '!items!potionOfGliding0'

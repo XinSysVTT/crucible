@@ -107,6 +107,7 @@ system:
         equipment: false
       movement:
         size: 6
+        heightRatio: 1.5
         stride: 0
       talents: []
       identifier: ancestralSpirit
@@ -278,13 +279,7 @@ items:
         presence on the battlefield causes it to count as <strong>three
         creatures</strong> when determining whether an enemy is Flanked.</p>
       actions: []
-      rune: ''
-      gesture: ''
-      inflection: ''
       iconicSpells: 0
-      training:
-        type: ''
-        rank: null
     effects: []
     flags: {}
     ownership:
@@ -307,7 +302,7 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.10.0
+  systemVersion: 0.11.0
   coreVersion: '14.364'
   createdTime: 1781203463310
   modifiedTime: 1781448969763

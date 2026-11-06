@@ -18,14 +18,19 @@ import * as models from "./module/models/_module.mjs";
 import * as audio from "./module/audio.mjs";
 import * as hooks from "./module/hooks/_module.mjs";
 import {applyEmberPatches} from "./module/hooks/ember.mjs";
+import * as areaSchematic from "./module/area-schematic.mjs";
+import * as migrations from "./module/migrations.mjs";
 
 // Helpers
 import {handleSocketEvent} from "./module/socket.mjs";
 import {registerEnrichers} from "./module/enrichers.mjs";
 import * as chat from "./module/chat.mjs";
-import * as interaction from "./module/interaction.mjs";
+import CrucibleTooltipManager from "./module/tooltip-manager.mjs";
 import CrucibleTalentNode from "./module/const/talent-node.mjs";
 import {statusEffects} from "./module/const/statuses.mjs";
+import * as methods from "./module/methods.mjs";
+
+/** @import {CrucibleFootfallSound} from "./module/const/footfalls.mjs"; */
 
 // Party
 let party = null;
@@ -42,27 +47,31 @@ Hooks.once("init", async function() {
   crucible.developmentMode = game.data.options.debug;
 
   /**
-   * The effective world migration version cached at setup; see {@link _getMigrationVersion}.
+   * The effective world migration version cached at setup; see {@link migrations.getMigrationVersion}.
    * @type {string|null}
    */
   crucible._migrationVersion = null;
+
+  /**
+   * A Promise which resolves once this world is known to be at the current system version.
+   * Once this Promise is resolved, the world is safe for downstream migrations.
+   * @type {Promise<void>}
+   */
+  crucible.migrating = migrations.migrating;
 
   // Expose the system API
   crucible.api = {
     applications,
     audio,
     canvas,
+    chat,
     dice,
-    interaction,
     models,
     documents,
     methods: {
-      generateId,
-      packageCompendium,
-      resetAllActorTalents,
-      standardizeItemIds,
-      syncOwnedItems,
-      syncWorldItems
+      ...methods,
+      syncOwnedItems: migrations.syncOwnedItems,
+      syncWorldItems: migrations.syncWorldItems
     },
     talents: {
       CrucibleTalentNode,
@@ -105,7 +114,7 @@ Hooks.once("init", async function() {
      * The knowledge topics configured for the system.
      * @type {Record<string, CrucibleKnowledgeConfig>}
      */
-    knowledge: foundry.utils.deepClone(SYSTEM.SKILL.DEFAULT_KNOWLEDGE),
+    knowledge: foundry.utils.deepClone(SYSTEM.PROFICIENCY.DEFAULT_KNOWLEDGE),
 
     /**
      * The categories a language can belong to.
@@ -123,7 +132,17 @@ Hooks.once("init", async function() {
      * Visually scale tokens smaller the farther they are away from the 'camera' (viewed level).
      * @type {boolean}
      */
-    elevationScaling: true
+    elevationScaling: true,
+
+    /**
+     * Footfall sounds made by moving tokens.
+     * Expected to move into core CONFIG in V15.
+     * @type {{materials: Record<string, {label: string}>, sounds: Record<string, CrucibleFootfallSound>}}
+     */
+    footfalls: {
+      materials: foundry.utils.deepClone(SYSTEM.FOOTFALLS.MATERIALS),
+      sounds: foundry.utils.deepClone(SYSTEM.FOOTFALLS.SOUNDS)
+    }
   };
   /** @deprecated */
   crucible.CONFIG.ancestryPacks = crucible.CONFIG.packs.ancestry;
@@ -137,6 +156,18 @@ Hooks.once("init", async function() {
       return party;
     }
   });
+
+  /**
+   * The primary party, for packages which look up a party through any game system.
+   * @returns {CrucibleActor|null}
+   */
+  crucible.getPrimaryParty = () => party;
+
+  /**
+   * The members of the primary party, for packages which look up a party through any game system.
+   * @returns {Iterable<CrucibleActor>}
+   */
+  crucible.getPrimaryPartyMembers = () => party?.system.actors ?? [];
 
   // Active Effect document configuration
   CONFIG.ActiveEffect.documentClass = documents.CrucibleActiveEffect;
@@ -191,9 +222,11 @@ Hooks.once("init", async function() {
 
   // Region Behavior document configuration
   Object.assign(CONFIG.RegionBehavior.dataModels, {
+    "crucible.action": models.CrucibleActionRegionBehavior,
     "crucible.hazard": models.CrucibleHazardRegionBehavior
   });
   Object.assign(CONFIG.RegionBehavior.typeIcons, {
+    "crucible.action": "fa-solid fa-burst",
     "crucible.hazard": "fa-solid fa-triangle-exclamation"
   });
 
@@ -209,8 +242,11 @@ Hooks.once("init", async function() {
   Object.freeze(SYSTEM.ITEM.EQUIPABLE_ITEM_TYPES);
   Object.freeze(SYSTEM.ITEM.AFFIXABLE_ITEM_TYPES);
 
-  // Other Document Configuration
+  // ChatMessage document configuration
   CONFIG.ChatMessage.documentClass = documents.CrucibleChatMessage;
+  CONFIG.ChatMessage.dataModels.rest = models.CrucibleRestMessage;
+
+  // Other Document Configuration
   CONFIG.Combatant.documentClass = documents.CrucibleCombatant;
   CONFIG.Scene.documentClass = documents.CrucibleScene;
   CONFIG.Token.documentClass = documents.CrucibleToken;
@@ -218,6 +254,7 @@ Hooks.once("init", async function() {
 
   // Spellcraft Initialization
   Hooks.callAll("crucible.initializeSpellcraft");
+  SYSTEM.SPELL.initializeComponents(); // Re-index now that modules have contributed their own components
   models.CrucibleSpellcraftGesture.initialize();
   models.CrucibleSpellcraftInflection.initialize();
   models.CrucibleSpellcraftRune.initialize();
@@ -252,8 +289,17 @@ Hooks.once("init", async function() {
 
   sheets.registerSheet(JournalEntry, "crucible", applications.CrucibleJournalSheet, {label: "CRUCIBLE.SHEETS.Journal"});
 
+  sheets.unregisterSheet(RegionBehavior, "core", foundry.applications.sheets.RegionBehaviorConfig, {
+    types: ["crucible.action"]
+  });
+  sheets.registerSheet(RegionBehavior, "crucible", applications.CrucibleActionBehaviorRegionConfig, {
+    types: ["crucible.action"],
+    label: "CRUCIBLE.SHEETS.ActionBehavior"
+  });
+
   // Core Application Overrides
   CONFIG.ui.combat = applications.CrucibleCombatTracker;
+  CONFIG.ux.TooltipManager = CrucibleTooltipManager;
 
   // Custom HTML Elements
   for ( const element of Object.values(applications.elements) ) {
@@ -268,6 +314,9 @@ Hooks.once("init", async function() {
 
   // Rich Text Enrichers
   registerEnrichers();
+
+  // Encounters from the area-schematic library, which a module defines as its scripts load
+  if ( CONFIG.AreaSchematic ) areaSchematic.registerEncounterClass();
 
   // Register Handlebars helpers
   Handlebars.registerHelper({
@@ -298,7 +347,9 @@ Hooks.once("init", async function() {
   // Queries
   CONFIG.queries.requestSkillCheck = dice.StandardCheck.handle.bind(dice.StandardCheck);
   CONFIG.queries.requestGroupCheck = dice.GroupCheck.handle.bind(dice.GroupCheck);
-  CONFIG.queries.requestCounterspell = ({actorUuid, ...options}) => {
+  CONFIG.queries.designateRestAction = models.CrucibleRestMessage.handleDesignation.bind(models.CrucibleRestMessage);
+  CONFIG.queries.submitRestAction = models.CrucibleRestMessage.handleSubmission.bind(models.CrucibleRestMessage);
+  CONFIG.queries.requestCounterspell =({actorUuid, ...options}) => {
     return models.CrucibleCounterspellAction.prompt(actorUuid, options);
   };
 
@@ -417,18 +468,22 @@ Hooks.once("init", async function() {
     type: new fields.SchemaField({
       affix: fieldForType("ActiveEffect", "affix"),
       ancestry: fieldForType("Item", "ancestry"),
+      archetype: fieldForType("Item", "archetype"),
       background: fieldForType("Item", "background"),
       equipment: fieldForType("Item", null, "equipment"),
       spell: fieldForType("Item", "spell"),
-      talent: fieldForType("Item", "talent")
+      talent: fieldForType("Item", "talent"),
+      taxonomy: fieldForType("Item", "taxonomy")
     }),
     default: {
       affix: [SYSTEM.COMPENDIUM_PACKS.affix],
       ancestry: [SYSTEM.COMPENDIUM_PACKS.ancestry],
+      archetype: [SYSTEM.COMPENDIUM_PACKS.archetype],
       background: [SYSTEM.COMPENDIUM_PACKS.background],
       equipment: [SYSTEM.COMPENDIUM_PACKS.equipment],
       spell: [SYSTEM.COMPENDIUM_PACKS.spell],
-      talent: [SYSTEM.COMPENDIUM_PACKS.talent]
+      talent: [SYSTEM.COMPENDIUM_PACKS.talent],
+      taxonomy: [SYSTEM.COMPENDIUM_PACKS.taxonomy]
     },
     requiresReload: true
   });
@@ -468,20 +523,29 @@ Hooks.once("init", async function() {
   CONFIG.debug.talentTree = false;
   CONFIG.debug.flanking = false;
   CONFIG.debug.vfx = true;
-  if ( crucible.developmentMode ) {
-    registerDevelopmentHooks();
-    enableSpellcheckContext();
-  }
+
 
   // Replace core layer class with custom grid layer class
   CONFIG.Canvas.layers.grid.layerClass = canvas.grid.CrucibleGridLayer;
 
   // Crucible-specific detection modes
   Object.assign(CONFIG.Canvas.detectionModes, {
+    bloodSense: new canvas.detectionModes.DetectionModeBloodSense(),
     echolocation: new canvas.detectionModes.DetectionModeEcholocation(),
     senseCreature: new canvas.detectionModes.DetectionModeSenseCreature(),
     thermalVision: new canvas.detectionModes.DetectionModeThermalVision()
   });
+});
+
+/* -------------------------------------------- */
+/*  Game Setup                                  */
+/* -------------------------------------------- */
+
+Hooks.once("setup", function() {
+  if ( crucible.developmentMode ) {
+    registerDevelopmentHooks();
+    enableSpellcheckContext();
+  }
 });
 
 /* -------------------------------------------- */
@@ -498,12 +562,19 @@ Hooks.once("canvasConfig", () => {
 /* -------------------------------------------- */
 
 Hooks.once("i18nInit", function() {
+  const L = foundry.helpers.Localization;
 
-  // Localize DataModels
-  foundry.helpers.Localization.localizeDataModel(models.CrucibleAction);
-  foundry.helpers.Localization.localizeSchema(models.CrucibleAction.schema.fields.effects.element, ["EFFECT"], {prefixPath: "effects.element."});
-  foundry.helpers.Localization.localizeDataModel(models.CrucibleSpellAction);
-  foundry.helpers.Localization.localizeDataModel(models.CrucibleCounterspellAction);
+  // Localize CrucibleAction data models. Each subclass maintains a separate cache of fields
+  for ( const model of Object.values(models) ) {
+    if ( !foundry.utils.isSubclass(model, models.CrucibleAction) ) continue;
+    L.localizeDataModel(model);
+    L.localizeSchema(model.schema.fields.effects.element, ["EFFECT"], {prefixPath: "effects.element."});
+  }
+
+  // The partial CrucibleAction embedded within a CrucibleActionRegionBehavior is a separate schema
+  const actionBehaviorEffectSchema = models.CrucibleActionRegionBehavior.schema.fields.action.fields.effects.element;
+  L.localizeSchema(actionBehaviorEffectSchema, ["EFFECT"], {prefixPath: "system.action.effects.element."});
+  L.localizeSchema(actionBehaviorEffectSchema, ["ACTION"], {prefixPath: "system.action."});
 
   // Pre-localize configuration objects
   preLocalizeConfig();
@@ -541,10 +612,10 @@ function preLocalizeConfig() {
   };
 
   // Top-level system constants
-  localizeConfigObject(SYSTEM.ABILITIES, ["abbreviation", "label", "group"]);
+  localizeConfigObject(SYSTEM.ABILITIES, ["abbreviation", "label", "group", "tooltip"]);
   localizeConfigObject(SYSTEM.DAMAGE_CATEGORIES);
   localizeConfigObject(SYSTEM.DAMAGE_TYPES, ["label", "abbreviation"]);
-  localizeConfigObject(SYSTEM.DEFENSES, ["label", "shortLabel"]);
+  localizeConfigObject(SYSTEM.DEFENSES, ["label", "shortLabel"]); // `tooltip` resolves lazily
   localizeConfigObject(SYSTEM.RESOURCES);
   localizeConfigObject(SYSTEM.TEMPERATURE_TIERS);
   localizeConfigObject(SYSTEM.THREAT_RANKS);
@@ -572,13 +643,12 @@ function preLocalizeConfig() {
   localizeConfigObject(SYSTEM.CONSUMABLE.CATEGORIES);
   localizeConfigObject(SYSTEM.CONSUMABLE.PROPERTIES, ["label", "tooltip"]);
 
-  // Crafting
-  localizeConfigObject(SYSTEM.CRAFTING.TRAINING);
-
   // Effects
   localizeConfigObject(SYSTEM.EFFECTS.PROPERTIES, ["label", "tooltip"]);
+  localizeConfigObject(SYSTEM.EFFECTS.SUPPRESSION_REASONS);
 
   // Item
+  localizeConfigObject(SYSTEM.ITEM.AFFIX_PROPERTIES);
   localizeConfigObject(SYSTEM.ITEM.ENCHANTMENT_TIERS);
   localizeConfigObject(SYSTEM.ITEM.LOOT_CATEGORIES);
   localizeConfigObject(SYSTEM.ITEM.QUALITY_TIERS);
@@ -586,28 +656,39 @@ function preLocalizeConfig() {
   localizeConfigObject(SYSTEM.ITEM.SCHEMATIC_PROPERTIES);
   localizeConfigObject(SYSTEM.ITEM.TOOL_CATEGORIES);
 
-  // Skill
-  localizeConfigObject(SYSTEM.SKILL.CATEGORIES, ["label", "hint"]);
-  localizeConfigObject(SYSTEM.SKILL.SKILLS);
+  // Proficiencies
+  localizeConfigObject(SYSTEM.PROFICIENCY.GROUPS, ["label", "hint"]);
+  localizeConfigObject(SYSTEM.PROFICIENCY.SKILLS, ["label", "short"]);
+  localizeConfigObject(SYSTEM.PROFICIENCY.WEAPONS, ["label", "short"]);
+  localizeConfigObject(SYSTEM.PROFICIENCY.EQUIPMENT, ["label", "short"]);
+  localizeConfigObject(SYSTEM.PROFICIENCY.PROFICIENCIES, ["label", "short"]);
 
   // Spellcraft
+  localizeConfigObject(SYSTEM.SPELL.COMPONENTS, ["label", "group"]);
+  localizeConfigObject(SYSTEM.PROFICIENCY.SPELLCRAFT, ["label", "short"]);
   localizeConfigObject(SYSTEM.SPELL.GESTURES, ["name", "adjective"]);
   localizeConfigObject(SYSTEM.SPELL.INFLECTIONS, ["name", "adjective"]);
-  localizeConfigObject(SYSTEM.SPELL.RUNES, ["name", "adjective"]);
+  localizeConfigObject(SYSTEM.SPELL.RUNES, ["name", "adjective", "spellName"]);
 
   // Talent
+  localizeConfigObject(SYSTEM.TALENT.KEYWORD_GROUPS);
+  localizeConfigObject(SYSTEM.TALENT.KEYWORDS, ["label", "group"]);
   localizeConfigObject(SYSTEM.TALENT.NODE_TYPES);
-  localizeConfigObject(SYSTEM.TALENT.TRAINING_RANKS);
-  localizeConfigObject(SYSTEM.TALENT.TRAINING_TYPES, ["group", "label"]);
+
+  // Training
+  localizeConfigObject(SYSTEM.PROFICIENCY.GROUPS);
+  localizeConfigObject(SYSTEM.PROFICIENCY.RANKS);
+  localizeConfigObject(SYSTEM.PROFICIENCIES, ["group", "label"]);
 
   // Weapon
   localizeConfigObject(SYSTEM.WEAPON.CATEGORIES);
   localizeConfigObject(SYSTEM.WEAPON.PROPERTIES, ["label", "tooltip"]);
   localizeConfigObject(SYSTEM.WEAPON.SLOTS);
-  localizeConfigObject(SYSTEM.WEAPON.TRAINING);
+  localizeConfigObject(SYSTEM.PROFICIENCY.WEAPONS);
 
   // CONFIG objects (not in SYSTEM)
   localizeConfigObject(crucible.CONFIG.currency, ["label", "abbreviation"]);
+  localizeConfigObject(crucible.CONFIG.footfalls.materials);
   localizeConfigObject(crucible.CONFIG.knowledge);
   localizeConfigObject(crucible.CONFIG.languageCategories);
   localizeConfigObject(crucible.CONFIG.languages);
@@ -626,7 +707,7 @@ Hooks.once("setup", function() {
   applyEmberPatches();
 
   // Resolve and cache the effective migration version (inferred for quickstart worlds)
-  const mv = crucible._migrationVersion = _getMigrationVersion();
+  const mv = crucible._migrationVersion = migrations.getMigrationVersion();
 
   // Cull deprecated item properties that have been fully migrated
   for ( const model of Object.values(CONFIG.Item.dataModels) ) {
@@ -671,17 +752,19 @@ Hooks.once("setup", function() {
 Hooks.once("ready", async function() {
 
   // System-specific interaction
-  document.body.addEventListener("pointerenter", interaction.onPointerEnter, true);
-  document.body.addEventListener("pointerleave", interaction.onPointerLeave, true);
+  document.body.addEventListener("pointerenter", CrucibleTooltipManager.onPointerEnter, true);
+  document.body.addEventListener("pointerleave", CrucibleTooltipManager.onPointerLeave, true);
+  document.body.addEventListener("click", chat.onClickChatReadaloud);
 
   // Resolve performance-mode-derived values onto `canvas.performance` (particle density, etc.)
   canvas.vfx.blocks.configurePerformanceMode();
 
-  // Perform World Migrations
-  if ( game.users.activeGM?.isSelf ) {
-    const mv = crucible._migrationVersion;
-    if ( foundry.utils.isNewerVersion(crucible.version, mv) ) await _performMigrations(mv);
+  // Perform World Migrations, resolve the migration only on the else branch because the migration path reloads
+  const mv = crucible._migrationVersion;
+  if ( game.users.activeGM?.isSelf && foundry.utils.isNewerVersion(crucible.version, mv) ) {
+    await migrations.performMigrations(mv);
   }
+  else migrations.resolveMigrating();
 
   // Display Welcome Journal
   const welcome = game.settings.get("crucible", "welcome");
@@ -699,8 +782,9 @@ Hooks.once("ready", async function() {
  * On open detached windows, apply crucible interaction listeners
  */
 Hooks.on("openDetachedWindow", (_id, window) => {
-  window.document.body.addEventListener("pointerenter", interaction.onPointerEnter, true);
-  window.document.body.addEventListener("pointerleave", interaction.onPointerLeave, true);
+  window.document.body.addEventListener("pointerenter", CrucibleTooltipManager.onPointerEnter, true);
+  window.document.body.addEventListener("pointerleave", CrucibleTooltipManager.onPointerLeave, true);
+  window.document.body.addEventListener("click", chat.onClickChatReadaloud);
 });
 
 /* -------------------------------------------- */
@@ -759,6 +843,7 @@ Hooks.on("getSceneControlButtons", controls => {
     icon: "fa-solid fa-circles-overlap",
     toggle: true,
     active: false,
+    visible: !!game.canvas.scene?.useMicrogrid,
     onChange: (_event, active) => {
       CONFIG.debug.flanking = active;
       canvas.CrucibleTokenObject.refreshFlankingVisualization();
@@ -766,6 +851,7 @@ Hooks.on("getSceneControlButtons", controls => {
   };
 });
 Hooks.on("renderCombatTracker", models.CrucibleCombatChallenge.onRenderCombatTracker);
+Hooks.on("renderRegionBehaviorConfig", canvas.movementAnimation.CrucibleTokenMovementAnimation.onRenderRegionBehaviorConfig);
 
 /* -------------------------------------------- */
 /*  Canvas Hooks                                */
@@ -818,82 +904,14 @@ Hooks.on("hotbarDrop", async (bar, data, slot) => {
 /* -------------------------------------------- */
 
 /**
- * Package all documents of a certain type into their appropriate Compendium pack
- * @param {string} documentName
- * @param {string} packName
- * @param {Folder|string} folder
- * @returns {Promise<void>}
- */
-async function packageCompendium(documentName, packName, folder) {
-  const pack = game.packs.get(`crucible.${packName}`);
-  if ( typeof folder === "string" ) {
-    folder = game.folders.find(f => (f.type === documentName) && (f.name === folder));
-  }
-  if ( !(folder instanceof Folder) || (folder.type !== documentName) ) {
-    throw new Error("Invalid folder provided to the packageCompendium method");
-  }
-
-  // Unlock the pack for editing
-  await pack.configure({locked: false});
-
-  // Delete all existing documents in the pack
-  const cls = getDocumentClass(documentName);
-  await pack.getDocuments();
-  await cls.deleteDocuments([], {pack: pack.collection, deleteAll: true});
-  await Folder.deleteDocuments(Array.from(pack.folders.keys()), {pack: pack.collection});
-
-  // Export all children of the target folder
-  await folder.exportToCompendium(pack, {keepId: true, keepFolders: true});
-
-  // Re-lock the pack
-  await pack.configure({locked: true});
-}
-
-/* -------------------------------------------- */
-
-/**
- * Generate a Crucible-standardized document ID given a provided string title.
- * @param {string} title      An input string title
- * @param {number} [length]   A maximum ID length
- * @returns {string}          A standardized camel-case ID
- */
-function generateId(title, length) {
-  const id = title.split(" ").map((w, i) => {
-    const p = w.slugify({replacement: "", lowercase: false, strict: true});
-    return i ? p.titleCase() : (p.charAt(0).toLowerCase() + p.slice(1));
-  }).join("");
-  return Number.isNumeric(length) ? id.slice(0, length).padEnd(length, "0") : id;
-}
-
-/* -------------------------------------------- */
-
-/**
- * Standardize all World item IDs
- * @returns {Promise<void>}
- */
-async function standardizeItemIds() {
-  const creations = [];
-  const deletions = [];
-  for ( const item of game.items ) {
-    const standardId = generateId(item.name, 16);
-    if ( item.id === standardId ) continue;
-    if ( game.items.has(standardId) ) throw new Error(`Standardized system ID ${standardId} is already in use`);
-    deletions.push(item.id);
-    creations.push(Object.assign(item.toObject(), {_id: standardId}));
-  }
-  await Item.deleteDocuments(deletions);
-  await Item.createDocuments(creations, {keepId: true});
-}
-
-/**
  * Register development-only hooks for debugging and ID management.
  */
 function registerDevelopmentHooks() {
   Hooks.on("preCreateItem", (item, data, options, _user) => {
-    if ( options.keepId === false ) return;
+    if ( options.keepId === false || !crucible.developmentMode ) return;
     // Generate a new ID
     if ( !item.parent && !item.id ) {
-      const id = generateId(item.name, 16);
+      const id = methods.generateId(item.name, 16);
       const collection = item.pack ? game.packs.get(item.pack)?.index : game.items;
       if ( collection?.has(id) ) {
         ui.notifications.error(`A document with standardized ID "${id}" already exists. Resolve the conflict manually.`);
@@ -921,7 +939,7 @@ function registerDevelopmentHooks() {
   // Standardized IDs for Rules journal entry pages
   Hooks.on("preCreateJournalEntryPage", (page, data, options, _user) => {
     if ( (page.parent?.pack === "crucible.rules") && (options.keepId !== false) ) {
-      const id = generateId(page.name, 16);
+      const id = methods.generateId(page.name, 16);
       if ( page.parent.pages.has(id) ) {
         ui.notifications.error(`A page with standardized ID "${id}" already exists in ${page.parent.name}. Resolve the conflict manually.`);
         return false;
@@ -944,156 +962,6 @@ function enableSpellcheckContext() {
 }
 
 /* -------------------------------------------- */
-
-/**
- * Sync talent data across all actors in the world if their synchronized version is stale.
- * @param {object} options
- * @param {boolean} [options.force]     Force syncing even if the actor stats are current
- * @param {boolean} [options.reload]    Auto-reload when synchronization is complete
- * @param {boolean} [options.talents]   Sync actor talents
- * @param {boolean} [options.spells]    Sync actor iconic spells
- * @returns {Promise<void>}
- */
-async function syncOwnedItems({force=false, reload=true, talents=true, spells=true, equipment=false}={}) {
-  console.groupCollapsed("Crucible | Owned Item Synchronization");
-
-  // Prepare equipment compendium index
-  let equipmentIndex;
-  if ( equipment ) {
-    const pack = game.packs.get("crucible.equipment");
-    await pack.getDocuments();
-    equipmentIndex = pack.contents.reduce((obj, item) => {
-      obj[item.system.identifier] = item;
-      return obj;
-    }, {});
-  }
-
-  // Sync actor-owned items
-  const bar = {n: 0, total: game.actors.size, pct: 0};
-  const progress = ui.notifications.info(_loc("CRUCIBLE.Syncing"), {console: true, progress: true});
-  for ( const actor of game.actors ) {
-    bar.n++;
-    bar.pct = bar.n / bar.total;
-    if ( force || foundry.utils.isNewerVersion(crucible.version, actor._stats.systemVersion) ) {
-      try {
-        const batchCreate = [];
-        const batchUpdate = [];
-        const batchDelete = [];
-        const actorUpdate = {"_stats.systemVersion": game.system.version};
-        if ( talents ) {
-          const {toCreate, toUpdate, toDelete, actorUpdates} = await actor.syncTalents({performUpdates: false});
-          batchCreate.push(...toCreate);
-          batchUpdate.push(...toUpdate);
-          batchDelete.push(...toDelete);
-          Object.assign(actorUpdate, actorUpdates);
-        }
-        if ( spells ) {
-          const {toCreate, toUpdate, toDelete} = await actor.syncIconicSpells({performUpdates: false});
-          batchCreate.push(...toCreate);
-          batchUpdate.push(...toUpdate);
-          batchDelete.push(...toDelete);
-        }
-        if ( equipment ) {
-          for ( const item of actor.items ) {
-            const update = _migrateEquipmentItem(item, equipmentIndex);
-            if ( update ) {
-              batchUpdate.push(update);
-              console.debug(`Syncing equipment: ${item.name} in Actor ${actor.name} [${item.uuid}]`);
-            }
-          }
-        }
-        const batchOperations = actor.defineBatchOperations(actorUpdate, {
-          createItems: {changes: batchCreate, options: {keepId: true}},
-          updateItems: {changes: batchUpdate, options: {diff: false, recursive: false, noHook: true}},
-          deleteItems: batchDelete
-        });
-        await foundry.documents.modifyBatch(batchOperations);
-      } catch(err) {
-        console.warn(`Crucible | Item synchronization failed for Actor "${actor.name}": ${err.message}`);
-      } finally {
-        progress.update({pct: bar.pct, message: actor.name});
-      }
-    }
-  }
-  progress.update({pct: 1});
-  console.groupEnd();
-  if ( reload ) foundry.utils.debouncedReload();
-}
-
-/* -------------------------------------------- */
-
-/**
- * Sync world-level equipment items with their upstream compendium source data.
- * @param {object} [options]
- * @param {boolean} [options.equipment=true]      Sync physical equipment items
- * @returns {Promise<void>}
- */
-async function syncWorldItems({equipment=true}={}) {
-  console.groupCollapsed("Crucible | World Item Synchronization");
-  if ( equipment ) {
-    const pack = game.packs.get("crucible.equipment");
-    await pack.getDocuments();
-    const equipmentIndex = pack.contents.reduce((obj, item) => {
-      obj[item.system.identifier] = item;
-      return obj;
-    }, {});
-    const updates = [];
-    for ( const item of game.items ) {
-      const update = _migrateEquipmentItem(item, equipmentIndex);
-      if ( update ) {
-        updates.push(update);
-        console.debug(`Syncing equipment: ${item.name} [${item.uuid}]`);
-      }
-    }
-    if ( updates.length ) await Item.updateDocuments(updates);
-  }
-  console.groupEnd();
-}
-
-/* -------------------------------------------- */
-
-/**
- * Build an update object that syncs a single equipment item with its upstream compendium source.
- * @param {CrucibleItem} item                         The owned item to sync
- * @param {Record<string, CrucibleItem>} index        The equipment compendium index keyed by identifier
- * @returns {object|null}
- */
-function _migrateEquipmentItem(item, index) {
-  if ( !SYSTEM.ITEM.PHYSICAL_ITEM_TYPES.has(item.type) ) return null;
-  const currentSource = item.toObject();
-  const upstreamSource = index[item.system.identifier]?.toObject();
-  if ( !upstreamSource ) return null;
-  const update = {_id: item.id, type: upstreamSource.type, name: upstreamSource.name, img: upstreamSource.img, system: upstreamSource.system};
-  const stateFields = [...item.system.constructor.STATEFUL_FIELDS, "quantity", "quality", "enchantment"];
-  for ( const field of stateFields ) {
-    const value = currentSource.system[field];
-    if ( value !== undefined ) foundry.utils.setProperty(update.system, field, value);
-  }
-  update.system = _replace(update.system); // Force full replacement
-  return update;
-}
-
-/* -------------------------------------------- */
-
-/**
- * Remove all non-permanent talents from every actor in the world.
- */
-async function resetAllActorTalents() {
-  for ( const actor of game.actors ) {
-    const deleteIds = [];
-    for ( const item of actor.items ) {
-      if ( item.type !== "talent" ) continue;
-      if ( actor.system.details.ancestry?.talents?.has(item.id) ) continue;
-      if ( actor.system.details.background?.talents?.has(item.id) ) continue;
-      if ( actor.system.details.archetype?.talents?.has(item.id) ) continue;
-      if ( actor.system.details.taxonomy?.talents?.has(item.id) ) continue;
-      deleteIds.add(item.id);
-    }
-    await actor.deleteEmbeddedDocuments("Item", deleteIds);
-  }
-}
-
-/* -------------------------------------------- */
 /*  Module Hooks                                */
 /* -------------------------------------------- */
 
@@ -1101,94 +969,6 @@ Hooks.once("diceSoNiceReady", dice3d => {
   // Improve Group Skill Checks rendering by hiding only the roll result
   dice3d.setMessageUpdateHideSelector?.(".dice-result");
 });
-
-/* -------------------------------------------- */
-/*  Data Migrations                             */
-/* -------------------------------------------- */
-
-/**
- * Perform one-time data migrations for the current world.
- * @param {string} priorVersion
- * @returns {Promise<void>}
- */
-async function _performMigrations(priorVersion) {
-  await syncWorldItems({equipment: true});
-  await syncOwnedItems({equipment: true, force: true, reload: false});
-  await _deleteFlankedEffects();
-  await game.settings.set("crucible", "migrationVersion", crucible.version);
-  foundry.utils.debouncedReload();
-}
-
-/* -------------------------------------------- */
-
-/**
- * Resolve the effective world migration version, inferring a baseline for quickstart worlds whose setting is 0.0.0.
- * @returns {string} The resolved migration version.
- */
-function _getMigrationVersion() {
-  const mv = game.settings.get("crucible", "migrationVersion");
-  if ( mv !== "0.0.0" ) return mv;
-
-  // A quickstart world reports 0.0.0 despite holding content from a later vintage; recover the oldest such vintage
-  // from the recorded adventure imports.
-  const imports = game.settings.get("core", "adventureImports");
-  let baseline = null;
-  for ( const data of Object.values(imports) ) {
-    if ( !data.quickstart?.quickstarted || !data.systemVersion ) continue;
-    if ( !baseline || foundry.utils.isNewerVersion(baseline, data.systemVersion) ) baseline = data.systemVersion;
-  }
-  return baseline ?? mv;
-}
-
-/* -------------------------------------------- */
-
-/**
- * Delete the ActiveEffects which the retired automatic flanking system committed to Actors, wherever they persist.
- * Flanking is now derived per-attacker at the moment of use, so these persisted effects are inert automation
- * artifacts. They are identified by their "flanked" subtype, which no manually applied condition ever carries.
- * @returns {Promise<void>}
- */
-async function _deleteFlankedEffects() {
-  console.groupCollapsed("Crucible | Retired Flanking Effect Cleanup");
-  const retiredIds = effects => (effects ?? []).filter(e => e.type === "flanked").map(e => e._id);
-  const deleteRetired = async (actor, ids) => {
-    await actor.deleteEmbeddedDocuments("ActiveEffect", ids);
-    console.debug(`Deleted ${ids.length} retired flanking effect(s) from ${actor.name} [${actor.uuid}]`);
-  };
-
-  // World Actors own their effects directly
-  for ( const actor of game.actors ) {
-    const ids = retiredIds(actor._source.effects);
-    if ( ids.length ) await deleteRetired(actor, ids);
-  }
-
-  // An unlinked Token holds an ActorDelta whose own effects are addressed through its synthetic Actor
-  for ( const scene of game.scenes ) {
-    for ( const token of scene.tokens ) {
-      if ( token.isLinked ) continue;
-      const ids = retiredIds(token._source.delta?.effects);
-      if ( !ids.length ) continue;
-      if ( token.actor ) await deleteRetired(token.actor, ids);
-      else console.warn(`Could not resolve the Actor for Token [${token.uuid}] to delete its flanking effects`);
-    }
-  }
-
-  // World-level Actor packs, which may hold an Actor exported while it was flanked
-  for ( const pack of game.packs ) {
-    if ( (pack.documentName !== "Actor") || (pack.metadata.packageType !== "world") ) continue;
-    const wasLocked = pack.locked;
-    if ( wasLocked ) await pack.configure({locked: false});
-    try {
-      for ( const actor of await pack.getDocuments() ) {
-        const ids = retiredIds(actor._source.effects);
-        if ( ids.length ) await deleteRetired(actor, ids);
-      }
-    } finally {
-      if ( wasLocked ) await pack.configure({locked: true});
-    }
-  }
-  console.groupEnd();
-}
 
 /* -------------------------------------------- */
 /*  ESModules API                               */

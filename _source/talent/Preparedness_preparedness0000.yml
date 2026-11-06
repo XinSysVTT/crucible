@@ -3,19 +3,18 @@ type: talent
 img: icons/sundries/survival/rope-wrapped-purple.webp
 system:
   description: >-
-    You seem to always be prepared for the moment at hand. You may sacrifice
-    your free movement for the Round to instead equip an Item from your
-    inventory without spending any Action points.
+    <p>You seem to always be prepared for the moment at hand. You may sacrifice
+    your @Rule[movement.freeMovement] for the round to instead equip an
+    <strong>Item</strong> from your inventory without spending any
+    @Rule[resource.action] points.</p>
+  keywords:
+    - playstyle.utility
+    - action.movement
   nodes:
-    - wis1a
+    - wis0a
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: wilderness
 effects: []
 ownership:
   default: 0
@@ -24,11 +23,11 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160141
-  modifiedTime: 1773514792604
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789490274466
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: Item.preparedness0000
   duplicateSource: null
   exportSource: null

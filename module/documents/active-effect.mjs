@@ -17,13 +17,17 @@ export default class CrucibleActiveEffect extends foundry.documents.ActiveEffect
   static TOOLTIP_TEMPLATE = "systems/crucible/templates/tooltips/tooltip-active-effect.hbs";
 
   /**
-   * Document types the owned-reference deletion cascade is permitted to delete.
-   * @type {Set<string>}
+   * Mapping potentially-owned Document types to the name of system field containing uuids for that Document type.
+   * @type {Record<string, string>}
    */
-  static #DELETABLE_TYPES = new Set(["Token", "Region"]);
+  static #DELETABLE_TYPES = {
+    AmbientLight: "lights",
+    Region: "regions",
+    Token: "summons"
+  };
 
   /**
-   * The UUIDs of the Tokens and Regions this effect owns. Cached from the effect's own persisted data.
+   * The UUIDs of the Documents this effect owns. Cached from the effect's own persisted data.
    * The responsible active GM derives the set of documents to delete from trusted, replicated state.
    * @type {Set<string>}
    */
@@ -68,27 +72,31 @@ export default class CrucibleActiveEffect extends foundry.documents.ActiveEffect
   /* -------------------------------------------- */
 
   /**
-   * Test whether this effect bears only the given status condition and no other mechanical content.
-   * Distinguishes effects safe to delete outright from compound effects that should only have the status expired.
-   * @param {string} statusId   The status condition to test for sole ownership
-   * @returns {boolean}         True if this status is the effect's sole status, and it carries no other content
+   * Test whether this effect would be left empty if the given status conditions were removed from it.
+   * Distinguishes effects safe to delete outright from compound effects that should only have the statuses expired.
+   * @param {...string} statusIds   The status conditions which would be removed
+   * @returns {boolean}             True if the effect bears only these statuses and no other mechanical content
    */
-  isStatusOnly(statusId) {
-    if ( !((this.statuses.size === 1) && this.statuses.has(statusId)) ) return false;
+  isStatusOnly(...statusIds) {
+    if ( !this.statuses.size || !this.statuses.every(s => statusIds.includes(s)) ) return false;
     if ( this.type !== "base" ) return false; // Only base-type effects can be status-only
-    const {changes, dot, summons, regions, maintenance} = this.system;
+    const {changes, dot, summons, regions, maintenance, properties} = this.system;
     return !(changes.length || dot.length || summons.size || regions.size
-      || maintenance.cost || maintenance.hands);
+      || properties.has("maintained") || maintenance.hands);
   }
 
   /* -------------------------------------------- */
 
   /**
-   * Collect the UUIDs of the Tokens and Regions this effect currently owns from its persisted references.
+   * Collect the UUIDs of the Documents this effect currently owns from its persisted references.
    * @returns {Set<string>}
    */
   #collectOwnedReferences() {
-    return new Set([...(this.system.summons ?? []), ...(this.system.regions ?? [])]);
+    const owned = new Set();
+    for ( const field of Object.values(CrucibleActiveEffect.#DELETABLE_TYPES) ) {
+      for ( const uuid of (this.system[field] ?? []) ) owned.add(uuid);
+    }
+    return owned;
   }
 
   /* -------------------------------------------- */
@@ -96,7 +104,7 @@ export default class CrucibleActiveEffect extends foundry.documents.ActiveEffect
   /**
    * Delete owned references on behalf of a requesting User.
    * Enforce that each still exists, is an allowed document type, and is OWNED by the user who triggered the operation.
-   * @param {Set<string>} references      UUIDs of owned Tokens and Regions to delete
+   * @param {Set<string>} references      UUIDs of owned Documents to delete
    * @param {string} userId               The user who performed the triggering operation
    * @returns {Promise<void>}
    */
@@ -107,7 +115,12 @@ export default class CrucibleActiveEffect extends foundry.documents.ActiveEffect
     for ( const uuid of references ) {
       const doc = await fromUuid(uuid);
       if ( !doc ) continue; // Already deleted
-      if ( CrucibleActiveEffect.#DELETABLE_TYPES.has(doc.documentName) && doc.testUserPermission(user, "OWNER") ) {
+
+      // Don't delete regions which will be cleaned up following deletion of attached token
+      if ( (doc.documentName === "Region") && doc._source.attachment.token ) {
+        if ( !doc.attachment.token || references.has(doc.attachment.token.uuid) ) continue;
+      }
+      if ( (doc.documentName in CrucibleActiveEffect.#DELETABLE_TYPES) && doc.testUserPermission(user, "OWNER") ) {
         await doc.delete();
         continue;
       }
@@ -192,6 +205,26 @@ export default class CrucibleActiveEffect extends foundry.documents.ActiveEffect
         console.warn("The identifier of an existing affix cannot be changed.");
         return false;
       }
+
+      // Only a Gamemaster may lift a curse
+      const properties = changes.system?.properties;
+      if ( !user.isGM && Array.isArray(properties) && this.system.properties.has("cursed")
+        && !properties.includes("cursed") ) {
+        ui.notifications.warn(_loc("AFFIX.WARNINGS.CursedGamemasterOnly"));
+        return false;
+      }
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  async _preDelete(options, user) {
+    const allowed = await super._preDelete(options, user);
+    if ( allowed === false ) return false;
+    if ( (this.type === "affix") && this.parent && !user.isGM && this.system.properties.has("cursed") ) {
+      ui.notifications.warn(_loc("AFFIX.WARNINGS.CursedGamemasterOnly"));
+      return false;
     }
   }
 
@@ -276,7 +309,7 @@ export default class CrucibleActiveEffect extends foundry.documents.ActiveEffect
   /** @inheritDoc */
   async _onDelete(options, userId) {
     await super._onDelete(options, userId);
-    await this.#deleteOwnedReferences(this.#ownedReferences, userId); // Delete every owned Token/Region
+    await this.#deleteOwnedReferences(this.#ownedReferences, userId); // Delete every owned Document
   }
 
   /* -------------------------------------------- */
@@ -385,5 +418,32 @@ export default class CrucibleActiveEffect extends foundry.documents.ActiveEffect
     // Suppressed Effects
     if ( this.isSuppressed ) tags.context.section = "suppressed";
     return tags;
+  }
+
+  /* -------------------------------------------- */
+  /*  Deprecations and Compatibility              */
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  static migrateData(source, options) {
+    source = super.migrateData(source, options);
+
+    /** @deprecated since 0.11.2 */
+    if ( source.type === "flanked" ) {
+      source.type = "base";
+      source.disabled = true;
+    }
+
+    /** @deprecated since 0.11.2 */
+    const version = source._stats?.systemVersion;
+    const system = source.system;
+    if ( version && foundry.utils.isNewerVersion("0.11.2", version) && Array.isArray(system?.properties) ) {
+      const properties = new Set(system.properties);
+      if ( system.maintenance?.cost > 0 ) properties.add("maintained");
+      else if ( system.maintenance?.cost === 0 ) system.maintenance.cost = null;
+      if ( Number.isFinite(system.dc) ) properties.add("removable");
+      system.properties = Array.from(properties);
+    }
+    return source;
   }
 }

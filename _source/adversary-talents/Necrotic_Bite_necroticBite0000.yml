@@ -2,6 +2,10 @@ name: Necrotic Bite
 type: talent
 img: icons/magic/unholy/strike-beam-blood-red-green.webp
 system:
+  keywords:
+    - playstyle.melee
+    - weapon.natural
+    - damageType.corruption
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} tears into flesh with a maw that is
@@ -13,9 +17,9 @@ system:
       condition: ''
       description: >-
         <p>The @ref[actor.name]{creature} attacks with a pestilent bite that is
-        <strong>Empowered</strong> and deals <strong>Corruption</strong>
-        damage.</p><p>On a <strong>Critical Success</strong> the attack causes
-        the @Condition[decaying] condition for <strong>3 Turns</strong>.</p>
+        @Rule[action.empowered] and deals <strong>Corruption</strong>
+        damage.</p><p>On a @Rule[dice.criticalSuccess] the attack causes the
+        @Condition[decaying] condition for <strong>3 Turns</strong>.</p>
       cost:
         action: 1
         focus: 1
@@ -57,13 +61,7 @@ system:
         - natural
         - empowered
         - corruption
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 9uAW3eV4LNZ2lQ0V
 ownership:

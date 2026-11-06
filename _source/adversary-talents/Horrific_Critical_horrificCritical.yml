@@ -2,6 +2,9 @@ name: Horrific Critical
 type: talent
 img: icons/skills/wounds/injury-eyes-blood-red-pink.webp
 system:
+  keywords:
+    - playstyle.melee
+    - target.willpower
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} delivers savage and grotesque blows that
@@ -14,13 +17,13 @@ system:
         Immediately after the creature achieves a Critical Hit with a melee
         attack.
       description: >-
-        <p>When the @ref[actor.name]{creature} achieves a <strong>Critical
-        Hit</strong> using a melee attack it may exaggerate the blow in a way
-        that evokes fear within those who behold the strike.</p><p>All the
-        enemies within 30 feet who can see the creature face a
-        <strong>Harmless</strong> attack against their
-        <strong>Willpower</strong> or become @Condition[frightened] for
-        <strong>3 Turns</strong>.</p>
+        <p>When the @ref[actor.name]{creature} achieves a
+        @Rule[dice.criticalSuccess]{Critical Hit} using a melee attack it may
+        exaggerate the blow in a way that evokes fear within those who behold
+        the strike.</p><p>All the enemies within 30 feet who can see the
+        creature face a @Rule[action.harmless] attack against their
+        @Rule[defense.willpower] or become @Condition[frightened] for <strong>3
+        Turns</strong>.</p>
       cost:
         action: 0
         focus: 1
@@ -63,13 +66,7 @@ system:
         - willpower
         - psychic
         - performance
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: XbUSvcKVfxu5qw7T
 ownership:

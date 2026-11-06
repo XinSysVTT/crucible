@@ -2,8 +2,12 @@ name: Adrenaline Surge
 type: talent
 img: icons/magic/movement/abstract-ribbons-red-orange.webp
 system:
+  keywords:
+    - playstyle.melee
+    - weapon.heavy
+    - resource.heroism
   nodes:
-    - str2b
+    - str2c
   description: >-
     <p>You can draw upon exceptional reserves of physical strength to meet
     challenges imposed on your body.</p>
@@ -13,10 +17,11 @@ system:
       img: icons/magic/movement/abstract-ribbons-red-orange.webp
       condition: ''
       description: >-
-        <p>You expend <strong>Heroism</strong> and benefit from <strong>+2
-        Boons</strong> to any action which scales using Strength for 3 Rounds.
-        You may perform this action outside of your turn in Combat before making
-        a <strong>Reaction</strong>.</p>
+        <p>You expend @Rule[resource.heroism] and benefit from
+        @Rule[dice.boon]{+2 Boons} to any action which scales using
+        @Rule[ability.strength] for <strong>3 Rounds</strong>. You may perform
+        this action outside of your turn in <strong>Combat</strong> before
+        making a @Rule[action.reaction].</p>
       cost:
         action: 0
         focus: 0
@@ -43,23 +48,20 @@ system:
             value: 3
             units: rounds
             expiry: turnStart
+            expired: false
           system:
             changes: []
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
-      tags: []
-      summon:
-        actorUuid: null
-        permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
+            properties: []
+      tags:
+        - subtle
+      summon: null
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: kvXzGhvDAbUcQsXM
 ownership:
@@ -70,12 +72,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.363'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.5
+  systemVersion: 0.10.2
   createdTime: 1772307160124
-  modifiedTime: 1780937991238
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1789492150383
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 _id: adrenalineSurge0
 sort: 0
 _key: '!items!adrenalineSurge0'

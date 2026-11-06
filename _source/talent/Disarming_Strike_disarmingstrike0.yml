@@ -14,17 +14,17 @@ system:
       img: icons/skills/melee/hand-grip-staff-teal.webp
       condition: ''
       description: >-
-        <p>You make a <strong>Strike </strong>against a the
-        <strong>Reflex</strong> defense of a single target. The technique is
-        <strong>Difficult</strong> to perform and deals reduced damage. If
-        successful, the target's mainhand weapon is
+        <p>You make a <strong>Strike</strong> against a the
+        @Rule[defense.reflex] defense of a single target. The technique is
+        @Rule[action.difficult] to perform and deals @Rule[action.weakened]
+        damage. If successful, the target's mainhand weapon is
         <strong>Dropped</strong>.</p>
       tags:
+        - disarm
         - melee
         - difficult
         - weakened
         - reflex
-        - disarm
       cost:
         action: 0
         focus: 1
@@ -41,28 +41,23 @@ system:
         maximum: null
         weapon: true
         minimum: null
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
+  keywords:
+    - playstyle.melee
+    - target.reflex
   nodes:
-    - str3a
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - str1a
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.10.2
   createdTime: 1772307160130
-  modifiedTime: 1773514792570
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789489635507
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 folder: ePNIUQxdOsY7GSKo
 ownership:
   default: 0

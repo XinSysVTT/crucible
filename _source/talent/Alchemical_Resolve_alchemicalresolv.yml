@@ -9,10 +9,10 @@ system:
     - id: alchemicalResolve
       condition: ''
       description: >-
-        <p>You rapidly bolster the Morale of an ally within 4 feet by applying
-        vapours. Perform a <strong>Medicine</strong> check against the target's
-        <strong>Rallying Threshold</strong>. Successful checks restore
-        <strong>Morale</strong>.</p>
+        <p>You rapidly bolster the @Rule[resource.morale] of an ally within
+        <strong>4 feet</strong> by applying vapours. Perform a
+        @Rule[skill.medicine] check against the target's @Rule[defense.madness].
+        Successful checks restore @Rule[resource.morale].</p>
       tags:
         - rallying
         - morale
@@ -27,7 +27,7 @@ system:
       target:
         type: single
         number: 1
-        scope: 0
+        scope: 2
         self: false
       effects: []
       name: Alchemical Resolve
@@ -36,18 +36,15 @@ system:
         maximum: 4
         weapon: false
         minimum: null
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
+  keywords:
+    - playstyle.utility
+    - target.rallying
+    - skill.medicine
   nodes:
     - int2c
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: medicine
 effects: []
 ownership:
   default: 0
@@ -56,15 +53,15 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160125
-  modifiedTime: 1773514792553
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789496473051
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: Item.alchemicalresolv
   duplicateSource: null
   exportSource: null
 _id: alchemicalresolv
-folder: 4Ll3b4Q4us2mp4Fu
+folder: fldMedicine00000
 sort: 100000
 _key: '!items!alchemicalresolv'

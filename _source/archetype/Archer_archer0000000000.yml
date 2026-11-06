@@ -16,26 +16,35 @@ system:
       level: null
     - item: Compendium.crucible.talent.Item.evasiveshot00000
       level: null
-    - item: Compendium.crucible.talent.Item.projectileWeapon
+    - item: Compendium.crucible.talent.Item.quickDraw0000000
       level: null
   identifier: archer
-  skills: []
+  training:
+    athletics: 1
+    awareness: 2
+    stealth: 1
+    wilderness: 1
+    performance: 0
+    mechanical: 2
+    projectile: 3
+    armor: 0
+    fletching: 2
   spells: []
   equipment: []
 effects: []
 folder: 6Up7ddrphLept3RW
-sort: 2100000
+sort: 2900000
 ownership:
   default: 0
   AnoypGxxNIMOS0XY: 3
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.368'
   createdTime: 1772307157481
-  modifiedTime: 1773514792213
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1791130481801
+  lastModifiedBy: 2g4T1RcAPz2LBKZ1
   compendiumSource: null
   duplicateSource: null
   exportSource: null

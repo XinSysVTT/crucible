@@ -1,28 +1,16 @@
+import ACTION_HOOKS from "./action.mjs";
+import ANCESTRY_TALENT_HOOKS from "./ancestry-talents.mjs";
+import TALENT_HOOKS from "./talent.mjs";
+
 export {default as accessory} from "./accessory.mjs";
-export {default as action} from "./action.mjs";
+export const action = Object.assign(ACTION_HOOKS, ANCESTRY_TALENT_HOOKS.action);
 export {default as consumable} from "./consumable.mjs";
-export {default as talent} from "./talent.mjs";
+export const talent = Object.assign(TALENT_HOOKS, ANCESTRY_TALENT_HOOKS.talent);
 export {default as tool} from "./tool.mjs";
 export {default as spell} from "./spell.mjs";
 export {default as spellcraft} from "./spellcraft.mjs";
 export {default as affix} from "./affix.mjs";
-export const weapon = {
-  chainHook: {
-    preActivateAction(...args) {
-      crucible.api.hooks.affix.returning.preActivateAction(...args);
-    }
-  },
-  javelin: {
-    prepareAction(item, action) {
-      if ( !action.tags.has("thrown") ) return;
-      // Only the javelin actually being thrown earns the bonus, not another thrown weapon held alongside it
-      const thrownWeapon = action.usage.weapon ?? action.usage.strikes?.[0];
-      if ( thrownWeapon?.id !== item.id ) return;
-      // Additive (not assignment) so the bonus composes with Peltast / Powerful Throw regardless of hook order
-      action.range.maximum += 50;
-    }
-  }
-};
+export {default as weapon} from "./weapon.mjs";
 export const armor = {};
 
 /* -------------------------------------------- */

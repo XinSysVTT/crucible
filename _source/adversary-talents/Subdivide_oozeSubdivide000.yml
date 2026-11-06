@@ -3,6 +3,8 @@ type: talent
 _id: oozeSubdivide000
 img: icons/creatures/slimes/slime-movement-pseudopods-blue.webp
 system:
+  keywords:
+    - action.summon
   nodes: []
   description: >-
     <p>The @ref[actor.name]{ooze} can divide itself into multiple parts, each an
@@ -15,14 +17,14 @@ system:
       description: >-
         <p>The ooze's cells rapidly divide and the creature splits in two! The
         original creature and its clone equally divide its remaining
-        <strong>Health</strong>. The <strong>Size</strong> of each resulting
+        @Rule[resource.health]. The @Rule[movement.size] of each resulting
         creature is decreased by 1, and its threat tier is reduced, for example
         an <strong>Elite</strong> ooze becomes a <strong>Normal</strong> ooze.
-        The new ooze arrives with only the <strong>Action</strong> and
-        <strong>Focus</strong> its parent had remaining after performing this
+        The new ooze arrives with only the @Rule[resource.action] and
+        @Rule[resource.focus] its parent had remaining after performing this
         Action. If in combat, the new creature acts as a <strong>Summon</strong>
         and joins at <strong>Initiative</strong> 1. This Action may only be used
-        if the creature has Size larger than 2.</p>
+        if the creature has @Rule[movement.size] larger than 2.</p>
       cost:
         action: 3
         focus: 1
@@ -41,16 +43,8 @@ system:
       effects: []
       tags:
         - summon
-      summon:
-        actorUuid: null
-        permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
+      summon: null
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 68HWinwhrVQnILl5
 ownership:
@@ -61,11 +55,11 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.10.2
   createdTime: 1772307157334
-  modifiedTime: 1773514792185
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789415981192
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 sort: 0
 _key: '!items!oozeSubdivide000'

@@ -2,6 +2,8 @@ name: Servitor
 type: talent
 img: icons/commodities/tech/sensor-yellow.webp
 system:
+  keywords:
+    - playstyle.utility
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} serves the will of another and maintains a
@@ -37,13 +39,7 @@ system:
       summon:
         actorUuid: null
         permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: DjDiZofs7UvgUC9D
 ownership:

@@ -3,6 +3,9 @@ type: talent
 _id: naturalInvisibil
 img: icons/magic/perception/shadow-stealth-eyes-purple.webp
 system:
+  keywords:
+    - playstyle.utility
+    - senses
   nodes: []
   description: >-
     <p>By some organic or arcane aspect of its physiology, @ref[actor.name]{this
@@ -55,13 +58,7 @@ system:
             regions: []
             summons: []
       tags: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: qmA72jUC4FASsfvS
 ownership:

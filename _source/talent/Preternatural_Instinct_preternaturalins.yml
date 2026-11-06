@@ -4,27 +4,24 @@ _id: preternaturalins
 img: icons/magic/movement/trail-streak-zigzag-teal.webp
 system:
   description: >-
-    Your quickness of mind and body are equally impressive. You gain +2 Boons to
-    all Initiative checks.
+    <p>Your quickness of mind and body are equally impressive. You gain
+    @Rule[dice.boon]{+2 Boons} to all <strong>Initiative</strong> checks.</p>
   actions: []
+  keywords:
+    - initiative
   nodes:
     - intdex4
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: awareness
 effects: []
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160141
-  modifiedTime: 1773514792604
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789486205635
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

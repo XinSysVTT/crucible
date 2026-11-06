@@ -6,9 +6,9 @@ effects: []
 flags: {}
 system:
   description: >-
-    This difficult ranged weaponry technique allows you to fire a multiple shots
-    with your weapon in a sweeping cone, each targeting a different enemy in the
-    area of effect.
+    <p>This @Rule[action.difficult] ranged weaponry technique allows you to fire
+    a multiple shots with your weapon in a sweeping cone, each targeting a
+    different enemy in the area of effect.</p>
   actions:
     - id: fanOfArrows
       name: Fan of Arrows
@@ -16,7 +16,7 @@ system:
       condition: ''
       description: >-
         <p>You fire multiple projectiles from your ranged weapon in an arc,
-        striking all enemy targets within a 40 foot cone.</p>
+        striking all enemy targets within a <strong>40 foot</strong> cone.</p>
       cost:
         action: 2
         focus: 1
@@ -36,31 +36,28 @@ system:
       tags:
         - ranged
         - difficult
-      summon:
-        actorUuid: null
-        permanent: true
-      autoFavorite: false
+      summon: null
+  keywords:
+    - playstyle.ranged
+    - weapon.projectile
+    - weapon.mechanical
+    - weapon.talisman
   nodes:
     - dex3a
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: projectile
 _stats:
   systemId: crucible
-  systemVersion: 0.9.4
-  coreVersion: '14.363'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160131
-  modifiedTime: 1780502745269
+  modifiedTime: 1789490789967
   lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-folder: 2nepH1RWurpMYAjw
-sort: 100000
+folder: zksJqmFhNaGTWekG
+sort: -100000
 ownership:
   default: 0
   AnoypGxxNIMOS0XY: 3

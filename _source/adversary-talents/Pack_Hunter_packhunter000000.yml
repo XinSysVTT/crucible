@@ -5,17 +5,13 @@ system:
   description: >-
     <p>This creature is a pack hunter, relying on its allies to flank and
     harrass a target to render it exposed to further harm.</p><p>This creature
-    doubles number of Boons awarded from attacking a @Condition[flanked]
-    enemy.</p>
+    doubles number of @Rule[dice.boon]{Boons} awarded from attacking a
+    @Condition[flanked] enemy.</p>
   actions: []
+  keywords:
+    - playstyle.melee
   nodes: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: S1hY0LkzEUHzLoFX
 ownership:
@@ -25,11 +21,11 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.4
-  coreVersion: '14.363'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307157335
-  modifiedTime: 1780572558726
-  lastModifiedBy: fzBjA63BB4hW4rQb
+  modifiedTime: 1789415897208
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

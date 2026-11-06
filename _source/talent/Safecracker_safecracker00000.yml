@@ -5,31 +5,29 @@ img: icons/sundries/misc/lock-open-yellow.webp
 system:
   description: >-
     <p>You are skilled in the arts of disarming traps and picking locks. You
-    gain +1 Boon on <strong>Stealth</strong> checks to disable a device or open
-    a lock.</p>
+    gain @Rule[dice.boon]{+1 Boon} on @Rule[skill.stealth] checks to disable a
+    device or open a lock.</p>
   actions: []
+  keywords:
+    - action.noncombat
+    - skill.stealth
   nodes:
     - dex4c
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: stealth
 effects: []
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160144
-  modifiedTime: 1773514792610
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789497236988
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-folder: 2MFixpDJ379KOogE
+folder: fldStealth000000
 sort: 100000
 ownership:
   default: 0

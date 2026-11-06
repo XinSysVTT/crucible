@@ -4,20 +4,17 @@ _id: planneddefense00
 img: icons/magic/defensive/shield-barrier-blades-teal.webp
 system:
   description: >-
-    You exert strong battlefield judgment to prepare your defenses against the
-    attacks of your foes. Any enemy which acts after you in
-    <strong>Initiative</strong> order suffers 1 Bane to their spell or weapon
-    attacks against you.
+    <p>You exert strong battlefield judgment to prepare your defenses against
+    the attacks of your foes. Any enemy which acts after you in
+    <strong>Initiative</strong> order suffers @Rule[dice.bane]{+1 Bane} to their
+    spell or weapon attacks against you.</p>
   actions: []
+  keywords:
+    - playstyle.defensive
+    - initiative
   nodes:
     - wis3a
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: BevAJzzLeFbSaVic
 sort: 50000
@@ -27,11 +24,11 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160141
-  modifiedTime: 1773514792602
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789486180728
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

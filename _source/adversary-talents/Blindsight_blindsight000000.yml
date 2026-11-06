@@ -2,6 +2,9 @@ name: Blindsight
 type: talent
 img: icons/magic/perception/eye-ringed-glow-angry-small-red.webp
 system:
+  keywords:
+    - playstyle.utility
+    - senses
   nodes: []
   description: >-
     <p>@ref[actor.name]{This creature} perceives its surroundings without the
@@ -9,13 +12,7 @@ system:
     60 feet. It is unaffected by @Condition[blinded], darkness, or invisibility,
     and any creature it detects this way is treated as visible to it.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: qmA72jUC4FASsfvS
 ownership:

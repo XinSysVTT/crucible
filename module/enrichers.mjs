@@ -1,10 +1,25 @@
-import { chooseActorsDialog } from "./interaction.mjs";
+/** @import {GroupCheckSkillConfig} from "./dice/group-check.mjs"; */
+
+/**
+ * An optional `{Display Name}` label following an enricher tag.
+ * @type {RegExp}
+ */
+const LABEL = /(?:\{([^}]+)\})?/;
+
+/**
+ * Compose a global enricher pattern from a tag pattern followed by an optional label.
+ * @param {RegExp} tag
+ * @returns {RegExp}
+ */
+function withLabel(tag) {
+  return new RegExp(tag.source + LABEL.source, "g");
+}
 
 /**
  * The pattern which matches `@ref` annotations, shared by the registered enricher and {@link resolveReferences}.
  * @type {RegExp}
  */
-const REFERENCE_PATTERN = /@ref\[([\w.]+)](?:{([^}]+)})?/g;
+const REFERENCE_PATTERN = withLabel(/@ref\[([\w.]+)]/);
 
 /**
  * Register custom text editor enrichers that are applied to Crucible content.
@@ -25,13 +40,13 @@ export function registerEnrichers() {
     },
     { // Crucible Hazards
       id: "crucibleHazard",
-      pattern: /\[\[\/hazard ([\w\s]+)]](?:{([^}]+)})?/g,
+      pattern: withLabel(/\[\[\/hazard ([\w\s]+)]]/),
       enricher: enrichHazard,
       onRender: renderHazard
     },
     { // Crucible Skill Checks
       id: "crucibleSkill",
-      pattern: /\[\[\/skillCheck ([\w\s]+)]]/g,
+      pattern: withLabel(/\[\[\/skillCheck ([\w\s=]+)]]/),
       enricher: enrichSkillCheck,
       onRender: renderSkillCheck
     },
@@ -50,6 +65,11 @@ export function registerEnrichers() {
       pattern: /\[\[\/skill ([\w\s]+)]]/g,
       enricher: enrichDND5ESkill,
       onRender: renderSkillCheck
+    },
+    {
+      id: "crucibleEncounterDifficulty",
+      pattern: /\[\[\/encounterDifficulty ([\d.]+)]]/g,
+      enricher: enrichEncounterDifficulty
     },
     {
       id: "crucibleTalent",
@@ -73,12 +93,12 @@ export function registerEnrichers() {
     },
     {
       id: "crucibleRule",
-      pattern: /@Rule\[([\w.]+)](?:{([^}]+)})?/g,
+      pattern: withLabel(/@Rule\[([^\]]+)]/),
       enricher: enrichRule
     },
     {
       id: "milestone",
-      pattern: /\[\[\/milestone( \d+)?\]\]/g,
+      pattern: withLabel(/\[\[\/milestone(?: (\d+))?(?: ([A-Za-z][\w-]*))?]]/),
       enricher: enrichMilestone,
       onRender: renderMilestone
     },
@@ -89,13 +109,13 @@ export function registerEnrichers() {
     },
     {
       id: "crucibleLoot",
-      pattern: /@Loot\[([\w-.]+)((?:\s+[\w]+=?[\w]*)*)](?:\{([^}]+)\})?/g,
+      pattern: withLabel(/@Loot\[([^\]]+)]/),
       enricher: enrichLoot,
       onRender: renderLoot
     },
     {
       id: "crucibleScroll",
-      pattern: /@Scroll\[([\w\s]+)](?:\{([^}]+)\})?/g,
+      pattern: withLabel(/@Scroll\[([\w\s]+)]/),
       enricher: enrichScroll,
       onRender: renderScroll
     }
@@ -152,7 +172,7 @@ function enrichDND5ESkill([match, terms]) {
   if ( !(skillId in DND5E_SKILL_MAPPING) ) return new Text(match);
   const skill = SYSTEM.SKILLS[DND5E_SKILL_MAPPING[skillId]];
   const passive = rest.includes("passive");
-  const tag = createSkillCheckElement(skill, dc, {passive, group: false});
+  const tag = createSkillCheckElement([{skill, dc}], {passive, group: false});
   tag.classList.add("dnd5e-skill-check");
   return tag;
 }
@@ -272,44 +292,76 @@ async function onClickAward(event) {
     currency[key] = roll.total;
     if ( !roll.isDeterministic ) rolls.push(roll);
   }
+  await awardCurrency(currency, {each, rolls});
+}
 
-  let currencyEach = crucible.api.documents.CrucibleActor.convertCurrency(currency);
+/* -------------------------------------------- */
 
+/**
+ * Prompt the GM to choose recipients, then grant (or charge) an amount of currency to each or split among them.
+ * A split remainder is dealt one unit at a time to recipients in a shuffled order.
+ * @param {Record<keyof crucible.CONFIG.currency, number>} currency   The amount in configured denominations
+ * @param {object} [options]
+ * @param {boolean} [options.each=false]    Apply the full amount to each recipient rather than splitting it
+ * @param {Roll[]} [options.rolls]          Rolls which determined the amount, displayed in the summary
+ * @returns {Promise<Set<CrucibleActor>>}   The recipients, empty if the award was not made
+ */
+export async function awardCurrency(currency, {each=false, rolls=[]}={}) {
+  const total = crucible.api.documents.CrucibleActor.convertCurrency(currency);
+  const isCost = total < 0;
   const targets = await chooseActorsDialog({
-    dialogTitle: _loc(`AWARD.Title${currencyEach < 0 ? "Cost" : "Reward"}`),
+    dialogTitle: _loc(`AWARD.Title${isCost ? "Cost" : "Reward"}`),
     dialogIcon: "fa-solid fa-trophy"
   });
-  if (!targets.size) return;
+  if ( !targets.size ) return targets;
 
-  // Iterate over actor targets
-  if ( !each ) currencyEach = Math.floor(currencyEach / targets.size);
-  if ( currencyEach < 0 ) {
-    const cannotAfford = targets.filter(a => a.system.currency < -currencyEach).map(a => a.name);
-    if ( cannotAfford.size ) return ui.notifications.warn(_loc("AWARD.WARNINGS.CannotAfford", {actors: Array.from(cannotAfford).join(", ")}));
-  }
-  for ( const actor of targets ) {
-    const startingCurrency = actor.system.currency;
-    const newCurrency = Math.max(startingCurrency + currencyEach, 0);
-    actor.update({
-      "system.currency": newCurrency
+  // Determine the amount applied to each recipient
+  const recipients = Array.from(targets);
+  const amounts = new Map();
+  if ( each ) for ( const actor of recipients ) amounts.set(actor, total);
+  else {
+    const magnitude = Math.abs(total);
+    const share = Math.floor(magnitude / recipients.length);
+    const remainder = magnitude % recipients.length;
+    const shuffled = recipients.map(actor => ({actor, key: Math.random()})).sort((a, b) => a.key - b.key);
+    shuffled.forEach(({actor}, i) => {
+      const amount = share + ((i < remainder) ? 1 : 0);
+      amounts.set(actor, isCost ? -amount : amount);
     });
   }
 
-  const currencyEntries = formatAwardEntries(currency, true);
+  // Confirm that every recipient can afford a cost
+  if ( isCost ) {
+    const cannotAfford = recipients.filter(a => a.system.currency < -amounts.get(a)).map(a => a.name);
+    if ( cannotAfford.length ) {
+      ui.notifications.warn(_loc("AWARD.WARNINGS.CannotAfford", {actors: cannotAfford.join(", ")}));
+      return new Set();
+    }
+  }
+  await Promise.all(recipients.map(a => a.update({"system.currency": Math.max(a.system.currency + amounts.get(a), 0)})));
+
+  // Summarize the award in chat, reporting the amount each recipient received
+  const formatAmount = amount => {
+    const allocated = crucible.api.documents.CrucibleActor.allocateCurrency(Math.abs(amount));
+    for ( const [k, v] of Object.entries(allocated) ) {
+      if ( !v ) delete allocated[k];
+    }
+    return formatAwardEntries(allocated).join(" ");
+  };
+  const template = "systems/crucible/templates/chat/award-summary.hbs";
+  const summaryHTML = await foundry.applications.handlebars.renderTemplate(template, {
+    title: _loc(`AWARD.SUMMARIES.${isCost ? "Cost" : "Reward"}${each ? "" : "Split"}`),
+    award: formatAwardEntries(currency, true).join(" "),
+    recipients: recipients.map(a => ({name: a.name, amount: formatAmount(amounts.get(a))}))
+  });
   const rollsHTML = await Promise.all(rolls.map(r => r.render()));
   await ChatMessage.implementation.create({
-    content: `
-    <section class="crucible">
-      <div class="currencies-inline">
-        ${_loc(`AWARD.SUMMARIES.${(currencyEach < 0) ? "Cost" : "Reward"}${each ? "" : "Split"}`, {award: currencyEntries.join(" ")})}
-      </div>
-      <ul class="plain">${Array.from(targets.map(a => `<li>${a.name}</li>`)).join("")}</ul>
-    </section>
-    `.concat(rollsHTML.join("")),
+    content: summaryHTML.concat(rollsHTML.join("")),
     rolls,
     speaker: {user: game.user},
     flags: {crucible: {isAwardSummary: true}}
   });
+  return targets;
 }
 
 /* -------------------------------------------- */
@@ -454,17 +506,20 @@ async function onClickCounterspell(event) {
 /* -------------------------------------------- */
 
 /**
- * Enrich a Milestone award with the format [[/milestone]] or [[/milestone {quantity}]].
+ * Enrich a Milestone award with the format [[/milestone {quantity?} {identifier?}]]{name?}.
  * @param {RegExpMatchArray} terms
  * @returns {HTMLEnrichedContentElement}
  */
-function enrichMilestone([_match, term]) {
+function enrichMilestone([_match, term, identifier, name]) {
   const quantity = Number.isNumeric(term) ? Number(term) : 1;
   const plurals = new Intl.PluralRules(game.i18n.lang);
   const tag = document.createElement("enriched-content");
   tag.classList.add("award", "milestone");
   tag.dataset.quantity = String(quantity);
-  tag.innerHTML = `${quantity} ${_loc(`AWARD.MILESTONE.${plurals.select(quantity)}`)}`;
+  if ( identifier ) tag.dataset.identifier = identifier;
+  if ( name ) tag.dataset.name = name;
+  const label = `${quantity} ${_loc(`AWARD.MILESTONE.${plurals.select(quantity)}`)}`;
+  tag.textContent = name ? `${name} (${label})` : label;
   tag.setAttribute("aria-label", _loc("AWARD.TOOLTIPS.Milestone"));
   tag.toggleAttribute("data-tooltip", true);
   return tag;
@@ -488,10 +543,46 @@ function renderMilestone(element) {
  */
 async function onClickMilestone(event) {
   event.preventDefault();
-  if ( !crucible.party ) return ui.notifications.warn(_loc("WARNING.NoParty"));
+  if ( !game.user.isGM ) return ui.notifications.warn(_loc("AWARD.WARNINGS.RequiresGM"));
 
-  const quantity = event.currentTarget.dataset.quantity;
-  await crucible.party.system.awardMilestoneDialog(quantity);
+  const party = crucible.api.models.CrucibleGroupActor.getParty();
+  if ( !party ) return;
+
+  // An explicitly identified milestone can only be awarded once
+  const {quantity, identifier, name} = event.currentTarget.dataset;
+  if ( identifier && (identifier in party.advancement.milestones) ) {
+    return ui.notifications.warn(_loc("AWARD.WARNINGS.DuplicateMilestone", {identifier, group: party.parent.name}));
+  }
+  await party.awardMilestoneDialog({number: Number(quantity), identifier, reason: name});
+}
+
+/* -------------------------------------------- */
+/*  Encounter Difficulty                        */
+/* -------------------------------------------- */
+
+/**
+ * Enrich a combat encounter's difficulty with the format [[/encounterDifficulty {threat}]].
+ * @param {RegExpMatchArray} terms
+ * @returns {HTMLEnrichedContentElement}
+ */
+function enrichEncounterDifficulty([match, term]) {
+  const threat = Number(term);
+  if ( Number.isNaN(threat) ) return new Text(match);
+  const tag = document.createElement("enriched-content");
+  tag.classList.add("encounter-difficulty");
+  tag.dataset.threat = term;
+  const partyThreat = crucible.party?.system.members.reduce((t, {actor, quantity}) => {
+    return t + ((actor?.threat ?? 0) * quantity);
+  }, 0);
+  const {difficulty} = crucible.api.models.CrucibleGroupActor.evaluateEncounter(threat, partyThreat);
+  if ( !difficulty ) {
+    tag.textContent = _loc("ENCOUNTER.Threat", {threat});
+    return tag;
+  }
+  tag.classList.add(difficulty.id);
+  tag.dataset.difficulty = difficulty.id;
+  tag.textContent = _loc("ENCOUNTER.ThreatDifficulty", {threat, difficulty: _loc(difficulty.label)});
+  return tag;
 }
 
 /* -------------------------------------------- */
@@ -514,14 +605,14 @@ function enrichHazard([_match, terms, name]) {
   const listFormatter = game.i18n.getListFormatter({style: "short", type: "unit"});
   const hazardRank = _loc("HAZARD.Rank", {danger});
   const parenthetical = name ? [hazardRank] : [];
-  if ( tags.includes("severe") ) parenthetical.push(_loc(SYSTEM.ACTION.TAGS.severe.label));
+  if ( tags.includes("severe") ) parenthetical.push(SYSTEM.ACTION.TAGS.severe.label);
   let label = name || hazardRank;
   if ( parenthetical.length ) label = _loc("HAZARD.Parenthetical", {label, tags: listFormatter.format(parenthetical)});
 
   // Prepare tooltip
-  const defenseLabel = _loc(SYSTEM.DEFENSES[defenseType]?.label);
-  const resourceLabel = _loc(SYSTEM.RESOURCES[resource]?.label);
-  const damageLabel = _loc(SYSTEM.DAMAGE_TYPES[damageType]?.label) || "";
+  const defenseLabel = SYSTEM.DEFENSES[defenseType]?.label;
+  const resourceLabel = SYSTEM.RESOURCES[resource]?.label;
+  const damageLabel = SYSTEM.DAMAGE_TYPES[damageType]?.label || "";
   let tooltip = restoration
     ? _loc("HAZARD.TooltipRestoration", {rank: hazardRank, defense: defenseLabel, resource: resourceLabel})
     : _loc("HAZARD.TooltipDamage", {rank: hazardRank, defense: defenseLabel, damage: damageLabel, resource: resourceLabel});
@@ -606,7 +697,14 @@ function enrichAction([match, ownerUUID, actionId]) {
   else {
     const owner = fromUuidSync(ownerUUID);
     if ( !owner ) return match;
-    if ( owner instanceof Actor ) action = owner.actions[actionId];
+    if ( owner instanceof Actor ) {
+
+      // Consumable actions are keyed by an item-aware id, which a bare action id resolves to
+      if ( !(actionId in owner.actions) ) {
+        actionId = Object.keys(owner.actions).find(k => owner.actions[k].id === actionId) ?? actionId;
+      }
+      action = owner.actions[actionId];
+    }
     else if ( owner instanceof Item ) action = owner.actions?.find(a => a.id === actionId);
   }
   if ( !action ) return match;
@@ -647,14 +745,18 @@ function enrichSpell([match, spellId]) {
 /* -------------------------------------------- */
 
 /**
- * Enrich a rule reference into an interactive element displaying the rule name and tooltip.
+ * Enrich a rule reference with format @Rule[{ruleId} {detail?}]{label?}, where an optional detail (quoted if it
+ * contains spaces) is appended to the rule name or label as a parenthetical.
  * @param {RegExpMatchArray} matchArray
  */
-async function enrichRule([match, ruleId, label]) {
+async function enrichRule([match, terms, label]) {
+  const [ruleId, detail] = terms.trim().split(/\s+(.*)/s);
   const cfg = foundry.utils.getProperty(SYSTEM.RULES, ruleId);
   if ( !cfg ) return new Text(match);
   const tag = document.createElement("enriched-content");
-  tag.innerHTML = label ?? _loc(cfg.label) ?? _loc(cfg.name);
+  const title = label ?? _loc(cfg.label) ?? _loc(cfg.name);
+  tag.innerHTML = detail ? _loc("CRUCIBLE.Parenthetical", {label: title, detail: detail.replace(/^"(.*)"$/s, "$1")})
+    : title;
   tag.dataset.crucibleTooltip = "tag";
   tag.dataset.ruleId = ruleId;
   tag.classList.add("rule", "basic-rule", ruleId.split(".")[0]);
@@ -667,38 +769,85 @@ async function enrichRule([match, ruleId, label]) {
 /* -------------------------------------------- */
 
 /**
- * Enrich a skill check notation into an interactive element that triggers a skill roll.
+ * Enrich a skill check with format [[/skillCheck {skill}={dc} {...skill}={dc} {...flags}]]{name}.
+ * A single skill may also be written positionally as [[/skillCheck {skill} {dc} {...flags}]].
  * @param {RegExpMatchArray} matchArray
  */
-function enrichSkillCheck([match, terms]) {
-  let [skillId, dc, ...rest] = terms.split(" ");
-  skillId = DND5E_SKILL_MAPPING[skillId] ?? skillId;
-  const skill = SYSTEM.SKILLS[skillId];
-  if ( !skill ) return new Text(match);
-  const passive = rest.includes("passive");
-  const group = rest.includes("group");
-  return createSkillCheckElement(skill, dc, {passive, group});
+function enrichSkillCheck([match, terms, name]) {
+  const parsed = parseSkillCheckTerms(terms);
+  if ( !parsed ) return new Text(match);
+  const {skills, passive, group} = parsed;
+  if ( passive && (skills.length > 1) ) return new Text(match);
+  return createSkillCheckElement(skills, {passive, group, name});
 }
 
 /* -------------------------------------------- */
 
 /**
- * Create an enriched-content element representing a skill check with the given skill, DC, and options.
- * @param {object} skill
- * @param {number} dc
- * @param {object} options
- * @param {boolean} options.passive
- * @param {boolean} options.group
+ * Parse the terms of a skill check into its allowed skills and flags.
+ * Returns null for invalid syntax: an unknown skill or term, a repeated skill, or a positional DC among several skills.
+ * @param {string} terms
+ * @returns {{skills: {skill: object, dc: number}[], passive: boolean, group: boolean}|null}
  */
-function createSkillCheckElement(skill, dc, {passive=false, group=false}={}) {
+function parseSkillCheckTerms(terms) {
+  const skills = [];
+  const flags = new Set();
+  let positional = false;
+  for ( const term of terms.trim().split(/\s+/) ) {
+    if ( (term === "passive") || (term === "group") ) {
+      flags.add(term);
+      continue;
+    }
+
+    // A bare number is the DC of the bare skill before it
+    if ( /^\d+$/.test(term) ) {
+      const previous = skills.at(-1);
+      if ( !previous?.bare || positional ) return null;
+      previous.dc = Number(term);
+      positional = true;
+      continue;
+    }
+
+    // A skill, with or without its DC
+    const [, id, dc] = term.match(/^(\w+)(?:=(\d+))?$/) ?? [];
+    const skill = SYSTEM.SKILLS[DND5E_SKILL_MAPPING[id] ?? id];
+    if ( !skill || skills.some(s => s.skill === skill) ) return null;
+    skills.push({skill, dc: dc ? Number(dc) : SYSTEM.PASSIVE_BASE + 3, bare: !dc});
+  }
+  if ( !skills.length || (positional && (skills.length > 1)) ) return null;
+  return {skills: skills.map(({skill, dc}) => ({skill, dc})), passive: flags.has("passive"), group: flags.has("group")};
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Create an enriched-content element representing a skill check with the given skills, DCs, and options.
+ * Unnamed, the first skill is named inline; every allowed skill is listed in the tooltip.
+ * @param {{skill: object, dc: number}[]} skills
+ * @param {object} options
+ * @param {boolean} [options.passive=false]
+ * @param {boolean} [options.group=false]
+ * @param {string} [options.name]                   A name which replaces the skill in the label
+ */
+function createSkillCheckElement(skills, {passive=false, group=false, name}={}) {
+  const [{skill, dc}] = skills;
   const tag = document.createElement("enriched-content");
-  tag.classList.add("skill-check", skill.category);
+  tag.classList.add("skill-check", skill.group);
   const dataset = {skillId: skill.id, dc};
+  if ( skills.length > 1 ) dataset.skills = skills.map(s => `${s.skill.id}=${s.dc}`).join(" ");
+  if ( name ) dataset.checkName = name;
   if ( group ) {
     tag.classList.add("group-check");
     dataset.group = "true";
   }
+
+  // A named check shows its lowest DC, marked when some skills are harder
   let dcLabel = _loc("DICE.DCSpecific", {dc});
+  if ( name ) {
+    const lowest = Math.min(...skills.map(s => s.dc));
+    const range = skills.some(s => s.dc > lowest) ? _loc("DICE.DCMinimum", {dc: lowest}) : lowest;
+    dcLabel = _loc("DICE.DCSpecific", {dc: range});
+  }
 
   // Passive checks only
   if ( passive ) {
@@ -710,9 +859,17 @@ function createSkillCheckElement(skill, dc, {passive=false, group=false}={}) {
   // Group checks only
   if ( group ) dcLabel = _loc("DICE.DCAdditionalGroup", {dcLabel});
 
+  // List every allowed skill in the tooltip when the label does not show them all
+  if ( !passive && (name || (skills.length > 1)) ) {
+    const listFormatter = game.i18n.getListFormatter({type: "disjunction"});
+    dataset.tooltipText = listFormatter.format(skills.map(s => {
+      return `${s.skill.label} (${_loc("DICE.DCSpecific", {dc: s.dc})})`;
+    }));
+  }
+
   // Create label
   Object.assign(tag.dataset, dataset);
-  tag.innerHTML = `${skill.label} (${dcLabel})`;
+  tag.innerHTML = `${name ?? skill.label} (${dcLabel})`;
   return tag;
 }
 
@@ -796,13 +953,13 @@ function renderSkillCheck(element) {
  */
 async function onClickSkillCheck(event) {
   event.preventDefault();
-  const {check, actor} = prepareSkillCheck(event);
+  const {check, actor, skills, checkName} = prepareSkillCheck(event);
   const request = game.user.isGM && !actor;
   const requestedActors = request ? inferEnricherActors() : [];
-  const response = await check.dialog({request, requestedActors});
-  if ( response === null ) return;
-  const flavor = _loc("ACTION.SkillCheck", {skill: SYSTEM.SKILLS[check.data.type].label});
-  return check.toMessage({flavor});
+  const roll = await check.dialog({request, requestedActors, skills, checkName});
+  if ( !roll ) return;
+  const flavor = checkName ?? _loc("ACTION.SkillCheck", {skill: SYSTEM.SKILLS[roll.data.type].label});
+  return roll.toMessage({flavor});
 }
 
 /* -------------------------------------------- */
@@ -816,45 +973,39 @@ function onClickGroupCheck(event) {
   if ( !game.user.isGM ) return ui.notifications.warn(_loc("DICE.GROUP_CHECK.RequiresGM"));
   let requestedActors = inferEnricherActors();
   if ( !requestedActors.length ) {
-    requestedActors = getPartyActors();
-    if ( !requestedActors ) return;
+    const party = crucible.api.models.CrucibleGroupActor.getParty();
+    if ( !party ) return;
+    requestedActors = Array.from(party.actors);
   }
-  const {check} = prepareSkillCheck(event);
-  const dialogOptions = {request: true, requestedActors};
-  return check.dialog(dialogOptions);
+  const {check, skills, checkName} = prepareSkillCheck(event);
+  return check.dialog({request: true, requestedActors, skills, checkName});
 }
 
 /* -------------------------------------------- */
 
 /**
- * Get party actors as an array for request-based group checks.
- * @returns {CrucibleActor[]|null}
- */
-function getPartyActors() {
-  const members = crucible.party?.system.actors;
-  if ( !members?.size ) {
-    ui.notifications.warn(_loc("WARNING.NoParty"));
-    return null;
-  }
-  return Array.from(members);
-}
-
-/* -------------------------------------------- */
-
-/**
- * Prepare a skill check instance from an enriched element click event.
+ * Prepare a skill check instance from an enriched element click event, with any alternative skills it allows.
  * @param {Event} event
- * @returns {{actor: CrucibleActor|null, check: StandardCheck}}
+ * @returns {{actor: CrucibleActor|null, check: StandardCheck,
+ *   skills: Record<string, GroupCheckSkillConfig>|undefined, checkName: string|undefined}}
  */
 function prepareSkillCheck(event) {
-  const {skillId, dc: dcStr, group} = event.currentTarget.dataset;
+  const {skillId, dc: dcStr, group, skills: skillTerms, checkName} = event.currentTarget.dataset;
   const parsedDc = Number(dcStr);
-  const dc = Number.isNaN(parsedDc) ? 15 : parsedDc;
+  const dc = Number.isNaN(parsedDc) ? SYSTEM.PASSIVE_BASE + 3 : parsedDc;
   const checkData = {type: skillId, dc};
   const actor = inferEnricherActors(true);
   const rollCls = group ? crucible.api.dice.GroupCheck : crucible.api.dice.StandardCheck;
   const check = actor ? actor.getSkillCheck(skillId, checkData) : new rollCls(checkData);
-  return {actor, check};
+  let skills;
+  if ( skillTerms ) {
+    skills = {};
+    for ( const term of skillTerms.split(" ") ) {
+      const [id, skillDc] = term.split("=");
+      skills[id] = {dc: Number(skillDc)};
+    }
+  }
+  return {actor, check, skills, checkName};
 }
 
 /* -------------------------------------------- */
@@ -876,6 +1027,66 @@ function inferEnricherActors(singular=false) {
   else actors = [];
   if ( singular ) return actors.length === 1 ? actors[0] : null;
   return actors;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Creates a dialog for selecting from a specific group of world actors, and/or from arbitrary world actors
+ * @param {object} [options]
+ * @param {string} [options.dialogTitle]    The title of the dialog
+ * @param {string} [options.dialogIcon]     The FontAwesome classes used for the dialog's Icon
+ * @param {Actor[]} [options.actors]        Which specific actors to show checkboxes for
+ * @param {boolean} [options.showSpecific]  Whether to show checkboxes for specific actors
+ * @param {boolean} [options.showAny]       Whether to show the inputs for "any actor"
+ * @returns {Promise<Set<CrucibleActor>>} A set of selected actor UUIDs
+ */
+async function chooseActorsDialog({dialogTitle="DICE.REQUESTS.ChooseTarget", dialogIcon="fa-solid fa-bullseye", actors, showSpecific=true, showAny=true}={}) {
+  let content = "";
+  if ( showSpecific ) {
+    actors ??= crucible.party?.system.members.map(a => a.actor) || [];
+    const specificActorInput = foundry.applications.fields.createMultiSelectInput({
+      name: "specificActor",
+      type: "checkboxes",
+      options: actors.reduce((arr, actor) => {
+        if ( actor ) arr.push({value: actor.uuid, label: actor.name, selected: true});
+        return arr;
+      }, [])
+    });
+    const specificActor = foundry.applications.fields.createFormGroup({
+      label: "DICE.REQUESTS.SpecificActors",
+      hint: "DICE.REQUESTS.SpecificActorsHint",
+      stacked: true,
+      localize: true,
+      input: specificActorInput
+    });
+    content += specificActor.outerHTML;
+  }
+
+  // Don't respect showAny if showSpecific is false or there are no specific actors to show
+  if ( showAny || !showSpecific || !actors?.length ) {
+    const anyActorInput = foundry.applications.elements.HTMLDocumentTagsElement.create({
+      type: "Actor",
+      name: "anyActor"
+    });
+    const anyActor = foundry.applications.fields.createFormGroup({
+      label: "DICE.REQUESTS.AnyActor",
+      hint: "DICE.REQUESTS.AnyActorHint",
+      localize: true,
+      input: anyActorInput
+    });
+    content += anyActor.outerHTML;
+  }
+  const result = await foundry.applications.api.DialogV2.input({
+    window: {title: dialogTitle, icon: dialogIcon},
+    content
+  });
+  if ( !result ) return new Set();
+  const selectedActors = [...(result.specificActor ?? []), ...(result.anyActor ?? [])].reduce((acc, uuid) => {
+    if ( !uuid.startsWith("Compendium") ) acc.push(fromUuidSync(uuid));
+    return acc;
+  }, []);
+  return new Set(selectedActors);
 }
 
 /* -------------------------------------------- */
@@ -915,9 +1126,11 @@ export function resolveReferences(text, relativeTo) {
 
 /**
  * Enrich a loot item reference into a draggable link that materializes a composed item on drop.
- * Tokens after the base UUID are parsed as affix identifiers (optionally with =tier) or quality=tierName.
+ * Tokens after the base UUID are parsed as affix identifiers (optionally with =tier), quality=tierName, broken,
+ * description="Public description text", img=path/to/icon.webp, or quantity=number.
+ * A quantity which is not stackable is displayed, but each drop composes a single copy.
  * @param {RegExpMatchArray} matchArray
- * @returns {Promise<HTMLAnchorElement|Text>}
+ * @returns {Promise<HTMLAnchorElement|DocumentFragment|Text>}
  * @example Explicit name and quality
  * ```html
  * @Loot[Compendium.crucible.equipment.Item.longsword0000000 keen weaponPotency quality=fine]{Keen Longsword of Potency}
@@ -930,8 +1143,25 @@ export function resolveReferences(text, relativeTo) {
  * ```html
  * @Loot[Compendium.crucible.equipment.Item.longsword0000000 keen weaponPotency fireDamage=3]
  * ```
+ * @example A broken item
+ * ```html
+ * @Loot[Compendium.crucible.equipment.Item.longsword0000000 broken]{Rusted Longsword}
+ * ```
+ * @example A custom public description
+ * ```html
+ * @Loot[Compendium.crucible.equipment.Item.amulet0000000000 description="A gold pendant chain."]{Gold Pendant}
+ * ```
+ * @example A custom icon
+ * ```html
+ * @Loot[Compendium.crucible.equipment.Item.amulet0000000000 img=icons/equipment/neck/pendant-gold.webp]
+ * ```
+ * @example A stack of several
+ * ```html
+ * @Loot[Compendium.crucible.equipment.Item.antitoxin0000000 quality=fine quantity=3]
+ * ```
  */
-async function enrichLoot([match, baseUuid, tokenString, displayName]) {
+async function enrichLoot([match, params, displayName]) {
+  const [baseUuid, tokenString=""] = params.trim().split(/\s+(.*)/s);
   const baseItem = fromUuidSync(baseUuid);
   if ( !baseItem ) return new Text(match);
 
@@ -939,19 +1169,21 @@ async function enrichLoot([match, baseUuid, tokenString, displayName]) {
   const affixes = [];
   let quality = null;
   let broken = false;
-  for ( const token of tokenString.trim().split(/\s+/).filter(Boolean) ) {
-    const [key, value] = token.split("=");
-    if ( key === "quality" ) {
-      quality = value;
-    } else if ( key === "broken" ) {
-      broken = value;
-    } else {
-      affixes.push({id: key, tier: value ? Number(value) : 1});
-    }
+  let description = null;
+  let img = null;
+  let quantity = null;
+  for ( const [, key, quotedValue, plainValue] of tokenString.matchAll(/(\w+)(?:="([^"]*)"|=([^\s"]*))?/g) ) {
+    const value = quotedValue ?? plainValue;
+    if ( key === "quality" ) quality = value;
+    else if ( key === "quantity" ) quantity = Number(value) || null;
+    else if ( key === "broken" ) broken = (value === undefined) || (value === "true");
+    else if ( key === "description" ) description = value || null;
+    else if ( key === "img" ) img = value || null;
+    else affixes.push({id: key, tier: value ? Number(value) : 1});
   }
 
   // Build the loot configuration
-  const config = {baseUuid, affixes, quality, broken, name: displayName || null};
+  const config = {baseUuid, affixes, quality, broken, description, img, quantity, name: displayName || null};
 
   // Compose a display name by resolving affix documents from configured packs
   let label = displayName;
@@ -971,8 +1203,11 @@ async function enrichLoot([match, baseUuid, tokenString, displayName]) {
       }
       if ( !found ) return new Text(match);
     }
-    label = crucible.api.models.CruciblePhysicalItem.composeItemName(baseItem.name, affixDocs,
-      baseItem.system.properties?.has("natural") ? "" : quality);
+
+    // Determine whether the item should be marked with a quality prefix
+    const base = await fromUuid(baseUuid);
+    const unmarked = base.system.properties?.has("natural") || (quality === base.system.quality);
+    label = crucible.api.models.CruciblePhysicalItem.composeItemName(baseItem.name, affixDocs, unmarked ? "" : quality);
   }
   if ( !label ) label = baseItem.name;
 
@@ -983,9 +1218,17 @@ async function enrichLoot([match, baseUuid, tokenString, displayName]) {
   a.dataset.link = "";
   a.dataset.uuid = baseUuid;
   a.dataset.loot = JSON.stringify(config);
-  a.dataset.tooltip = label;
+  a.dataset.crucibleTooltip = "loot";
   a.innerHTML = `<i class="fa-solid fa-wand-sparkles"></i> ${label}`;
-  return a;
+  if ( !(quantity > 1) ) return a;
+
+  // Suffix the link with a stacked quantity
+  const span = document.createElement("span");
+  span.classList.add("quantity");
+  span.innerHTML = _loc("ITEM.QuantityMultiple", {quantity});
+  const fragment = document.createDocumentFragment();
+  fragment.append(a, " ", span);
+  return fragment;
 }
 
 /* -------------------------------------------- */

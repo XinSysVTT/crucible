@@ -66,8 +66,7 @@ export default class CrucibleTalentNode {
     if ( typeof nodeType.passive === "boolean" ) return nodeType.passive; // Never or always passive
     for ( const t of this.talents ) {
       if ( t.actions.length ) return false;
-      const {rune, gesture, inflection} = t.system;
-      if ( rune || gesture || inflection ) return false; // Spellcraft components count as active
+      if ( t.system.spellcraft ) return false; // Spellcraft components count as active
     }
     return true;
   }
@@ -344,6 +343,28 @@ export default class CrucibleTalentNode {
   /* -------------------------------------------- */
 
   /**
+   * Collect nodes breadth-first from the origin, passing only through nodes which satisfy a test.
+   * @param {(node: CrucibleTalentNode) => boolean} [test]    Which nodes beyond the origin to include
+   * @returns {Set<CrucibleTalentNode>}                        Nodes in the order they were reached
+   */
+  static traverse(test=() => true) {
+    const nodes = new Set();
+    let frontier = [CrucibleTalentNode.nodes.get("origin")];
+    while ( frontier.length ) {
+      const next = [];
+      for ( const node of frontier ) {
+        if ( nodes.has(node) ) continue;
+        nodes.add(node);
+        for ( const c of node.connected ) if ( test(c) ) next.push(c);
+      }
+      frontier = next;
+    }
+    return nodes;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Prepare the data structure of talent prerequisites
    * @param {AdvancementPrerequisites} requirements
    * @returns {AdvancementPrerequisites}
@@ -360,10 +381,12 @@ export default class CrucibleTalentNode {
         if ( v <= 1 ) return obj;
         o.label = _loc("ADVANCEMENT.Level");
       }
-      else if ( k.startsWith("skills.") ) o.label = SYSTEM.SKILLS[k.split(".")[1]].label;
-      else if ( k.startsWith("training.") ) o.label = SYSTEM.TALENT.TRAINING_TYPES[k.split(".")[1]].label;
+      else if ( k.startsWith("training.") ) {
+        o.label = SYSTEM.PROFICIENCIES[k.split(".")[1]].label;
+        o.tag = `${o.label}: ${SYSTEM.PROFICIENCY.RANK_VALUES[v]?.label ?? v}`; // Name the rank, not its integer
+      }
       else o.label = k;
-      o.tag = `${o.label} ${o.value}`;
+      o.tag ??= `${o.label} ${o.value}`;
       obj[k] = o;
       return obj;
     }, {});

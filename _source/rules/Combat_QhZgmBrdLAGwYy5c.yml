@@ -132,9 +132,9 @@ pages:
         pool is modified by <strong>Boons</strong> and <strong>Banes</strong>.
         The ability modifier for the attack roll is determined by the scaling
         formula of the weapon type being used. The Skill Bonus for the attack
-        roll is determined by the character's training in that particular weapon
-        type. The Enchantment Bonus for the roll is determined by the magical
-        properties (if any) of the weapon being used.</p><h2
+        roll is determined by the character's proficiency with that particular
+        weapon type. The Enchantment Bonus for the roll is determined by the
+        magical properties (if any) of the weapon being used.</p><h2
         class="divider">Determining Attack Outcomes</h2><p>The attack is a hit
         if the result of the Attack Roll exceeds the Defense score of the
         target. If the result of the attack roll is less than the Defense score,
@@ -160,14 +160,14 @@ pages:
         damage-over-time, however, can have the effects of that indirect damage
         reduced to zero by Resistance.</p><h2 class="divider">Critical Hits and
         Misses</h2><p>If the Attack Roll exceeds the Defense Score by an amount
-        greater than the attacker's Critical Hit Threshold (6 in most cases) it
-        becomes a <strong>Critical Hit</strong>. Similarly if the Attack Roll is
-        lower than the Defense Score by an amount greater than the attacker's
-        Critical Miss Threshold (6 in most cases) it becomes a <strong>Critical
-        Miss</strong>.</p><p>A Critical Hit does not directly increase the
-        damage of an attack - although because of the way that Overflow
-        contributes to total damage, Critical Hits always deal more damage than
-        normal hits.</p><p>Critical Hits and Critical Misses present
+        greater than the attacker's Critical Success Threshold (6 in most cases)
+        it becomes a <strong>Critical Hit</strong>. Similarly if the Attack Roll
+        is lower than the Defense Score by an amount greater than or equal to
+        the attacker's Critical Failure Threshold (6 in most cases) it becomes a
+        <strong>Critical Miss</strong>.</p><p>A Critical Hit does not directly
+        increase the damage of an attack - although because of the way that
+        Overflow contributes to total damage, Critical Hits always deal more
+        damage than normal hits.</p><p>Critical Hits and Critical Misses present
         opportunities for other things to occur. Many talents allow your
         character to cause special effects when achieving a Critical Hit, or to
         react to an enemy if an incoming attack is a Critical Miss.</p><section
@@ -195,10 +195,10 @@ pages:
     _stats:
       systemId: crucible
       systemVersion: 0.9.0
-      coreVersion: '14.363'
+      coreVersion: '14.369'
       createdTime: 1780584488328
-      modifiedTime: 1780584488328
-      lastModifiedBy: fzBjA63BB4hW4rQb
+      modifiedTime: 1793035896588
+      lastModifiedBy: ZXJsFnFZuf21WDAk
       compendiumSource: JournalEntry.rQ8H74v0bMnhu4xA.JournalEntryPage.lZfPVvBSsCEqlte4
       duplicateSource: null
       exportSource: null
@@ -226,35 +226,33 @@ pages:
         subgrid with distance units of <strong>1 foot</strong>. Scenes must use
         a <strong>5 foot</strong> grid size for the subgrid to display
         correctly.</p><p>Measurement distance is computed using the
-        <strong>Exact √2</strong> diagonal measurement
-        mode.</p></section><p>Many combat actions a character can perform
-        involve the <strong>Movement</strong> tag. Such actions allow you to
-        move a certain number of feet up to or equal to your character's
-        <strong>Stride</strong> attribute. The distance allowed by a
-        <strong>Movement </strong>action cannot be broken up or interrupted.
-        There is no leftover movement saved across actions if you move less than
-        your Stride.</p><p>There are no facing mechanics in Crucible, meaning
-        that it does not matter which direction your Token is facing on the map,
-        your character is able to perceive and act in a full 360 degree radius
-        unless otherwise limited by some special effect or condition.</p><h2
-        class="divider">Movement Cost Calculation</h2><p>The
-        <strong>Action</strong> cost of a given Movement is computed as
-        follows:</p><ol><li><p><strong>Distance</strong> is computed
-        center-point to center-point, where the distance of diagonal movement is
-        computed using the <strong>Exact √2</strong> diagonal measurement
-        mode.</p></li><li><p><strong>Effective Distance</strong> is computed by
-        applying the following modifiers in order:</p><ol
+        <strong>Exact √2</strong> diagonal measurement mode.</p></section><p
+        data-rule="movement.stride">Many combat actions involve the
+        @Rule[action.movement] tag. Such actions allow you to move a distance up
+        to your character's <strong>Stride</strong>. The distance allowed by a
+        @Rule[action.movement] action cannot be broken up or interrupted, and
+        any unused distance is not saved for later actions.</p><p>There are no
+        facing mechanics in Crucible, meaning that it does not matter which
+        direction your Token is facing on the map, your character is able to
+        perceive and act in a full 360 degree radius unless otherwise limited by
+        some special effect or condition.</p><h2 class="divider">Movement Cost
+        Calculation</h2><p>The @Rule[resource.action] cost of a given Movement
+        is computed as follows:</p><ol><li><p><strong>Distance</strong> is
+        computed center-point to center-point, where the distance of diagonal
+        movement is computed using the <strong>Exact √2</strong> diagonal
+        measurement mode.</p></li><li><p><strong>Effective Distance</strong> is
+        computed by applying the following modifiers in order:</p><ol
         style="list-style-type:lower-alpha"><li><p><strong>Status
         Conditions</strong> are applied first, as described
         below.</p></li><li><p>The effects of <strong>Terrain</strong> are
         applied second.</p></li><li><p>Modifiers resulting from the
         <strong>Movement Type</strong> are applied.</p></li></ol></li><li><p>The
-        <strong>Action</strong> cost of the movement is computed
+        @Rule[resource.action] cost of the movement is computed
         as:</p></li></ol><section class="formula"><p class="value">Action
         Cost</p><p class="equals">=</p><p class="equation">ceil(Effective
-        Distance / Stride)</p></section><ol start="4"><li><p>If a <strong>Free
-        Move</strong> is available, the final Action Cost of the movement is
-        reduced by 1.</p></li></ol><h3 class="divider">Movement
+        Distance / Stride)</p></section><ol start="4"><li><p>If a
+        @Rule[movement.freeMovement] is available, the final Action Cost of the
+        movement is reduced by 1.</p></li></ol><h3 class="divider">Movement
         Conditions</h3><p>The following <strong>Status Conditions
         </strong>affect the measurement and cost of
         movement.</p><h4>@Condition[slowed]</h4><p>The <strong>Effective
@@ -283,43 +281,69 @@ pages:
         Distance</strong> traveled is doubled. Burrowing movement passes beneath
         walls, obstacles, and other creatures on the surface above. A creature
         which ends its movement while burrowing gains the @Condition[burrowing]
-        condition.</p><h2 class="divider">Free Movement</h2><p>Each creature has
-        the opportunity to perform one free <strong>Movement</strong> action per
-        round of Combat. This means that the first Action performed each round
-        which involves the Movement tag is discounted at -1 Action cost. This
-        will typically make the action free to perform, but in some cases may
-        simply reduce its overall cost.</p><p>Free Movement is not available to
-        creatures that are @Condition[weakened], @Condition[prone], or
-        @Condition[slowed]. Creatures wearing <strong>Heavy</strong> armor also
-        lose access to free Movement unless they have the
+        condition.</p><h2 class="divider">Free Movement</h2><div
+        data-rule="movement.freeMovement"><p>Each creature may perform one free
+        @Rule[action.movement] action per round of Combat: the first Action it
+        performs each round that has the Movement tag costs 1 fewer
+        @Rule[resource.action]. This typically makes the Action free, but may
+        only reduce the cost of a more expensive one.</p><p><strong>Free
+        Movement</strong> is not available to creatures that are
+        @Condition[weakened], @Condition[prone], or @Condition[slowed].
+        Creatures wearing <strong>Heavy</strong> armor also lose access to Free
+        Movement unless they have the
         @UUID[Compendium.crucible.talent.Item.armoredefficienc]{Armored
-        Efficiency} talent.</p><h2 class="divider">Terrain</h2><p>Difficult
-        terrain increases the cost of movement while traversing it. Difficult
-        terrain can be defined using Foundry VTT Scene Regions with the
-        <strong>Modify Movement Cost</strong> behavior, which is fully
-        integrated with Crucible movement cost computation.</p><h2
-        class="divider">Creature Collision</h2><p>While in Combat, creatures
-        treat other creatures as obstacles which block movement. A creature may
-        not move through the space occupied by another creature, whether that
-        creature is an ally or an enemy. Dead creatures do not block movement,
-        nor do creatures at a different elevation, such as a flying creature
-        above the battlefield or a burrowing creature beneath it.</p><p>Blocked
-        movement does not mean that creatures must keep a respectful distance -
-        a creature can press into and partially overlap the edge of another
-        creature's space, but cannot push fully through it.</p><section
-        class="foundryvtt"><h4>Automation</h4><p>Token collision happens
-        automatically whenever the moving Token belongs to an active Combat
-        encounter. Outside of Combat, Tokens move freely through one another.
-        When a moving Token bumps into another, its movement simply stops at the
-        point of contact, just as if it had hit a wall.</p></section><p>Certain
-        movement actions are exempt from this restriction. <strong>Jump</strong>
-        movement vaults over obstructing creatures, <strong>Burrow</strong>
-        movement tunnels beneath them, and <strong>Blink</strong> movement
-        teleports past them entirely. Certain Actions also allow movement
-        through otherwise obstructing creatures as part of their effect, for
-        example @UUID[Compendium.crucible.talent.Item.tumblethrough000]{Tumble
-        Through} or
-        @UUID[Compendium.crucible.talent.Item.shieldcharge0000]{Shield
+        Efficiency} talent.</p></div><h2 class="divider">Terrain</h2><p>The
+        ground a creature crosses may increase the cost of moving across it.
+        Terrain multiplies the <strong>Effective Distance</strong> of
+        <strong>Walk</strong>, <strong>Step</strong>, <strong>Climb</strong>,
+        and <strong>Jump</strong> movement. Terrain is classified as one of the
+        following:</p><dl><dt><p>Normal Terrain</p></dt><dd
+        data-rule="movement.normalTerrain"><p>Open ground which poses no
+        obstacle to movement, such as roads, floors, or short grass. Normal
+        Terrain does not modify the <strong>Effective Distance</strong> of
+        movement.</p></dd><dt><p>Difficult Terrain</p></dt><dd
+        data-rule="movement.difficultTerrain"><p>Ground which slows careful
+        footing, such as rubble, dense undergrowth, deep snow, or shallow water.
+        The <strong>Effective Distance</strong> of movement through Difficult
+        Terrain is doubled.</p></dd><dt><p>Extreme Terrain</p></dt><dd
+        data-rule="movement.extremeTerrain"><p>Ground which can barely be
+        crossed on foot, such as steep scree, thick mud, or tangled thorns. The
+        <strong>Effective Distance</strong> of movement through Extreme Terrain
+        is tripled.</p></dd></dl><p>A creature which <strong>Crawls</strong> is
+        not penalized twice: the doubled cost of Crawl already accounts for
+        Difficult Terrain, so Crawling costs double on Normal or Difficult
+        Terrain and triple on Extreme Terrain.</p><section
+        class="foundryvtt"><h4>Gamemaster Guidance</h4><p>Always specify
+        Difficult and Extreme Terrain by drawing a Scene Region over the
+        affected area and giving it the <strong>Modify Movement Cost</strong>
+        behavior, with its <strong>Walk</strong> cost set to 2 (Difficult) or 3
+        (Extreme). Step, Crawl, Climb, and Jump movement derive their cost from
+        this Walk setting automatically. Crucible reads terrain only from this
+        behavior when it measures movement, so terrain marked any other way,
+        such as with a Drawing or a Note, is not reflected in the Action cost
+        shown by the movement ruler. Normal Terrain needs no
+        Region.</p></section><h2 class="divider">Creature Collision</h2><p>While
+        in Combat, creatures treat other creatures as obstacles which block
+        movement. A creature may not move through the space occupied by another
+        creature, whether that creature is an ally or an enemy. Dead creatures
+        do not block movement, nor do creatures at a different elevation, such
+        as a flying creature above the battlefield or a burrowing creature
+        beneath it.</p><p>Blocked movement does not mean that creatures must
+        keep a respectful distance - a creature can press into and partially
+        overlap the edge of another creature's space, but cannot push fully
+        through it.</p><section class="foundryvtt"><h4>Automation</h4><p>Token
+        collision happens automatically whenever the moving Token belongs to an
+        active Combat encounter. Outside of Combat, Tokens move freely through
+        one another. When a moving Token bumps into another, its movement simply
+        stops at the point of contact, just as if it had hit a
+        wall.</p></section><p>Certain movement actions are exempt from this
+        restriction. <strong>Jump</strong> movement vaults over obstructing
+        creatures, <strong>Burrow</strong> movement tunnels beneath them, and
+        <strong>Blink</strong> movement teleports past them entirely. Certain
+        Actions also allow movement through otherwise obstructing creatures as
+        part of their effect, for example
+        @UUID[Compendium.crucible.talent.Item.tumblethrough000]{Tumble Through}
+        or @UUID[Compendium.crucible.talent.Item.shieldcharge0000]{Shield
         Charge}.</p><p><strong>Forced Movement</strong> respects creature
         obstacles in the same way: a creature which is pushed, pulled, or
         knocked back stops its involuntary movement when it collides with
@@ -378,10 +402,10 @@ pages:
     _stats:
       systemId: crucible
       systemVersion: 0.9.0
-      coreVersion: '14.363'
+      coreVersion: '14.368'
       createdTime: 1684374473225
-      modifiedTime: 1780579467460
-      lastModifiedBy: QvBFYpRRXHRBcOfP
+      modifiedTime: 1790618038170
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
       compendiumSource: null
       duplicateSource: null
       exportSource: null
@@ -398,17 +422,20 @@ pages:
     text:
       format: 1
       content: >-
-        <p>A creature's space normally cannot be entered or crossed by another
-        creature - ordinary movement is halted by anyone in its path. Some
-        abilities let a creature force its way through, resolved by comparing
-        the moving creature's <strong>Movement Strength</strong> against the
-        <strong>Blocker Strength</strong> of whoever stands in the way.</p><p>A
-        movement passes through a blocker only when its Movement Strength is
-        <em>greater</em> than the blocker's Blocker Strength; on a tie, the
-        blocker holds. Both ordinary creatures and ordinary movement have a
-        strength of <strong>None</strong>, so by default no one passes through
-        anyone. Forceful movements - <strong>Bull Rush</strong>, <strong>Shield
-        Charge</strong>, <strong>Overrun</strong>, <strong>Tumble
+        <p data-rule="movement.size">Each creature occupies a square space
+        determined by its <strong>Size</strong>; a <strong>Size 4</strong>
+        creature, for instance, occupies a 4x4 area of 1-foot grid
+        spaces.</p><p>A creature's space normally cannot be entered or crossed
+        by another creature - ordinary movement is halted by anyone in its path.
+        Some abilities let a creature force its way through, resolved by
+        comparing the moving creature's <strong>Movement Strength</strong>
+        against the <strong>Blocker Strength</strong> of whoever stands in the
+        way.</p><p>A movement passes through a blocker only when its Movement
+        Strength is <em>greater</em> than the blocker's Blocker Strength; on a
+        tie, the blocker holds. Both ordinary creatures and ordinary movement
+        have a strength of <strong>None</strong>, so by default no one passes
+        through anyone. Forceful movements - <strong>Bull Rush</strong>,
+        <strong>Shield Charge</strong>, <strong>Overrun</strong>, <strong>Tumble
         Through</strong>, and the like - carry a <strong>Powerful</strong>
         strength that pushes through ordinary creatures. A few defenders, most
         notably a Guarded <strong>Bastion</strong>, project an
@@ -436,10 +463,10 @@ pages:
     _stats:
       systemId: crucible
       systemVersion: 0.9.0
-      coreVersion: '14.364'
+      coreVersion: '14.368'
       createdTime: 1684374473225
-      modifiedTime: 1781790011336
-      lastModifiedBy: QvBFYpRRXHRBcOfP
+      modifiedTime: 1790610922274
+      lastModifiedBy: ZXJsFnFZuf21WDAk
       compendiumSource: null
       duplicateSource: null
       exportSource: null
@@ -464,11 +491,11 @@ pages:
         Willpower or Fortitude, or the target's passive score in a
         Skill.</p><section class="gameplay"><p>Krag wants to use his
         intimidating demeanor to break the Morale of some attacking Goblins.
-        Krag, an Adept in the Intimidation skill, uses the
+        Krag, an Expert in the Intimidation skill, uses the
         <strong>Intimidate</strong> Action targeting a nearby Goblin and rolls
         the Skill Attack, producing a total result of <strong>27</strong>
         compared to the Goblin's passive Intimidation score of
-        <strong>14</strong>. This success results in <strong>17 Void
+        <strong>14</strong>. This success results in <strong>13 Void
         Damage</strong> dealt to the Goblin's Morale, causing it to become
         @Condition[broken] and attempt to flee.</p></section>
     video:
@@ -483,10 +510,10 @@ pages:
     _stats:
       systemId: crucible
       systemVersion: 0.9.0
-      coreVersion: '14.363'
+      coreVersion: '14.369'
       createdTime: 1684374509565
-      modifiedTime: 1780583262801
-      lastModifiedBy: fzBjA63BB4hW4rQb
+      modifiedTime: 1793036798897
+      lastModifiedBy: ZXJsFnFZuf21WDAk
       compendiumSource: null
       duplicateSource: null
       exportSource: null
@@ -681,10 +708,10 @@ pages:
         creature's natural weapon.</p></td></tr></tbody></table><h3>Attack
         Modifiers</h3><table><thead><tr><th
         style="width:30%"><p>Tag</p></th><th><p>Rules
-        Effect</p></th></tr></thead><tbody><tr><td><p>Deadly</p></td><td><p>Gains
-        a +1 damage
-        multiplier.</p></td></tr><tr><td><p>Difficult</p></td><td><p>Incurs +1
-        Bane to the attack
+        Effect</p></th></tr></thead><tbody><tr><td><p>Deadly</p></td><td><p>Increases
+        the Damage Multiplier applied to Overflow by +1, for example from ×1 to
+        ×2.</p></td></tr><tr><td><p>Difficult</p></td><td><p>Incurs +1 Bane to
+        the attack
         roll.</p></td></tr><tr><td><p>Empowered</p></td><td><p>Increases base
         damage by +6.</p></td></tr><tr><td><p>Accurate</p></td><td><p>Adds +2
         Boons to the attack
@@ -759,16 +786,17 @@ pages:
     text:
       format: 1
       content: >-
-        <p><strong>Engagement</strong> describes the total number of opposing
-        Combatants that you can simultaneously battle against without becoming
-        more vulnerable. The base Engagement for <strong>Hero</strong>
-        characters is <strong>1</strong>, while the base Engagement for
-        <strong>Adversary</strong> characters is equal to their <strong>Size -
-        2</strong> with a minimum of <strong>1</strong>.</p><p>When a character
-        is adjacent to multiple enemies where the number of engaged enemies
-        equals or exceeds their Engagement score, that character is said to be
-        <strong>Fully Engaged</strong>. Some conditions or action prerequisites
-        may only occur when a creature is Fully Engaged.</p><section
+        <p data-rule="movement.engagement"><strong>Engagement</strong> describes
+        the total number of opposing Combatants that you can simultaneously
+        battle against without becoming more vulnerable. The base Engagement for
+        <strong>Hero</strong> characters is <strong>1</strong>, while the base
+        Engagement for <strong>Adversary</strong> characters starts at
+        <strong>1</strong> and adds <strong>+1 for every 2 Size above
+        4</strong>, rounded up.</p><p data-rule="movement.fullyEngaged">When the
+        number of enemies a character is engaged with equals or exceeds their
+        @Rule[movement.engagement], that character is <strong>Fully
+        Engaged</strong>. Some conditions and action prerequisites depend on
+        whether a creature is Fully Engaged.</p><section
         class="foundryvtt"><p>To help visualize how Engagement and Flanking
         mechanics works, there is a special toggle that can be used in
         the<strong> Tokens Layer</strong> of the <strong>Scene Controls
@@ -820,13 +848,14 @@ pages:
         disengage from you in melee combat it becomes temporarily vulnerable,
         allowing you to perform a @Action[default reactiveStrike], a weapon
         attack as a Reaction. You may not make a Reactive Strike if you are
-        @Condition[unaware], @Condition[overrun], or @Condition[flanked] by
-        other remaining opponents whom you perceive.</p><section
-        class="gameplay"><p>The Goblins in our previous example have decided
-        that Krag is too tough and it is advisable to disengage in search of
-        more vulnerable prey. Two of the four goblins may move away from Krag
-        without reciprocity, because Krag is otherwise <strong>Fully
-        Engaged</strong> and therefore cannot retaliate. When the third goblin
+        @Condition[unaware], @Condition[overrun], @Rule[movement.fullyEngaged],
+        or @Condition[flanked] by other remaining opponents whom you
+        perceive.</p><section class="gameplay"><p>The Goblins in our original
+        example (without Jinora providing any aid) have decided that Krag is too
+        tough and it is advisable to disengage in search of more vulnerable
+        prey. Two of the five goblins may move away from Krag without
+        reciprocity, because Krag is still <strong>Fully Engaged</strong> by the
+        remaining goblins, and therefore cannot retaliate. When the third goblin
         moves away, however, Krag performs a @Action[default reactiveStrike],
         burying his battle axe in the back of the retreating
         evildoer!</p></section>
@@ -841,12 +870,12 @@ pages:
     _stats:
       compendiumSource: null
       duplicateSource: null
-      coreVersion: '14.364'
+      coreVersion: '14.369'
       systemId: crucible
       systemVersion: 0.8.6
       createdTime: 1726930849493
-      modifiedTime: 1781993712288
-      lastModifiedBy: fzBjA63BB4hW4rQb
+      modifiedTime: 1793037014760
+      lastModifiedBy: ZXJsFnFZuf21WDAk
       exportSource: null
     category: null
     _key: '!journal.pages!QhZgmBrdLAGwYy5c.akwDfoFV3AWbOSI6'
@@ -975,7 +1004,7 @@ pages:
     image: {}
     text:
       format: 1
-      content: "<p>Crucible is designed to be a challenging combat experience which will require players to think tactically, work together, and effectively develop their characters' powers. Encounter balance in Crucible is managed using several fundamental levers.</p><ol><li><p>Convenient scaling of Adversary <strong>Level</strong> and <strong>Threat</strong> rating which makes adjusting difficulty for differing party levels or sizes relatively easy to do.</p></li><li><p>The secondary <strong>Wounds</strong> and <strong>Madness </strong>pools that hero characters uniquely have which accumulate and absorb variance due to bad luck.</p></li><li><p>The <strong>Gamemaster</strong>, who plays a pivotal role in interpreting the storytelling needs for each combat moment.</p></li></ol><h2 class=\"divider\">Balancing Encounters</h2><p>Encounters in Crucible are typically balanced such that the cumulative <strong>Threat</strong> of all enemies is equal to the cumulative <strong>Threat</strong> of hero characters plus any allied non-player characters. The ease of adjusting the <strong>Level</strong> or <strong>Threat</strong> of an @UUID[Compendium.crucible.rules.JournalEntry.v1dqTT3NI35lFNxM.JournalEntryPage.WH0YSVcYo09aHNZ2]{adversary } makes it easy to adjust an encounter to this point of balance ahead of time.</p><p>Encounters balanced in this way have an approximately 50% chance of going in the party's favor and a 50% chance of going in the enemies' favor. This does not mean that the party \"loses\" or \"dies\" half the time, but rather in 50% of balanced encounters the party will suffer some number of <strong>Wounds</strong>.</p><h2 class=\"divider\">Wounds Regulate Luck\_</h2><p>The accumulation of these <strong>Wounds</strong> is something that the heroes must manage over the course of multiple encounters or days. Since adversaries do not have <strong>Wounds</strong>, only <strong>Health</strong> this is an intentional advantage in favor of Hero characters.</p><p>In any single balanced encounter if the heroes get lucky or play well, they will win without suffering any <strong>Wounds</strong>. If the heroes play poorly or experience bad luck, they will probably still win but suffer <strong>Wounds</strong> in the process. Wounds are a mechanism to regulate swings in luck while also requiring the party to be effective combatants most of the time.</p><h2 class=\"divider\">The Role of the Gamemaster</h2><p>Lastly, the <strong>Gamemaster</strong> plays a pivotal role in ensuring the fun and balance of combat. Enemies in Crucible are generally optimized such that they can be very effective at their main combat style. This is done because we assume that player characters are also designed and progressed with — to at least some extent — combat effectiveness in mind.</p><p>It is not a goal of Crucible to <em>require</em> that every player character be maximally optimized or that every decision in combat be one that optimizes for victory rather than advancing the story being told. It is therefore important that the Gamemaster to calibrate the optimization of their own play to match the party and the needs of the storytelling moment.</p><p>Adversaries in Crucible can and should be fallible in the decisions that they make. Enemies can, and often should, spend their Action and Focus in combat on actions that maintain tension and stakes while prioritizing the needs of the story rather than actions that specifically optimize to defeat the heroes.</p>"
+      content: "<p>Crucible is designed to be a challenging combat experience which will require players to think tactically, work together, and effectively develop their characters' powers. Encounter balance in Crucible is managed using several fundamental levers.</p><ol><li><p>Convenient scaling of Adversary <strong>Level</strong> and <strong>Threat</strong> rating which makes adjusting difficulty for differing party levels or sizes relatively easy to do.</p></li><li><p>The secondary <strong>Wounds</strong> and <strong>Madness </strong>pools that hero characters uniquely have which accumulate and absorb variance due to bad luck.</p></li><li><p>The <strong>Gamemaster</strong>, who plays a pivotal role in interpreting the storytelling needs for each combat moment.</p></li></ol><h2 class=\"divider\">Balancing Encounters</h2><p>Encounters in Crucible are typically balanced such that the cumulative <strong>Threat</strong> of all enemies is equal to the cumulative <strong>Threat</strong> of hero characters plus any allied non-player characters. The ease of adjusting the <strong>Level</strong> or <strong>Threat</strong> of an @UUID[Compendium.crucible.rules.JournalEntry.v1dqTT3NI35lFNxM.JournalEntryPage.WH0YSVcYo09aHNZ2]{adversary } makes it easy to adjust an encounter to this point of balance ahead of time.</p><p>Encounters balanced in this way have an approximately 50% chance of going in the party's favor and a 50% chance of going in the enemies' favor. This does not mean that the party \"loses\" or \"dies\" half the time, but rather in 50% of balanced encounters the party will suffer some number of <strong>Wounds</strong>.</p><h2 class=\"divider\">Encounter Difficulty</h2><p>Encounters may be deliberately built above or below this point of balance. The difficulty of an encounter is rated by the ratio of <strong>Adversary Threat</strong>, the cumulative Threat of all enemies, to <strong>Party Level</strong>, the cumulative Level of all heroes plus the Threat of any allied non-player characters.</p><section class=\"formula\"><p class=\"value\">Difficulty Ratio</p><p class=\"equals\">=</p><p class=\"equation\">Adversary Threat ÷ Party Level</p></section><table><thead><tr><th><p>Difficulty</p></th><th><p>Difficulty Ratio</p></th><th style=\"width:60%\"><p>Description</p></th></tr></thead><tbody><tr><td><p>Trivial</p></td><td><p>Below 0.5</p></td><td><p>No real danger; the heroes prevail with little effort.</p></td></tr><tr><td><p>Easy</p></td><td><p>0.5 to 0.75</p></td><td><p>A brief contest which spends few resources.</p></td></tr><tr><td><p>Moderate</p></td><td><p>0.75 to 1</p></td><td><p>A fair fight which tests the heroes without seriously endangering them.</p></td></tr><tr><td><p>Challenging</p></td><td><p>1 to 1.25</p></td><td><p>A balanced encounter; the heroes will likely win, but may suffer Wounds.</p></td></tr><tr><td><p>Deadly</p></td><td><p>1.25 to 1.75</p></td><td><p>The enemies have the upper hand; some heroes may fall.</p></td></tr><tr><td><p>Hopeless</p></td><td><p>1.75 or above</p></td><td><p>Victory is unlikely; retreat or a change of circumstances is the wisest course.</p></td></tr></tbody></table><section class=\"gameplay\"><h4>Example: A Hobgoblin Ambush</h4><p>Four Level 3 heroes, a Party Level of 12, are ambushed by a Level 4 Elite <strong>Hobgoblin Fighter</strong> (Threat 6), two Level 3 Normal <strong>Hobgoblin Archers</strong> (Threat 3 each), and four Level 1 Minion <strong>Hobgoblin Conscripts</strong> (Threat 0.5 each).</p><p>The Adversary Threat is 6 + 3 + 3 + 2 = 14, a Difficulty Ratio of 14 ÷ 12 ≈ 1.17, which is a <strong>Challenging</strong> encounter. Removing one archer reduces the Adversary Threat to 11 and the ratio to about 0.92, making the encounter <strong>Moderate</strong>.</p></section><section class=\"foundryvtt\"><h4>Automation</h4><p>Adventure journals display each encounter's Adversary Threat together with its Difficulty, rated against the Party Level of the configured primary party, for example [[/encounterDifficulty 14]].</p></section><h2 class=\"divider\">Wounds Regulate Luck\_</h2><p>The accumulation of these <strong>Wounds</strong> is something that the heroes must manage over the course of multiple encounters or days. Since adversaries do not have <strong>Wounds</strong>, only <strong>Health</strong> this is an intentional advantage in favor of Hero characters.</p><p>In any single balanced encounter if the heroes get lucky or play well, they will win without suffering any <strong>Wounds</strong>. If the heroes play poorly or experience bad luck, they will probably still win but suffer <strong>Wounds</strong> in the process. Wounds are a mechanism to regulate swings in luck while also requiring the party to be effective combatants most of the time.</p><h2 class=\"divider\">The Role of the Gamemaster</h2><p>Lastly, the <strong>Gamemaster</strong> plays a pivotal role in ensuring the fun and balance of combat. Enemies in Crucible are generally optimized such that they can be very effective at their main combat style. This is done because we assume that player characters are also designed and progressed with — to at least some extent — combat effectiveness in mind.</p><p>It is not a goal of Crucible to <em>require</em> that every player character be maximally optimized or that every decision in combat be one that optimizes for victory rather than advancing the story being told. It is therefore important that the Gamemaster to calibrate the optimization of their own play to match the party and the needs of the storytelling moment.</p><p>Adversaries in Crucible can and should be fallible in the decisions that they make. Enemies can, and often should, spend their Action and Focus in combat on actions that maintain tension and stakes while prioritizing the needs of the story rather than actions that specifically optimize to defeat the heroes.</p>"
     video:
       controls: true
       volume: 0.5

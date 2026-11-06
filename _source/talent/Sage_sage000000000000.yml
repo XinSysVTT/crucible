@@ -12,10 +12,11 @@ system:
       name: Flash of Brilliance
       condition: ''
       description: >-
-        <p>You expend <strong>Heroism</strong> and experience a sudden,
-        brilliant moment of total clarity. Until the end of your next turn you
-        are treated as possessing every form of <strong>Knowledge</strong>.</p>
-      tags: []
+        <p>You expend @Rule[resource.heroism] and experience a sudden, brilliant
+        moment of total clarity. Until the end of your next turn you are treated
+        as possessing every form of <strong>Knowledge</strong>.</p>
+      tags:
+        - subtle
       cost:
         action: 0
         focus: 0
@@ -42,26 +43,27 @@ system:
           system:
             changes: []
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
+            properties: []
       img: icons/magic/light/explosion-star-glow-silhouette.webp
       range:
         minimum: null
         maximum: null
         weapon: false
-      summon:
-        actorUuid: null
-        permanent: true
-      autoFavorite: false
+      summon: null
     - id: fieldStudy
       name: Field Study
       condition: ''
       description: >-
         <p>During the process of a @Action[default rest], you devote yourself to
         studying a chosen field of <strong>Knowledge</strong>. Upon the
-        completion of the Rest, you gain that Knowledge for the next 24 hours or
-        until you use this Action again.</p>
+        completion of the <strong>Rest</strong>, you gain that
+        <strong>Knowledge</strong> for the next <strong>24 hours</strong> or
+        until you use this action again.</p>
       tags:
         - rest
         - noncombat
@@ -91,28 +93,27 @@ system:
           system:
             changes: []
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
+            properties: []
       img: icons/sundries/documents/document-letter-blue.webp
       range:
         minimum: null
         maximum: null
         weapon: false
-      summon:
-        actorUuid: null
-        permanent: true
-      autoFavorite: false
+      summon: null
+  keywords:
+    - playstyle.utility
+    - action.rest
+    - action.noncombat
+    - resource.heroism
   nodes:
     - sig3.intellect
     - sig3.wisdom
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 1
-  training:
-    type: ''
-    rank: null
 effects: []
 ownership:
   default: 0
@@ -121,11 +122,11 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.5
-  coreVersion: '14.363'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160132
-  modifiedTime: 1780958952650
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1789494802515
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

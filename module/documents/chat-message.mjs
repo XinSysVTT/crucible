@@ -8,11 +8,11 @@ import CrucibleAction from "../models/action.mjs";
 export default class CrucibleChatMessage extends ChatMessage {
 
   /**
-   * Whether a reverse-confirm is currently in flight for this message.
+   * Whether a confirmation or reversal is currently in flight for this message.
    * @type {boolean}
    * @internal
    */
-  _reversing;
+  _confirming;
 
   /**
    * The in-flight VFX playback triggered by this message's confirmation, if any.
@@ -119,7 +119,7 @@ export default class CrucibleChatMessage extends ChatMessage {
     const messages = game.messages.contents;
     for ( let i = messages.length - 1; i >= 0; i-- ) {
       const message = messages[i];
-      if ( !message.flags.crucible?.action ) continue;
+      if ( !message.flags.crucible?.action || message.flags.crucible.reversed ) continue;
       if ( (confirmed !== undefined) && (message.flags.crucible.confirmed !== confirmed) ) return null;
       const messageActor = fromUuidSync(message.flags.crucible.actor);
       if ( (typeof actor === "string") && (messageActor?.id !== actor) ) return null;
@@ -137,7 +137,15 @@ export default class CrucibleChatMessage extends ChatMessage {
   async renderHTML(options) {
     const html = await super.renderHTML(options);
     if ( ["isInitiativeReport", "isTurnChangeSummary"].some(f => f in (this.flags.crucible ?? {})) ) return html;
+    if ( this.flags.crucible?.reversed ) return html;
     const content = html.querySelector(".message-content");
+
+    // Group rest cards render their content from system data
+    if ( this.type === "rest" ) {
+      if ( content ) content.innerHTML = await this.system.renderCard(); // Replace the core rendering of rolls
+      this.system.activateListeners(html); // The renderChatMessageHTML hook fires before the card content exists
+      return html;
+    }
     const sections = this.flags.crucible?.sections;
 
     // Render data into per-target sections with a target header, rolls, and a table of secondary changes
@@ -180,35 +188,26 @@ export default class CrucibleChatMessage extends ChatMessage {
    */
   static onRenderHTML(message, html, _messageData) {
     const flags = message.flags.crucible || {};
-    if ( !foundry.utils.isEmpty(flags) || (message.rolls[0] instanceof crucible.api.dice.StandardCheck) ) {
+
+    // Apply a chat message theme based on the value of flags.crucible.theme, otherwise assign the `.crucible` theme
+    if ( flags.theme && (flags.theme !== "crucible") ) html.classList.add(flags.theme);
+    else if ( !foundry.utils.isEmpty(flags) || (message.type === "rest")
+      || (message.rolls[0] instanceof crucible.api.dice.StandardCheck) ) {
       html.classList.add("crucible");
       html.querySelector(".message-content").classList.add("themed", "theme-dark");
     }
 
     // Action Cards
-    if ( flags.action ) {
-      const meta = html.querySelector(".message-metadata");
-      if ( flags.confirmed ) {
-        const target = html.querySelector(".damage-result .target");
-        if ( target ) target.classList.add("applied");
-        if ( meta ) meta.insertAdjacentHTML("afterbegin", "<i class=\"confirmed fa-solid fa-hexagon-check\" data-tooltip=\"ACTION.Confirmed\"></i>");
-      }
-      else {
-        if ( meta ) meta.insertAdjacentHTML("afterbegin", "<i class=\"unconfirmed fa-solid fa-hexagon-xmark\" data-tooltip=\"ACTION.Unconfirmed\"></i>");
-        if ( game.user.isGM ) {
-          const confirm = foundry.utils.parseHTML(`<button class=\"confirm frame-brown\" type=\"button\"><i class=\"fas fa-hexagon-check\"></i>${_loc("DICE.Confirm")}</button>`);
-          html.appendChild(confirm);
-          confirm.addEventListener("click", event => {
-            const button = event.currentTarget;
-            button.disabled = true;
-            button.firstElementChild.className = "fa-solid fa-spinner fa-spin";
-            CrucibleAction.confirmMessage(message);
-          });
-        }
-      }
+    if ( flags.action ) CrucibleChatMessage.#onRenderAction(message, html);
 
-      // Hide summoned creature names for non-GMs
-      if ( (flags.action.target.type === "summon") && !game.user.isGM ) html.querySelector(".target-region.full-tags")?.remove();
+    // Turn Change Summary with usable maintenance buttons for owners
+    if ( flags.isTurnChangeSummary ) {
+      for ( const button of html.querySelectorAll("button.maintain-effect") ) {
+        const effect = fromUuidSync(button.dataset.uuid);
+        if ( effect?.isOwner ) button.addEventListener("click", () => effect.system.getMaintainAction()?.use());
+        else button.replaceWith(foundry.utils.parseHTML(`<span><i class="fa-solid fa-pause"></i> ${
+          _loc("BASE_EFFECT.FIELDS.maintenance.label")}</span>`));
+      }
     }
 
     // Initiative Report
@@ -223,6 +222,57 @@ export default class CrucibleChatMessage extends ChatMessage {
     // Handle target hover interactivity with a delegated listener bound to the message root
     html.addEventListener("pointerover", onChatTargetLinkHover);
     html.addEventListener("pointerout", onChatTargetLinkHover);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Alter the rendered HTML of an action card to reflect its confirmation state.
+   * @param {CrucibleChatMessage} message
+   * @param {HTMLElement} html
+   */
+  static #onRenderAction(message, html) {
+    const flags = message.flags.crucible;
+    const state = flags.confirmed ? "confirmed" : (flags.reversed ? "reversed" : "unconfirmed");
+
+    // Confirmation state icon
+    const icons = {confirmed: "fa-hexagon-check", reversed: "fa-hexagon-xmark", unconfirmed: "fa-hexagon-exclamation"};
+    const icon = document.createElement("i");
+    icon.className = `${state} fa-solid ${icons[state]}`;
+    icon.dataset.tooltip = `ACTION.${state.capitalize()}`;
+    html.querySelector(".message-metadata")?.prepend(icon);
+
+    // State-specific alterations
+    if ( state === "confirmed" ) html.querySelector(".damage-result .target")?.classList.add("applied");
+    else if ( state === "reversed" ) html.classList.add("action-reversed");
+    else if ( game.user.isGM ) html.append(CrucibleChatMessage.#createConfirmButton(message));
+
+    // Hide summoned creature names for non-GMs
+    if ( (flags.action.target.type === "summon") && !game.user.isGM ) {
+      html.querySelector(".target-region.full-tags")?.remove();
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Create a button which confirms the action contained in a message.
+   * @param {CrucibleChatMessage} message
+   * @returns {HTMLButtonElement}
+   */
+  static #createConfirmButton(message) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "confirm frame-brown";
+    const icon = document.createElement("i");
+    icon.className = "fa-solid fa-hexagon-check";
+    button.append(icon, _loc("DICE.Confirm"));
+    button.addEventListener("click", () => {
+      button.disabled = true;
+      icon.className = "fa-solid fa-spinner fa-spin";
+      CrucibleAction.confirmMessage(message);
+    });
+    return button;
   }
 }
 

@@ -15,20 +15,35 @@ system:
     dexterity: 3
   talents:
     - item: Compendium.crucible.talent.Item.preparedness0000
-      level: null
-    - item: Compendium.crucible.talent.Item.assessstrength00
-      level: null
+      level: 0
+    - item: Compendium.crucible.talent.Item.assessResolve000
+      level: 2
     - item: Compendium.crucible.talent.Item.precisionshot000
-      level: null
-    - item: Compendium.crucible.talent.Item.projectileWeapon
-      level: null
-    - item: Compendium.crucible.talent.Item.lightWeaponTrain
-      level: null
-  skills:
-    - athletics
-    - awareness
-    - stealth
-    - wilderness
+      level: 0
+    - item: Compendium.crucible.talent.Item.quickDraw0000000
+      level: 1
+    - item: Compendium.crucible.talent.Item.lunge00000000000
+      level: 1
+    - item: Compendium.crucible.talent.Item.wildspeaker00000
+      level: 2
+    - item: Compendium.crucible.talent.Item.perspicacity0000
+      level: 2
+    - item: Compendium.crucible.talent.Item.pinningshot00000
+      level: 3
+    - item: Compendium.crucible.talent.Item.hide000000000000
+      level: 1
+    - item: Compendium.crucible.talent.Item.sneak00000000000
+      level: 0
+  training:
+    athletics: 1
+    awareness: 2
+    stealth: 2
+    wilderness: 2
+    medicine: 0
+    intimidation: 0
+    mechanical: 2
+    projectile: 4
+    fletching: 1
   identifier: scout
   spells: []
   equipment: []
@@ -42,11 +57,11 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.368'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.11.0
   createdTime: 1772307157481
-  modifiedTime: 1773514792214
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
-sort: 800000
+  modifiedTime: 1791130481800
+  lastModifiedBy: 2g4T1RcAPz2LBKZ1
+sort: 1600000
 _key: '!items!archetypeScout00'

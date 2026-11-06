@@ -3,6 +3,7 @@ export const NAME_FORMATS = Object.freeze({
   ADJ: 2
 });
 
+
 /**
  * The Arcane Runes which exist in the Crucible spellcraft system.
  * These config objects are instantiated as CrucibleSpellcraftRune instances during system initialization.
@@ -13,134 +14,158 @@ export const RUNES = {
     id: "control",
     name: "SPELL.RUNES.Control",
     img: "icons/magic/control/hypnosis-mesmerism-eye.webp",
+    color: "#584fb1",
     resource: "morale",
     damageType: "psychic",
     opposed: "kinesis",
     defense: "willpower",
     scaling: "wisdom",
+    training: "physical",
     nameFormat: NAME_FORMATS.NOUN
   },
   death: {
     id: "death",
     name: "SPELL.RUNES.Death",
     img: "icons/magic/unholy/hand-claw-fire-blue.webp",
+    color: "#7e9c71",
     resource: "health",
     damageType: "corruption",
     opposed: "life",
     defense: "fortitude",
     scaling: "presence",
+    training: "physical",
     nameFormat: NAME_FORMATS.NOUN
   },
   earth: {
     id: "earth",
     name: "SPELL.RUNES.Earth",
     img: "icons/magic/earth/projectile-boulder-debris.webp",
+    color: "#427028",
     resource: "health",
     damageType: "acid",
     opposed: "storm",
     defense: "reflex",
     scaling: "wisdom",
+    training: "elemental",
     nameFormat: NAME_FORMATS.ADJ
   },
   flame: {
     id: "flame",
     name: "SPELL.RUNES.Flame",
     img: "icons/magic/fire/barrier-wall-flame-ring-yellow.webp",
+    color: "#d53c08",
     resource: "health",
     damageType: "fire",
     opposed: "frost",
     defense: "reflex",
     scaling: "intellect",
+    training: "elemental",
     nameFormat: NAME_FORMATS.NOUN
   },
   frost: {
     id: "frost",
     name: "SPELL.RUNES.Frost",
     img: "icons/magic/water/snowflake-ice-snow-white.webp",
+    color: "#81d8ff",
     resource: "health",
     damageType: "cold",
     opposed: "flame",
     defense: "fortitude",
     scaling: "wisdom",
+    training: "elemental",
     nameFormat: NAME_FORMATS.NOUN
   },
   illumination: {
     id: "illumination",
     name: "SPELL.RUNES.Illumination",
     img: "icons/magic/light/projectile-beam-yellow.webp",
+    color: "#ffca52",
     resource: "health",
     damageType: "radiant",
     opposed: "illusion",
     defense: "reflex",
     scaling: "presence",
+    training: "spiritual",
     nameFormat: NAME_FORMATS.ADJ
   },
   illusion: {
     id: "illusion",
     name: "SPELL.RUNES.Illusion",
     img: "icons/magic/light/projectile-smoke-blue-white.webp",
+    color: "#d81e8e",
     resource: "morale",
     damageType: "psychic",
     opposed: "illumination",
     defense: "willpower",
     scaling: "intellect",
+    training: "spiritual",
     nameFormat: NAME_FORMATS.ADJ
   },
   kinesis: {
     id: "kinesis",
     name: "SPELL.RUNES.Kinesis",
     img: "icons/magic/movement/pinwheel-turning-blue.webp",
+    color: "#dfe4dd",
     resource: "health",
     damageType: "physical",
     opposed: "control",
     defense: "physical",
     scaling: "presence",
+    training: "physical",
     nameFormat: NAME_FORMATS.ADJ
   },
   life: {
     id: "life",
     name: "SPELL.RUNES.Life",
     img: "icons/magic/life/heart-shadow-red.webp",
+    color: "#ff5fa2",
     resource: "health",
     restoration: true,
     damageType: "poison",
     opposed: "death",
     defense: "fortitude",
     scaling: "wisdom",
+    training: "physical",
     nameFormat: NAME_FORMATS.NOUN
   },
   oblivion: {
     id: "oblivion",
     name: "SPELL.RUNES.Oblivion",
     img: "icons/magic/unholy/barrier-shield-glowing-pink.webp",
+    color: "#40070d",
     resource: "morale",
     damageType: "void",
     opposed: "soul",
     defense: "willpower",
     scaling: "intellect",
+    training: "spiritual",
     nameFormat: NAME_FORMATS.NOUN
   },
   soul: {
     id: "soul",
     name: "SPELL.RUNES.Soul",
     img: "icons/magic/light/projectile-halo-teal.webp",
+    color: "#00f3fc",
     resource: "morale",
     restoration: true,
     damageType: "psychic",
     opposed: "oblivion",
     defense: "willpower",
     scaling: "presence",
+    training: "spiritual",
     nameFormat: NAME_FORMATS.NOUN
   },
   storm: {
     id: "storm",
     name: "SPELL.RUNES.Storm",
     img: "icons/magic/lightning/bolt-strike-blue.webp",
+    color: "#264e6e",
     resource: "health",
     damageType: "electricity",
     opposed: "earth",
     defense: "reflex",
     scaling: "intellect",
+    training: "elemental",
     nameFormat: NAME_FORMATS.ADJ
   }
 };
@@ -192,6 +217,9 @@ export const GESTURES = Object.seal({
     cost: {
       action: 5,
       focus: 1 // Maintained
+    },
+    damage: {
+      base: 6 // Zeroed on the cast itself; delivered by the recurring region action instead
     },
     hands: 2,
     nameFormat: NAME_FORMATS.NOUN,
@@ -246,8 +274,8 @@ export const GESTURES = Object.seal({
     id: "conjure",
     name: "SPELL.GESTURES.Conjure",
     cost: {
-      action: 5,
-      focus: 2
+      action: 4,
+      focus: 1
     },
     hands: 2,
     range: {
@@ -552,6 +580,20 @@ export const INFLECTIONS = {
   }
 };
 
+/**
+ * The configuration record which declares each type of spellcraft component. Entries of these records are replaced
+ * by model instances during system initialization, so the record identities are stable but their values are not.
+ * @type {Readonly<Record<"rune"|"gesture"|"inflection", Record<string, object>>>}
+ */
+export const COMPONENT_RECORDS = Object.freeze({rune: RUNES, gesture: GESTURES, inflection: INFLECTIONS});
+
+/**
+ * Every spellcraft component which a Talent may grant, keyed by component id and tagged with the type of component
+ * it is. Ids are unique across runes, gestures, and inflections, so one identifier names a component unambiguously.
+ * @type {Record<string, {id: string, label: string, group: string, type: "rune"|"gesture"|"inflection"}>}
+ */
+export const COMPONENTS = {};
+
 export const GESTURE_SUMMONS = {
   create: {
     death: "Compendium.crucible.summons.Actor.56puGK932Qc0cowe",
@@ -595,3 +637,15 @@ export const COMPOSED_SPELL_NAMES = {
   "spell.soul.aspect.negate": "SPELL.NAMES.CurseCowardice",
   "spell.storm.aspect.negate": "SPELL.NAMES.CurseConductivity"
 };
+
+/**
+ * Rebuild the component index from the current records, called again once modules have contributed their own.
+ * Rebuilding mutates in place because Talent schema fields captured this object as their choices.
+ */
+export function initializeComponents() {
+  for ( const [type, records] of Object.entries(COMPONENT_RECORDS) ) {
+    const group = `SPELL.COMPONENTS.${type.capitalize()}Pl`;
+    for ( const [id, c] of Object.entries(records) ) COMPONENTS[id] = {id, label: c.name, group, type};
+  }
+}
+initializeComponents();

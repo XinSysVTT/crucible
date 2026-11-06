@@ -1,0 +1,35 @@
+name: Dependable Refocus
+type: talent
+img: icons/magic/symbols/runes-star-orange.webp
+system:
+  description: >-
+    <p>Practice has made the work of drawing your reserves back into yourself
+    steady and sure. Your
+    @Action[Compendium.crucible.talent.Item.refocus000000000 refocus] action
+    gains the @Rule[action.accurate] and @Rule[action.keen] tags.</p>
+  actions: []
+  keywords:
+    - weapon.talisman
+    - resource.focus
+  nodes:
+    - pre2b
+  iconicSpells: 0
+  training: talisman
+effects: []
+folder: zQ7pKvR3mNxL8sTa
+ownership:
+  default: 0
+flags: {}
+_stats:
+  systemId: crucible
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
+  createdTime: 1788278400000
+  modifiedTime: 1788315980471
+  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+_id: dependableRefocu
+sort: 900000
+_key: '!items!dependableRefocu'

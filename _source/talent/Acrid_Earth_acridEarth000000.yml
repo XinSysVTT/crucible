@@ -2,21 +2,19 @@ name: Acrid Earth
 type: talent
 img: icons/magic/earth/barrier-stone-brown-green.webp
 system:
+  keywords:
+    - playstyle.spellcraft
+    - spell.elemental
+    - damageType.acid
   nodes:
     - int4a
   description: >-
     <p>You wield earth as a chemist wields reagents, its caustic bite answering
     a sharp and incisive mind. Your usage of the <strong>Rune of Earth</strong>
-    scales with <strong>Intellect</strong> instead of
-    <strong>Wisdom</strong>.</p>
+    scales with @Rule[ability.intellect] instead of @Rule[ability.wisdom].</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: elemental
 effects: []
 folder: xhBPnxcjrC9F4AVL
 ownership:

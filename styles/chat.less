@@ -23,7 +23,27 @@
       color: var(--color-result-verygood);
     }
     .unconfirmed {
+      color: var(--color-result-warn);
+    }
+    .reversed {
       color: var(--color-result-verybad);
+    }
+  }
+
+  // Reversed action cards collapse to their header
+  &.action-reversed .message-content {
+    .crucible.action-roll {
+      margin-bottom: 0;
+    }
+    .action-roll > :not(.action),
+    .action > :not(.action-header) {
+      display: none;
+    }
+    .action-header {
+      opacity: 0.6;
+      .icon {
+        filter: grayscale(1);
+      }
     }
   }
 
@@ -50,8 +70,17 @@
   }
 
   // Confirm button
-  button.confirm {
+  button.confirm,
+  .rest-controls {
     margin-top: 0.5rem;
+  }
+  .rest-controls {
+    gap: 0.5rem;
+    button.icon {
+      flex: none;
+      width: auto;
+      aspect-ratio: 1;
+    }
   }
 
   .milestone-award {
@@ -66,22 +95,17 @@
 
   // Turn start/end summary cards
   .turn-change-summary {
-    .change-table {
-
+    button.maintain-effect {
+      --button-size: 24px;
+      display: inline-flex;
+      height: auto;
+      padding: 0 8px;
+      font-size: inherit;
     }
   }
 
   // Initiative Report and Turn Change Report
   .report-table {
-    margin: 0.25rem 0 0;
-    td, th {
-      font-size: var(--font-size-12);
-      line-height: 1.5em;
-      padding-inline: 0; // Tight layout
-    }
-    .report-value {
-      text-align: right;
-    }
 
     // Directional Result Indicators
     .boons i, .increase i {
@@ -168,6 +192,12 @@
     word-break: unset;
     text-indent: 1.45em hanging;
   }
+
+  // Read-aloud text sent from a journal fills the message
+  section.block.readaloud {
+    margin: 0;
+    padding: 0 0.5rem;
+  }
 }
 
 
@@ -223,6 +253,12 @@
   .group-check-row.line-item,
   .chat-message .standard-check.line-item {
     gap: 0 0.5rem;
+    .title {
+      min-width: 0; // Truncate long names rather than wrapping the title onto its own line
+      h4 {
+        text-overflow: ellipsis;
+      }
+    }
     .dice-result {
       flex: 0 0 100%;
       margin-top: -0.5rem; // Tighter spacing with title row
@@ -239,6 +275,100 @@
     .result.hex {
       --hex-size: 48px;
       font-size: 1.2em;
+    }
+  }
+}
+
+/* -------------------------------------------- */
+/*  Group Rest Chat Card                        */
+/* -------------------------------------------- */
+
+.crucible.rest-card {
+  .rest-summary {
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: var(--font-size-12);
+    color: var(--color-secondary);
+  }
+  .rest-status {
+    flex: none;
+  }
+  &.planning .rest-status,
+  &.rolling .rest-status {
+    color: var(--color-result-warn);
+  }
+  &.ready .rest-status {
+    color: var(--color-result-good);
+  }
+  .rest-participant {
+    .designation {
+      font-size: var(--font-size-12);
+      color: var(--color-secondary);
+    }
+    button.icon {
+      flex: none;
+      width: var(--button-size);
+      height: var(--button-size);
+      &[aria-pressed="true"] {
+        box-shadow: 0 0 6px var(--color-border-highlight);
+      }
+    }
+    i.resolved {
+      color: var(--color-result-good);
+    }
+    &:not(.results-shown) :is(.rest-rolls, .rest-rolls-row) {
+      display: none;
+    }
+    .rest-action-value {
+      display: flex;
+      justify-content: end;
+      align-items: center;
+      gap: 0.5rem;
+      button.icon {
+        --button-size: 18px;
+        padding: 0;
+        font-size: var(--font-size-12);
+        &[aria-pressed="true"] {
+          --button-text-color: var(--button-hover-text-color);
+          opacity: 1;
+          box-shadow: none;
+        }
+      }
+    }
+  }
+
+  // Compact results of performed rest actions, one per target
+  .rest-rolls {
+    flex: 0 0 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .rest-roll {
+    margin: 0;
+    .rest-roll-target {
+      display: block;
+      font-size: var(--font-size-11);
+      color: var(--color-secondary);
+    }
+  }
+  &.interrupted .rest-status,
+  &.cancelled .rest-status {
+    color: var(--color-result-verybad);
+  }
+  &.complete .rest-status {
+    color: var(--color-result-verygood);
+  }
+
+  // Interrupted or cancelled rests collapse to their summary
+  &.interrupted,
+  &.cancelled {
+    .rest-summary {
+      margin-bottom: 0;
+      opacity: 0.6;
+    }
+    .rest-participants {
+      display: none;
     }
   }
 }

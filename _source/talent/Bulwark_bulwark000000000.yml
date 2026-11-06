@@ -4,19 +4,19 @@ img: icons/equipment/shield/buckler-wooden-boss-glowing-blue.webp
 system:
   description: >-
     <p>You have expertise in using a <strong>Shield</strong> to defend yourself
-    and others.</p><p>Once per Turn while you have a Shield equipped, you may
-    use the @Action[default defend] action at a reduced cost of 1 Action
-    Point.</p>
+    and others.</p><p>While you have a <strong>Shield</strong> equipped, you may
+    sacrifice your @Rule[movement.freeMovement] for the Round to reduce the
+    @Rule[resource.action] cost of the @Action[default defend] action by 1.</p>
+  keywords:
+    - playstyle.defensive
+    - weapon.shield
+    - defense.block
+    - action.movement
   nodes:
     - tou0a
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: shield
 effects: []
 ownership:
   default: 0
@@ -25,11 +25,11 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.10.0
-  coreVersion: '14.364'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160128
-  modifiedTime: 1781972841916
-  lastModifiedBy: fzBjA63BB4hW4rQb
+  modifiedTime: 1789487356158
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: Item.bulwark000000000
   duplicateSource: null
   exportSource: null

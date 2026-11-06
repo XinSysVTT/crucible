@@ -3,23 +3,25 @@ type: talent
 img: icons/magic/light/beams-rays-orange-purple-large.webp
 system:
   description: >-
-    <p>You are highly skilled in weaving the Rune of Illumination. When you cast
-    a Spell or use an action that involves this Rune, your Critical Hits which
-    deal damage cause the @Condition[irradiated] condition.</p><p>The Irradiated
+    <p>You are highly skilled in weaving the <strong>Rune of
+    Illumination</strong>. When you cast a <strong>Spell</strong> or use an
+    action that involves this <strong>Rune</strong>, your
+    @Rule[dice.criticalSuccess]{Critical Hits} which deal damage cause the
+    @Condition[irradiated] condition.</p><p>The <strong>Irradiated</strong>
     effect lasts for <strong>1 Round</strong> and deals the ability score your
     <strong>Rune of Illumination</strong> scales with as
-    <strong>Radiant</strong> damage to both <strong>Health</strong> and
-    <strong>Morale</strong>.</p>
+    <strong>Radiant</strong> damage to both @Rule[resource.health] and
+    @Rule[resource.morale].</p>
   actions: []
+  keywords:
+    - playstyle.spellcraft
+    - spell.spiritual
+    - damageType.radiant
+    - target.morale
   nodes:
     - pre3b
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: spiritual
 effects: []
 ownership:
   default: 0
@@ -28,11 +30,11 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160138
-  modifiedTime: 1773514792593
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789499049844
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: Item.lightbringer0000
   duplicateSource: null
   exportSource: null

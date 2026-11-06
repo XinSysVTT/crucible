@@ -13,7 +13,10 @@ export default class HeroSheet extends CrucibleBaseActorSheet {
     actions: {
       editAncestry: HeroSheet.#onEditAncestry,
       editBackground: HeroSheet.#onEditBackground,
-      levelUp: HeroSheet.#onLevelUp
+      levelUp: HeroSheet.#onLevelUp,
+      proficiencyDecrease: HeroSheet.#onChangeProficiency,
+      proficiencyIncrease: HeroSheet.#onChangeProficiency,
+      resolveProgress: HeroSheet.#onResolveProgress
     }
   };
 
@@ -30,6 +33,12 @@ export default class HeroSheet extends CrucibleBaseActorSheet {
       }
     });
   }
+
+  /**
+   * The first unresolved progression requirement, whose tab the header warning navigates to.
+   * @type {{label: string, tab: string}|null}
+   */
+  #nextProgressStep = null;
 
   /* -------------------------------------------- */
 
@@ -54,33 +63,32 @@ export default class HeroSheet extends CrucibleBaseActorSheet {
     i.level = isL0 ? !i.progress : (adv.pct === 100);
     context.advancementTooltip = _loc("ADVANCEMENT.MilestoneTooltip", adv);
 
-    // Progression Issues
+    // Progression Issues, ordered so the first is the next step the player should take
     const issues = [];
-    if ( !s.system.details.ancestry?.name ) issues.push("ACTOR.WARNINGS.NoAncestry");
-    if ( !s.system.details.background?.name ) issues.push("ACTOR.WARNINGS.NoBackground");
+    if ( !s.system.details.ancestry?.name ) issues.push({label: "ACTOR.WARNINGS.NoAncestry", tab: "attributes"});
+    if ( !s.system.details.background?.name ) issues.push({label: "ACTOR.WARNINGS.NoBackground", tab: "attributes"});
     if ( !isL0 ) {
-      if ( points.ability.available < 0 ) issues.push("ACTOR.WARNINGS.OverspentAbility");
-      else if ( points.ability.requireInput ) issues.push("ACTOR.WARNINGS.UnderspentAbility");
-      if ( points.talent.available < 0 ) issues.push("ACTOR.WARNINGS.OverspentTalent");
-      else if ( points.talent.available ) issues.push("ACTOR.WARNINGS.UnderspentTalent");
+      if ( points.ability.available < 0 ) issues.push({label: "ACTOR.WARNINGS.OverspentAbility", tab: "attributes"});
+      else if ( points.ability.requireInput ) issues.push({label: "ACTOR.WARNINGS.UnderspentAbility", tab: "attributes"});
+      if ( points.talent.available < 0 ) issues.push({label: "ACTOR.WARNINGS.OverspentTalent", tab: "talents"});
+      else if ( points.talent.available ) issues.push({label: "ACTOR.WARNINGS.UnderspentTalent", tab: "talents"});
+      if ( points.proficiency.available < 0 ) {
+        issues.push({label: "ACTOR.WARNINGS.OverspentProficiency", tab: "proficiency"});
+      }
+      else if ( points.proficiency.available ) {
+        issues.push({label: "ACTOR.WARNINGS.UnderspentProficiency", tab: "proficiency"});
+      }
     }
     i.progress = !!issues.length;
+    this.#nextProgressStep = issues[0] ?? null;
     if ( i.progress ) {
-      const items = issues.reduce((s, text) => `${s}<li>${_loc(text)}</li>`, "");
+      const items = issues.reduce((s, {label}) => `${s}<li>${_loc(label)}</li>`, "");
       i.progressTooltip = `<h4>${_loc("ACTOR.ProgressionRequirements")}</h4><ol>${items}</ol>`;
     }
 
     // Allow extension of sheet context
     Hooks.callAll("crucible.prepareHeroSheetContext", this, context, options);
     return context;
-  }
-
-  /* -------------------------------------------- */
-
-  /** @override */
-  async close(options) {
-    await super.close(options);
-    await this.actor.toggleTalentTree(false);
   }
 
   /* -------------------------------------------- */
@@ -100,6 +108,8 @@ export default class HeroSheet extends CrucibleBaseActorSheet {
         return this.actor.toggleTalentTree();
       case "talentReset":
         return this.actor.resetTalents();
+      case "proficiencyReset":
+        return this.actor.resetTraining();
     }
   }
 
@@ -114,6 +124,21 @@ export default class HeroSheet extends CrucibleBaseActorSheet {
   static async #onLevelUp(event) {
     game.tooltip.deactivate();
     await this.actor.levelUp(1);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle click actions to allocate or reclaim a training point.
+   * @this {HeroSheet}
+   * @param {PointerEvent} event
+   * @param {HTMLButtonElement} target
+   * @returns {Promise<void>}
+   */
+  static async #onChangeProficiency(event, target) {
+    const {training} = target.closest(".line-item.training").dataset;
+    const delta = target.dataset.action === "proficiencyIncrease" ? 1 : -1;
+    await this.actor.purchaseTraining(training, delta);
   }
 
   /* -------------------------------------------- */
@@ -138,6 +163,19 @@ export default class HeroSheet extends CrucibleBaseActorSheet {
    */
   static async #onEditBackground(event) {
     await this.actor._viewDetailItem("background", {editable: false});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle click action to activate the tab where the next unmet progression requirement is resolved.
+   * @this {HeroSheet}
+   * @param {PointerEvent} event
+   */
+  static #onResolveProgress(event) {
+    if ( !this.#nextProgressStep ) return;
+    game.tooltip.deactivate();
+    this.changeTab(this.#nextProgressStep.tab, "sheet");
   }
 
   /* -------------------------------------------- */

@@ -7,6 +7,9 @@ import {SYSTEM} from "../const/system.mjs";
 
 /**
  * Data schema, attributes, and methods specific to Weapon type Items.
+ *
+ * @property {string[]} proficiencies   Proficiencies which wield this weapon effectively, the best of which supplies
+ *                                      its skill bonus. Mutable by `prepareWeapons` hooks.
  */
 export default class CrucibleWeaponItem extends CruciblePhysicalItem {
 
@@ -77,6 +80,18 @@ export default class CrucibleWeaponItem extends CruciblePhysicalItem {
    */
   defense;
 
+  /**
+   * Dot-delimited ability scaling for attacks made with this weapon.
+   * @type {string}
+   */
+  scaling;
+
+  /**
+   * Maximum distance in feet at which this weapon may be thrown.
+   * @type {number}
+   */
+  thrownRange;
+
   /* -------------------------------------------- */
 
   /**
@@ -131,6 +146,15 @@ export default class CrucibleWeaponItem extends CruciblePhysicalItem {
     // Weapon stats derive from the active category, which Versatile swaps for the sibling in the alternate grip
     const category = this.activeCategory;
 
+    // Simple and natural weapons are intuitive by their nature
+    if ( ["simple1", "simple2"].includes(category.id) || this.properties.has("natural") ) {
+      this.properties.add("intuitive");
+    }
+
+    // Ability and skill scaling through proficiencies and scaling configuration
+    this.proficiencies = this.properties.has("natural") ? ["natural"] : [...category.training];
+    this.scaling = category.scaling;
+
     // Weapon Damage
     this.damage = this.#prepareDamage();
 
@@ -139,6 +163,7 @@ export default class CrucibleWeaponItem extends CruciblePhysicalItem {
 
     // Weapon Range
     this.range = this.#prepareRange();
+    this.thrownRange = this.properties.has("thrown") ? 30 : 10;
 
     // Weapon Bonuses
     this.actionBonuses = {ability: 0, skill: -4, enchantment: 0};
@@ -168,14 +193,10 @@ export default class CrucibleWeaponItem extends CruciblePhysicalItem {
     const actor = this.parent.actor;
 
     // Ability Bonus
-    this.actionBonuses.ability = actor.getAbilityBonus(category.scaling.split("."));
+    this.actionBonuses.ability = actor.getAbilityBonus(this.scaling.split("."));
 
     // Skill Bonus
-    const trainingTypes = this.properties.has("natural") ? ["natural"] : category.training;
-    const isIntuitive = ["simple1", "simple2"].includes(category.id) || this.properties.has("intuitive");
-    let b = actor.getSkillBonus(trainingTypes);
-    if ( isIntuitive ) b = Math.max(b, -1);
-    this.actionBonuses.skill = b;
+    this.actionBonuses.skill = actor.getSkillBonus(this.proficiencies, {intuitive: this.properties.has("intuitive")});
 
     // Populate current damage bonus
     const actorBonuses = actor.system.rollBonuses.damage || {};
@@ -183,7 +204,7 @@ export default class CrucibleWeaponItem extends CruciblePhysicalItem {
     if ( !category.ranged ) bonus += (actorBonuses.melee ?? 0);
     if ( category.ranged ) bonus += (actorBonuses.ranged ?? 0);
     if ( category.hands === 2 ) bonus += (actorBonuses.twoHanded ?? 0);
-    this.damage.bonus = bonus;
+    this.damage.bonus += bonus;
   }
 
   /* -------------------------------------------- */
@@ -205,6 +226,7 @@ export default class CrucibleWeaponItem extends CruciblePhysicalItem {
     };
     if ( this.properties.has("oversized") ) damage.base += category.hands;
     if ( this.properties.has("blocking") || this.properties.has("engaging") ) damage.base -= category.hands;
+    if ( this.properties.has("reach") ) damage.base -= category.hands;
     if ( this.properties.has("parrying") ) damage.criticalSuccessThreshold += 1;
     return damage;
   }
@@ -242,7 +264,8 @@ export default class CrucibleWeaponItem extends CruciblePhysicalItem {
   #prepareRange() {
     const category = this.activeCategory;
     let range = category.range;
-    if ( this.properties.has("ambush") ) range = Math.max(range - (category.ranged ? 10 : 1), 1);
+    if ( this.properties.has("reach") ) range = Math.ceil(range * 1.5);
+    if ( this.properties.has("ambush") ) range = Math.ceil(range * 0.5);
     return range;
   }
 
@@ -298,7 +321,7 @@ export default class CrucibleWeaponItem extends CruciblePhysicalItem {
     const tags = super.getTags(scope);
 
     // Equipment Slot and Type
-    if ( this.properties.has("natural") ) tags.equipped = SYSTEM.WEAPON.PROPERTIES.natural.label;
+    if ( this.properties.has("natural") ) delete tags.equipped;
     else if ( this.equipped ) {
       const slotKey = Object.entries(SYSTEM.WEAPON.SLOTS).find(([_k, v]) => v === this.slot)[0];
       tags.equipped = SYSTEM.WEAPON.SLOTS.labels[slotKey];
@@ -326,11 +349,9 @@ export default class CrucibleWeaponItem extends CruciblePhysicalItem {
    * @internal
    */
   _getUntrainedTooltip(actor) {
-    const category = this.config.category;
-    if ( ["simple1", "simple2"].includes(category.id) || this.properties.has("intuitive") ) return null;
-    const trainingTypes = this.properties.has("natural") ? ["natural"] : category.training;
-    if ( actor.getSkillBonus(trainingTypes) >= 0 ) return null;
-    const labels = trainingTypes.map(t => _loc(SYSTEM.WEAPON.TRAINING[t].label));
+    if ( this.properties.has("intuitive") ) return null;
+    if ( actor.getSkillBonus(this.proficiencies) >= 0 ) return null;
+    const labels = this.proficiencies.map(t => SYSTEM.PROFICIENCY.WEAPONS[t].label);
     const training = game.i18n.getListFormatter({type: "disjunction"}).format(labels);
     return _loc("WEAPON.TAGS.UntrainedTooltip", {training});
   }

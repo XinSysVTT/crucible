@@ -16,7 +16,7 @@ system:
       condition: You incapacitate an enemy with a melee attack.
       description: >-
         <p>After defeating an enemy, you immediately move up to your
-        <strong>Stride </strong>and <strong>Strike</strong> another foe that you
+        @Rule[movement.stride] and <strong>Strike</strong> another foe that you
         pass next to or end your movement adjacent to.</p>
       cost:
         action: -2
@@ -39,20 +39,18 @@ system:
         - melee
         - movement
       summon: null
+  keywords:
+    - playstyle.melee
+    - action.movement
   nodes:
-    - toustr1
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - str2c
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: intimidation
 _stats:
   systemId: crucible
-  systemVersion: 0.10.0
-  coreVersion: '14.364'
-  modifiedTime: 1781880953267
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
+  modifiedTime: 1788278356454
   lastModifiedBy: WRGzDgYAt3ZuX6TU
   compendiumSource: null
   duplicateSource: null

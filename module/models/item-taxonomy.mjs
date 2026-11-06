@@ -24,6 +24,8 @@ export default class CrucibleTaxonomyItem extends foundry.abstract.TypeDataModel
       }, {}), {validate: CrucibleTaxonomyItem.#validateAbilities}),
       movement: new fields.SchemaField({
         size: new fields.NumberField({...requiredInteger, min: 1, initial: 4}),
+        heightRatio: new fields.NumberField({...requiredInteger, integer: false, positive: true, initial: 1.5,
+          step: 0.05}),
         stride: new fields.NumberField({...requiredInteger, min: 1, initial: 10})
       }),
       resistances: new fields.SchemaField(Object.values(SYSTEM.DAMAGE_TYPES).reduce((obj, damageType) => {
@@ -44,6 +46,12 @@ export default class CrucibleTaxonomyItem extends foundry.abstract.TypeDataModel
         autoScale: new fields.BooleanField()
       })),
       characteristics: new fields.SchemaField({
+        blooded: new fields.BooleanField({required: true, initial: source => {
+          let category;
+          if ( source?.type === "adversary" ) category = source.system.details.taxonomy?.category;
+          else category = source?.system?.category;
+          return SYSTEM.ACTOR.CREATURE_CATEGORIES[category]?.blooded ?? true;
+        }}),
         equipment: new fields.BooleanField(),
         spells: new fields.BooleanField(),
         temperature: new fields.StringField({required: true, blank: true, initial: "",
@@ -113,17 +121,13 @@ export default class CrucibleTaxonomyItem extends foundry.abstract.TypeDataModel
   /** @inheritDoc */
   static migrateData(source) {
     source = super.migrateData(source);
+    SYSTEM.TALENT.migrateTalentGrants(source);
+    crucible.api.models.CrucibleAncestryItem._migrateIdentifier(source);
 
-    if ( source.talents?.length ) {
-      if ( typeof source.talents[0] === "string") {
-        source.talents = source.talents.map(t => ({item: t, level: null}));
-      }
-    }
-
+    /** @deprecated since 0.7.3 */
     const abilities = source.abilities;
     if ( abilities ) {
       const sum = Object.values(abilities).reduce((t, n) => t + n, 0);
-      /** @deprecated since 0.7.3 */
       if ( sum === 18 ) source.abilities = Object.keys(SYSTEM.ABILITIES).reduce((obj, a) => {
         obj[a] = 2;
         return obj;

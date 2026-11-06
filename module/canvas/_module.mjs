@@ -1,3 +1,4 @@
+import CrucibleDoorControl from "./door-control.mjs";
 import CrucibleTokenRuler from "./token-ruler.mjs";
 import CrucibleTokenHUD from "../applications/hud/token-hud.mjs";
 import {MOVEMENT_ACTIONS, TRAVEL_PACES} from "../const/actor.mjs";
@@ -6,13 +7,15 @@ import {registerComponents} from "./vfx/components/_module.mjs";
 
 export * as detectionModes from "./detection-modes/_module.mjs";
 export * as tree from "./tree/_module.mjs";
+export * as filters from "./filters/_module.mjs";
 export * as grid from "./grid/_module.mjs";
+export * as movementAnimation from "./movement-animation.mjs";
 export * as particles from "./particles/_module.mjs";
 export * as vfx from "./vfx/_module.mjs";
 export * as movement from "./movement.mjs";
 export {default as CrucibleMovementPolygon} from "./movement-polygon.mjs";
 export {default as CrucibleTokenObject} from "./token.mjs";
-export {CrucibleTokenRuler};
+export {CrucibleDoorControl, CrucibleTokenRuler};
 
 /**
  * Configure canvas extensions for the Crucible system.
@@ -20,6 +23,7 @@ export {CrucibleTokenRuler};
 export function configure() {
   CONFIG.Token.rulerClass = CrucibleTokenRuler;
   CONFIG.Token.hudClass = CrucibleTokenHUD;
+  CONFIG.Canvas.doorControlClass = CrucibleDoorControl;
   // Stride of 10, 6 strides per turn, 10 seconds per round, x2 multiplier for visual satisfaction
   CONFIG.Token.movement.defaultSpeed = (10 * 6) * 2 / 10;
 

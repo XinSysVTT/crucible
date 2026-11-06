@@ -3,28 +3,28 @@ type: talent
 img: icons/skills/social/intimidation-impressing.webp
 system:
   description: >-
-    You can wield weapons with the Slow trait and wear Armor with the Bulky
-    trait without suffering Banes to your Initiative rolls.
+    <p>You can wield weapons with the <strong>Slow</strong> trait and wear
+    @Rule[defense.armor] with the <strong>Bulky</strong> trait without suffering
+    @Rule[dice.bane]{Banes} to your <strong>Initiative</strong> rolls.</p>
   actions: []
+  keywords:
+    - initiative
+    - armor.heavy
+    - weapon.heavy
   nodes:
-    - str2c
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - str1b
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: armor
 effects: []
 flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160141
-  modifiedTime: 1773514792603
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789487035049
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: Compendium.crucible.talent.powerfulphysique
   duplicateSource: null
   exportSource: null

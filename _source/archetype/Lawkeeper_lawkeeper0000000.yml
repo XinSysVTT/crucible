@@ -17,7 +17,7 @@ system:
   talents:
     - item: Compendium.crucible.talent.Item.intercept0000000
       level: 1
-    - item: Compendium.crucible.talent.Item.projectileWeapon
+    - item: Compendium.crucible.talent.Item.quickDraw0000000
       level: 1
     - item: Compendium.crucible.talent.Item.preparedness0000
       level: 0
@@ -29,13 +29,22 @@ system:
       level: 2
     - item: Compendium.crucible.talent.Item.markprey00000000
       level: 2
-    - item: Compendium.crucible.talent.Item.unarmedCombatTra
+    - item: Compendium.crucible.talent.Item.grapple000000000
       level: 0
-  skills:
-    - awareness
-    - medicine
-    - society
-    - intimidation
+    - item: Compendium.crucible.talent.Item.forensicreconstr
+      level: 1
+    - item: Compendium.crucible.talent.Item.perspicacity0000
+      level: 0
+  training:
+    awareness: 2
+    medicine: 1
+    society: 2
+    deception: 0
+    diplomacy: 0
+    intimidation: 1
+    light: 2
+    mechanical: 3
+    armor: 1
   spells: []
   equipment: []
 effects: []
@@ -48,12 +57,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.368'
   systemId: crucible
-  systemVersion: 0.8.7
+  systemVersion: 0.10.2
   createdTime: 1771961150981
-  modifiedTime: 1773514792219
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1791130481799
+  lastModifiedBy: 2g4T1RcAPz2LBKZ1
 _id: lawkeeper0000000
-sort: 0
+sort: 400000
 _key: '!items!lawkeeper0000000'

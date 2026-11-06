@@ -1,27 +1,27 @@
-folder: 2nepH1RWurpMYAjw
+folder: k2H23tobHffCMQCj
 name: Deft Grip
 type: talent
 _id: deftgrip00000000
 img: icons/skills/melee/stabbing-knife.webp
 system:
+  keywords:
+    - playstyle.melee
+    - playstyle.spellcraft
+    - weapons.twohand
   nodes:
-    - dex2a
+    - dex2c
   description: >-
     <p>Your grasp of your weaponry is fluid and precise. While wielding a
-    two-handed weapon that scales with Dexterity you may cast spells which
-    require two hands, and attempts to Disarm you are made with +2
-    Banes.</p><p>You may use Free Movement to equip or unequip such a weapon
-    without any Action cost.</p>
+    two-handed weapon that scales with @Rule[ability.dexterity] you may cast
+    spells which require two hands, and attempts to <strong>Disarm</strong> you
+    are made with @Rule[dice.bane]{+2 Banes}.</p><p>Additionally, you may use
+    your @Rule[movement.freeMovement] to equip or unequip such a weapon without
+    any @Rule[resource.action] cost.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: light
 effects: []
-sort: 0
+sort: 400000
 ownership:
   default: 0
   iobhrakkle3Lyj0G: 3
@@ -30,10 +30,10 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.363'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.5
+  systemVersion: 0.10.2
   createdTime: 1772713232009
-  modifiedTime: 1780937856390
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1789490591568
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 _key: '!items!deftgrip00000000'

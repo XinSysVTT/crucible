@@ -3,18 +3,15 @@ type: talent
 _id: aqueousCamouflag
 img: icons/magic/water/orb-water-bubbles-blue.webp
 system:
+  keywords:
+    - playstyle.utility
+    - skill.stealth
   nodes: []
   description: >-
     <p>While fully submerged in water or liquids, @ref[actor.name]{this
-    creature} has @Advantage[2] on <strong>Stealth</strong> checks.</p>
+    creature} has @Rule[dice.boon]{+2 Boons} on @Rule[skill.stealth] checks.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: qmA72jUC4FASsfvS
 ownership:

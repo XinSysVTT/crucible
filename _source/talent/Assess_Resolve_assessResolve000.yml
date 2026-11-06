@@ -1,0 +1,68 @@
+name: Assess Resolve
+type: talent
+img: icons/magic/fire/flame-burning-eye.webp
+system:
+  description: >-
+    <p>You take a moment to observe a creature which you can see and develop
+    intuition about whether its body or its spirit is the more
+    resilient.</p><p>Perform a <strong>Knowledge Test</strong> using the
+    appropriate <strong>Skill</strong> for the creature. On a success, you learn
+    whether the creature has greater maximum @Rule[resource.health] or greater
+    maximum @Rule[resource.morale]. On a @Rule[dice.criticalSuccess] the
+    Gamemaster additionally describes how the creature is likely to behave
+    should it become @Condition[broken].</p>
+  actions:
+    - id: assessResolve
+      description: >-
+        <p>You observe a creature you can see to judge whether its body or its
+        spirit is the more resilient.</p>
+      tags:
+        - harmless
+        - subtle
+      cost:
+        action: 1
+        focus: 1
+        heroism: 0
+        weapon: false
+        hands: 0
+      target:
+        type: single
+        number: 1
+        scope: 0
+        self: false
+      effects: []
+      name: Assess Resolve
+      img: icons/magic/fire/flame-burning-eye.webp
+      condition: ''
+      range:
+        minimum: null
+        maximum: null
+        weapon: false
+      summon:
+        actorUuid: null
+        permanent: true
+  keywords:
+    - playstyle.utility
+  nodes:
+    - wis1a
+  iconicSpells: 0
+  training: society
+effects: []
+folder: fldScience000000
+flags: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.367'
+  systemId: crucible
+  systemVersion: 0.10.2
+  modifiedTime: 1789496827900
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+  createdTime: 1772307160126
+ownership:
+  default: 0
+  AnoypGxxNIMOS0XY: 3
+_id: assessResolve000
+sort: 700000
+_key: '!items!assessResolve000'

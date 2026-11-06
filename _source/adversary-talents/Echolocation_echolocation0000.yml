@@ -3,6 +3,9 @@ type: talent
 _id: echolocation0000
 img: icons/magic/symbols/ring-circle-smoke-blue.webp
 system:
+  keywords:
+    - playstyle.utility
+    - senses
   nodes: []
   description: >-
     <p>@ref[actor.name]{This creature} perceives the world through the emission
@@ -13,13 +16,7 @@ system:
     using @ref[name] is treated as visible for the purposes of actions which
     require you to see your target.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: qmA72jUC4FASsfvS
 ownership:

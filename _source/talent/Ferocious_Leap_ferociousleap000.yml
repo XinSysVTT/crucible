@@ -9,9 +9,9 @@ system:
   actions:
     - id: ferociousLeap
       description: >-
-        <p>You <strong>Jump</strong> up to 10 feet, delivering a
-        <strong>Strike</strong> against an enemy within melee range of where you
-        land. Your movement ignores difficult terrain and is not blocked by
+        <p>You <strong>Jump</strong> up to <strong>10 feet</strong>, delivering
+        a <strong>Strike</strong> against an enemy within melee range of where
+        you land. Your movement ignores difficult terrain and is not blocked by
         enemy creatures.</p>
       tags:
         - melee
@@ -39,24 +39,22 @@ system:
         weapon: true
         minimum: 4
       summon: null
+  keywords:
+    - playstyle.melee
+    - action.movement
   nodes:
-    - str3b
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - str2c
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: athletics
 effects: []
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.10.0
-  coreVersion: '14.364'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160132
-  modifiedTime: 1781881062015
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789490198631
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

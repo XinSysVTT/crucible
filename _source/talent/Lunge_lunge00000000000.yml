@@ -1,0 +1,66 @@
+folder: Xg1Jww0K0CK7vUo1
+name: Lunge
+type: talent
+img: icons/skills/melee/strike-polearm-light-orange.webp
+system:
+  description: >-
+    <p>You know how to wield light weapons fluidly with a high degree of
+    maneuverability and grace in combat.</p>
+  actions:
+    - id: lunge
+      name: Lunge
+      img: icons/skills/melee/strike-polearm-light-orange.webp
+      condition: ''
+      description: >-
+        <p>You dart forward nimbly, attacking with sudden and unexpected
+        swiftness to perform a <strong>Strike</strong> with a weapon which
+        scales using @Rule[ability.dexterity] against a single target, with an
+        increased range of <strong>+2 feet</strong>.</p><p>The attack is
+        @Rule[action.difficult], but you do not move from your current position
+        nor does this attack provoke a @Action[default reactiveStrike].</p>
+      cost:
+        action: 0
+        focus: 0
+        heroism: 0
+        hands: 0
+        weapon: true
+      range:
+        minimum: null
+        maximum: 2
+        weapon: true
+      target:
+        type: single
+        number: 1
+        scope: 3
+        self: false
+      effects: []
+      tags:
+        - finesse
+        - melee
+        - difficult
+      summon: null
+  iconicSpells: 0
+  training: light
+  keywords:
+    - playstyle.melee
+    - weapon.light
+  nodes:
+    - dex0b
+effects: []
+flags: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.367'
+  systemId: crucible
+  systemVersion: 0.10.2
+  createdTime: 1772307160138
+  modifiedTime: 1789488611598
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+ownership:
+  default: 0
+  AnoypGxxNIMOS0XY: 3
+_id: lunge00000000000
+sort: 200000
+_key: '!items!lunge00000000000'

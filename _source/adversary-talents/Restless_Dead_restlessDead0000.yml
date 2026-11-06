@@ -2,6 +2,8 @@ name: Restless Dead
 type: talent
 img: icons/magic/death/hand-undead-skeleton-fire-pink.webp
 system:
+  keywords:
+    - playstyle.defensive
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature}'s life is sustained by necromantic magic
@@ -16,13 +18,7 @@ system:
     dispelled.</p></li><li><p>The creature's body is destroyed to a degree that
     it can no longer maintain its physical form.</p></li></ul>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: EDeByOa9cuYSaF8Y
 ownership:

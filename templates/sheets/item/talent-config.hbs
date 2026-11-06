@@ -4,20 +4,40 @@
     <fieldset>
         <legend>{{localize "ITEM.SHEET.TalentConfiguration"}}</legend>
         {{formGroup fields.nodes value=source.system.nodes options=nodes sort=true}}
+        {{formGroup fields.keywords value=source.system.keywords groups=keywordGroups sort=true}}
     </fieldset>
 
     <fieldset>
         <legend>{{localize "ITEM.SHEET.Spellcraft"}}</legend>
-        {{formGroup fields.rune value=source.system.rune valueAttr="id" labelAttr="name"}}
-        {{formGroup fields.gesture value=source.system.gesture valueAttr="id" labelAttr="name"}}
-        {{formGroup fields.inflection value=source.system.inflection valueAttr="id" labelAttr="name"}}
+        {{formGroup fields.spellcraft value=source.system.spellcraft blank=""}}
         {{formGroup fields.iconicSpells value=source.system.iconicSpells}}
     </fieldset>
 
     <fieldset>
-        <legend>{{fields.training.label}}</legend>
-        <p class="hint">{{fields.training.hint}}</p>
-        {{formGroup fields.training.fields.type value=source.system.training.type blank=""}}
-        {{formGroup fields.training.fields.rank value=source.system.training.rank options=trainingRanks blank=""}}
+        <legend>{{localize "ITEM.SHEET.Training"}}</legend>
+        {{formGroup fields.training value=source.system.training blank=""}}
+    </fieldset>
+
+    <fieldset class="training">
+        <legend>{{localize "ITEM.SHEET.TalentRequirements"}}</legend>
+        {{#if requirements.rows.length}}
+        <div class="form-fields">
+            {{#each requirements.rows as |p|}}
+            <div class="training-requirement" data-proficiency="{{p.id}}">
+                {{formInput p.field value=p.value type="number" name=p.name}}
+                <span class="proficiency">{{p.label}}</span>
+                <a class="remove" data-action="requirementRemove"
+                   data-tooltip="ITEM.SHEET.TalentRequirementRemove">
+                    <i class="fa-solid fa-times"></i>
+                </a>
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+        {{#if requirements.options.length}}
+        {{formInput requirements.field name="requirementAdd" value="" options=requirements.options
+                    groups=requirements.groups blank=(localize "ITEM.SHEET.TalentRequirementAdd")}}
+        {{/if}}
+        <p class="hint">{{localize "ITEM.SHEET.TalentRequirementsHint"}}</p>
     </fieldset>
 </section>

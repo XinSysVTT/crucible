@@ -78,6 +78,16 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
    */
   actors = new Set();
 
+  /**
+   * Does this group track milestone advancement, as the primary party or a group containing any hero?
+   * @type {boolean}
+   */
+  get tracksAdvancement() {
+    if ( this.parent === crucible.party ) return true;
+    for ( const actor of this.actors ) if ( actor.type === "hero" ) return true;
+    return false;
+  }
+
   /* -------------------------------------------- */
   /*  Document Preparation                        */
   /* -------------------------------------------- */
@@ -137,6 +147,71 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
   /* -------------------------------------------- */
 
   /**
+   * Evaluate the difficulty of an encounter's threat against the threat of the party's side.
+   * @param {number} threat                     The total threat of the encounter's hostile combatants
+   * @param {number} partyThreat                The total threat of the party's side
+   * @returns {{threat: number, partyThreat: number, ratio: number|null, difficulty: object|null}}
+   */
+  static evaluateEncounter(threat, partyThreat) {
+    if ( !partyThreat ) return {threat, partyThreat, ratio: null, difficulty: null};
+    const ratio = threat / partyThreat;
+    const difficulty = Object.values(SYSTEM.ENCOUNTER_DIFFICULTIES).find(d => ratio < d.maximumRatio);
+    return {threat, partyThreat, ratio, difficulty};
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * The configured primary party, or `null` after warning if none is set or it has no members.
+   * @returns {CrucibleGroupActor|null}
+   */
+  static getParty() {
+    const party = crucible.party?.system;
+    if ( party?.actors?.size ) return party;
+    ui.notifications.warn(_loc("WARNING.NoParty"));
+    return null;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Members of this group whose player is currently connected.
+   * @returns {CrucibleActor[]}
+   */
+  getOnlineActors() {
+    return Array.from(this.actors).filter(actor => actor.getActivePlayerUser());
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Members for an initial party fill: connected players, or everyone if nobody is online.
+   * @returns {CrucibleActor[]}
+   */
+  getPreferredActors() {
+    const online = this.getOnlineActors();
+    return online.length ? online : Array.from(this.actors);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Replace this group's members in `selected` with the next online-first fill, leaving other actors in place.
+   * @param {Set<CrucibleActor>} selected
+   */
+  toggleOnlineActors(selected) {
+    const has = actors => actors.length > 0 && actors.every(actor => selected.has(actor));
+    const preferred = this.getPreferredActors();
+    const all = Array.from(this.actors);
+    // Cycle incomplete -> preferred -> all -> preferred
+    const keep = has(preferred) && !has(all) ? all : preferred;
+    for ( const actor of this.actors ) selected.delete(actor);
+    for ( const actor of keep ) selected.add(actor);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Add a new member to this group.
    * If the new member is a single Actor (hero or adversary), the group gains `quantity` that Actor.
    * If the new member is a group, this group is merged with the membership of the other group.
@@ -168,6 +243,11 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
 
     // Add new members
     for ( const m of toJoin.values() ) members.push(m);
+
+    // A linked Actor is a single creature, so it cannot be stacked
+    for ( const m of members ) {
+      if ( game.actors.get(m.actorId)?.prototypeToken.actorLink ) m.quantity = 1;
+    }
 
     // Commit the update
     await this.parent.update({"system.members": members});
@@ -259,7 +339,7 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
     recipientIds ||= Array.from(this.memberIds);
     for ( const id of recipientIds ) {
       const actor = game.actors.get(id);
-      if ( !actor || (actor.type !== "hero") ) throw new Error(_loc("AWARD.WARNINGS.InvalidMilestoneRecipient", {id}));
+      if ( actor?.type !== "hero" ) continue; // Companions and other non-hero members do not advance
       recipientHTML.push(`<li>${actor.name}</li>`);
       const actorMilestones = actor.system._source.advancement.milestones + number;
       actorUpdates.push({_id: id, system: {advancement: {milestones: actorMilestones}}});
@@ -312,7 +392,7 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
     recipientIds ||= Array.from(this.memberIds);
     for ( const id of recipientIds ) {
       const actor = game.actors.get(id);
-      if ( !actor || (actor.type !== "hero") ) throw new Error(_loc("AWARD.WARNINGS.InvalidMilestoneRevokee", {id}));
+      if ( actor?.type !== "hero" ) continue; // Companions and other non-hero members do not advance
       recipientHTML.push(`<li>${actor.name}</li>`);
       const actorMilestones = Math.max(actor.system._source.advancement.milestones - number, 0);
       actorUpdates.push({_id: id, system: {advancement: {milestones: actorMilestones}}});
@@ -337,10 +417,13 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
    * Provide the Gamemaster with a Dialog to award milestone points to the group.
    * @param {object} [options]
    * @param {boolean} [options.createMessage=true]  Whether to create a chat message summarizing the award
-   * @param {boolean} [options.number=1]            A number of milestones as the default option
+   * @param {number} [options.number=1]             A number of milestones as the default option
+   * @param {string} [options.identifier]           A default milestone identifier
+   * @param {string} [options.reason]               A default reason which describes the milestone
    * @returns {Promise<void>}
    */
-  async awardMilestoneDialog(options={}) {
+  async awardMilestoneDialog({createMessage=true, number: defaultNumber=1, identifier: defaultIdentifier,
+    reason: defaultReason}={}) {
     if ( !game.user.isGM ) throw new Error(_loc("AWARD.WARNINGS.RequiresGM"));
 
     // Prepare form data
@@ -364,9 +447,9 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
     });
     const identifierPlaceholder = `milestone${Object.keys(this.advancement.milestones).length+1}`;
     content.append(
-      identifier.toFormGroup({}, {name: "identifier", placeholder: identifierPlaceholder}),
-      number.toFormGroup({classes: ["slim"]}, {name: "number", value: options.number || 1, placeholder: "1"}),
-      reason.toFormGroup({stacked: true}, {name: "reason"}),
+      identifier.toFormGroup({}, {name: "identifier", value: defaultIdentifier, placeholder: identifierPlaceholder}),
+      number.toFormGroup({classes: ["slim"]}, {name: "number", value: defaultNumber || 1, placeholder: "1"}),
+      reason.toFormGroup({stacked: true}, {name: "reason", value: defaultReason}),
       recipients.toFormGroup({stacked: true}, {name: "recipients", type: "checkboxes", value: Object.keys(heroes),
         sort: true})
     );
@@ -383,7 +466,7 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
 
     // Perform the award
     await this.awardMilestone(response.identifier, response.number, {
-      ...options,
+      createMessage,
       recipientIds: response.recipients,
       reason: response.reason
     });
@@ -394,9 +477,11 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
 
   /**
    * Provide the Gamemaster with a Dialog to revoke milestone points from the group.
+   * @param {object} [options]
+   * @param {string} [options.identifier]           A default milestone identifier to revoke
    * @returns {Promise<void>}
    */
-  async revokeMilestoneDialog() {
+  async revokeMilestoneDialog({identifier: defaultIdentifier}={}) {
     if ( !game.user.isGM ) throw new Error(_loc("AWARD.WARNINGS.RequiresGM"));
 
     // Prepare form data
@@ -423,7 +508,7 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
       hint: _loc("AWARD.MILESTONE.RecipientsHint")
     });
     content.append(
-      identifier.toFormGroup({}, {name: "identifier"}),
+      identifier.toFormGroup({}, {name: "identifier", value: defaultIdentifier}),
       recipients.toFormGroup({stacked: true}, {name: "recipients", type: "checkboxes", value: Object.keys(heroes),
         sort: true})
     );
@@ -480,90 +565,25 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
   /* -------------------------------------------- */
 
   /**
-   * Perform a group rest where every member of the group uses the Rest action and time advances.
-   * Fires a `crucible.preGroupRest` hook which may return `false` to cancel synchronously, or push a Promise
-   * into `restConfig.promises` for async workflows which may throw an Error to prevent rest progress.
-   * Fires a `crucible.groupRest` hook once an uninterrupted rest has finished and time has advanced.
-   * @fires {preGroupRest}
-   * @fires {groupRest}
+   * Begin a group rest by staging a pending rest ChatMessage which a Gamemaster confirms.
    * @param {object} [options]
    * @param {boolean} [options.allowInterruption=true]    Allow the possibility of rest interruption.
    * @param {boolean} [options.dialog=true]               Prompt the Gamemaster to confirm participants and duration.
-   * @returns {Promise<void>}
+   * @returns {Promise<CrucibleChatMessage|null>}         The pending rest message, or null if not begun
    */
   async rest({allowInterruption=true, dialog=true}={}) {
     const baseHours = SYSTEM.TIME.restSeconds / 3600;
     const prior = this.parent.getFlag("crucible", "rest") ?? null;
     const hoursRemaining = prior ? Math.max(prior.hoursRequired - prior.hoursCompleted, 1) : baseHours;
-    const restConfig = {
-      duration: hoursRemaining * 3600,
-      allowInterruption,
-      promises: [],
-      prior,
-      interrupted: null
-    };
+    let config = {participants: this.actors, duration: hoursRemaining * 3600, allowInterruption,
+      allowRestActions: true};
 
     // Confirm participants and rest configuration with the Gamemaster
-    let participants = this.actors;
     if ( dialog ) {
-      const response = await this.#confirmRestDialog(restConfig.duration / 3600, prior);
-      if ( !response ) return;
-      participants = response.participants;
-      restConfig.duration = response.duration;
-      restConfig.allowInterruption = response.allowInterruption;
+      config = await this.#confirmRestDialog(hoursRemaining, prior);
+      if ( !config ) return null;
     }
-
-    // Allow modules to modify or prevent the rest
-    const cancelled = Hooks.call("crucible.preGroupRest", this, restConfig) === false;
-    if ( cancelled && restConfig.allowInterruption ) return;
-    try {
-      await Promise.all(restConfig.promises);
-    } catch(err) {
-      if ( !restConfig.allowInterruption ) {
-        console.warn(`Group rest hook throw an Error, but this Rest cannot be interrupted: ${err.message}`);
-      }
-      else if ( restConfig.interrupted ) {
-        await this.#recordRestInterruption(prior, restConfig.interrupted);
-        return;
-      }
-      else {
-        console.warn(`Group rest cancelled: ${err.message}`);
-        return;
-      }
-    }
-
-    // Successful completion - clear continuation state and execute the rest
-    if ( prior ) await this.parent.unsetFlag("crucible", "rest");
-    const promises = [];
-    for ( const actor of participants ) {
-      promises.push(actor.useAction("rest", {dialog: false}));
-    }
-    promises.push(game.time.advance(restConfig.duration));
-    await Promise.allSettled(promises);
-
-    // Announce completion only once time has advanced, so listeners which timestamp the rest record its end
-    Hooks.callAll("crucible.groupRest", this, restConfig, participants);
-  }
-
-  /* -------------------------------------------- */
-
-  /**
-   * Persist continuation state after a rest is interrupted, folding listener-supplied extras into the flag.
-   * @param {{hoursCompleted: number, hoursRequired: number}|null} prior   Prior continuation state.
-   * @param {{hoursElapsed: number}} interrupted                           Listener-supplied interruption descriptor.
-   * @returns {Promise<void>}
-   */
-  async #recordRestInterruption(prior, interrupted) {
-    const baseHours = SYSTEM.TIME.restSeconds / 3600;
-    const {hoursElapsed, ...extras} = interrupted;
-    const flag = {
-      hoursCompleted: (prior?.hoursCompleted ?? 0) + hoursElapsed,
-      hoursRequired: prior?.hoursRequired ?? baseHours,
-      ...extras
-    };
-    await this.parent.setFlag("crucible", "rest", _replace(flag));
-    await game.time.advance(hoursElapsed * 3600);
-    ui.notifications.warn(_loc("ACTOR.GROUP.REST.Interrupted", {hours: hoursElapsed}));
+    return crucible.api.models.CrucibleRestMessage.createMessage(this.parent, config);
   }
 
   /* -------------------------------------------- */
@@ -572,7 +592,8 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
    * Prompt the Gamemaster to confirm group rest participants and duration.
    * @param {number} defaultHours       Pre-populated rest duration in hours
    * @param {{hoursCompleted: number, hoursRequired: number}|null} [prior=null]   Prior continuation state.
-   * @returns {Promise<{participants: CrucibleActor[], duration: number, allowInterruption: boolean}|null>}
+   * @returns {Promise<{participants: CrucibleActor[], duration: number, allowInterruption: boolean,
+   *   allowRestActions: boolean}|null>}
    */
   async #confirmRestDialog(defaultHours, prior=null) {
 
@@ -584,7 +605,8 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
         {initial: Object.keys(choices)}),
       hours: new NumberField({required: true, nullable: false, positive: true, min: 1, step: 0.5,
         initial: defaultHours}),
-      allowInterruption: new BooleanField({initial: true})
+      allowInterruption: new BooleanField({initial: true}),
+      allowRestActions: new BooleanField({initial: true})
     });
     foundry.helpers.Localization.localizeSchema(formSchema, ["ACTOR.GROUP.REST"]);
     const content = document.createElement("div");
@@ -613,7 +635,8 @@ export default class CrucibleGroupActor extends foundry.abstract.TypeDataModel {
     return {
       participants: [...this.actors].filter(a => response.participants.includes(a.id)),
       duration: (response.hours ?? defaultHours) * 3600,
-      allowInterruption: response.allowInterruption ?? true
+      allowInterruption: response.allowInterruption ?? true,
+      allowRestActions: response.allowRestActions ?? true
     };
   }
 

@@ -8,6 +8,7 @@ export default class CrucibleSpellcraftRune extends foundry.abstract.DataModel {
       id: new fields.StringField({required: true, blank: false}),
       name: new fields.StringField(),
       img: new fields.FilePathField({categories: ["IMAGE"]}),
+      color: new fields.ColorField({required: true, nullable: false}),
       damageType: new fields.StringField({required: false, initial: undefined,
         choices: ["physical"].concat(Object.keys(SYSTEM.DAMAGE_TYPES))}),
       resource: new fields.StringField({choices: SYSTEM.RESOURCES, initial: "health"}),
@@ -18,7 +19,9 @@ export default class CrucibleSpellcraftRune extends foundry.abstract.DataModel {
         return obj;
       }, {})}),
       nameFormat: new fields.NumberField({choices: Object.values(SYSTEM.SPELL.NAME_FORMATS)}),
-      scaling: new fields.StringField({choices: SYSTEM.ABILITIES})
+      spellName: new fields.StringField(),
+      scaling: new fields.StringField({choices: SYSTEM.ABILITIES}),
+      training: new fields.StringField({required: true, blank: false, choices: SYSTEM.PROFICIENCY.SPELLCRAFT})
     };
   }
 
@@ -49,7 +52,9 @@ export default class CrucibleSpellcraftRune extends foundry.abstract.DataModel {
   /** @inheritDoc */
   _initialize() {
     super._initialize();
-    this.adjective = _loc(`${this.name}Adj`);
+    const spellName = this.spellName || this.name;
+    this.adjective = _loc(`${spellName}Adj`);
+    this.spellName = _loc(spellName);
     this.name = _loc(this.name);
   }
 

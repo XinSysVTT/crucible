@@ -2,21 +2,20 @@ name: Gathering Storm
 type: talent
 img: icons/magic/lightning/bolts-salvo-clouds-sky.webp
 system:
+  keywords:
+    - playstyle.spellcraft
+    - spell.elemental
+    - damageType.electricity
   nodes:
     - wis4d
   description: >-
     <p>You understand that a storm is not sudden chaos but a patient, gathering
     force that breaks only when it must. Your usage of the <strong>Rune of
-    Storm</strong> scales with <strong>Wisdom</strong> instead of
-    <strong>Intellect</strong>.</p>
+    Storm</strong> scales with @Rule[ability.wisdom] instead of
+    @Rule[ability.intellect].</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: elemental
 effects: []
 folder: xhBPnxcjrC9F4AVL
 ownership:

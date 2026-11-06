@@ -2,20 +2,19 @@ name: Inexorable Flame
 type: talent
 img: icons/magic/fire/flame-burning-campfire-rocks.webp
 system:
+  keywords:
+    - playstyle.spellcraft
+    - spell.elemental
+    - damageType.fire
   nodes:
     - wis4d
   description: >-
     <p>You recognize that fire can spread with inevitable and unstoppable
     purpose. Your usage of the <strong>Rune of Flame</strong> scales with
-    <strong>Wisdom</strong> instead of <strong>Intellect</strong>.</p>
+    @Rule[ability.wisdom] instead of @Rule[ability.intellect].</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: elemental
 effects: []
 folder: xhBPnxcjrC9F4AVL
 ownership:

@@ -37,15 +37,13 @@ system:
       summon:
         actorUuid: null
         permanent: true
+  keywords:
+    - playstyle.ranged
+    - weapon.mechanical
   nodes:
     - dex1a
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: mechanical
 effects: []
 folder: k2H23tobHffCMQCj
 sort: 200000

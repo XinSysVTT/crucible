@@ -287,10 +287,11 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
     });
 
     // Talents
-    ancestry.features.push({
+    const talentItems = await Promise.all(talents.map(({item: uuid}) => this._renderFeatureItem(uuid)));
+    if ( talentItems.length ) ancestry.features.push({
       id: "talents",
       label: schema.getField("talents").label,
-      items: await Promise.all(talents.map(({item: uuid}) => this._renderFeatureItem(uuid)))
+      items: talentItems
     });
   }
 
@@ -316,7 +317,7 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
    * @protected
    */
   static async _initializeBackground(background) {
-    const {knowledge, skills, talents, schema, languages} = background.item.system;
+    const {knowledge, training, talents, schema, languages} = background.item.system;
 
     // Knowledge Areas
     const knowledgeTags = Array.from(knowledge.map(knowledgeId => {
@@ -338,21 +339,22 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
       tags: languageTags
     });
 
-    // Skills
-    const skillItems = await Promise.all(skills.map(skillId => {
-      const uuid = SYSTEM.SKILLS[skillId].talents[1];
-      return this._renderFeatureItem(uuid);
+    // Granted Training, ordered as automatic advancement prioritises it rather than as the Background declared it
+    const trainingTags = SYSTEM.PROFICIENCY.ALLOCATION_ORDER.filter(id => training.has(id)).map(id => ({
+      text: _loc("ACTOR.TrainingSpecific", {training: SYSTEM.PROFICIENCIES[id].label, points: (1).signedString()})
     }));
-    if ( skillItems.length ) background.features.push({
-      label: schema.getField("skills").label,
-      items: skillItems
+    if ( trainingTags.length ) background.features.push({
+      label: schema.getField("training").label,
+      tags: trainingTags
     });
 
     // Talents
     const talentItems = await Promise.all(talents.map(({item: uuid}) => this._renderFeatureItem(uuid)));
     if ( talentItems.length ) background.features.push({
+      id: "talents",
       label: schema.getField("talents").label,
-      items: talentItems
+      items: talentItems,
+      uuids: talents.map(t => t.item)
     });
   }
 
@@ -450,7 +452,7 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
       // Flag weapons which the hero lacks the training to wield effectively
       if ( item.type === "weapon" ) {
         const untrainedTooltip = item.system._getUntrainedTooltip(this._clone);
-        if ( untrainedTooltip ) tags.category = {label: tags.category, unmet: true, tooltip: untrainedTooltip};
+        if ( untrainedTooltip ) tags.category = {...tags.category, unmet: true, tooltip: untrainedTooltip};
       }
       return {
         uuid: item.uuid,
@@ -742,11 +744,31 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
     const spentPoints = this._clone.points.ability.pool === 0;
     this._completed.background = (backgroundId in backgrounds) && spentPoints;
     if ( backgroundId ) {
-      const b = context.background = backgrounds[backgroundId];
+      const b = context.background = await this._prepareBackgroundOption(backgrounds[backgroundId]);
       if ( b.color ) t.selectionColor = b.color;
       if ( b.icon ) t.selectionIcon = b.icon;
     }
     else context.background = null;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prepare a chosen background option for display, showing the talent substitutions chosen for the Actor.
+   * @param {CrucibleHeroCreationItem} option     The chosen background option
+   * @returns {Promise<CrucibleHeroCreationItem>}  The option, or a copy of it with substituted talents
+   * @protected
+   */
+  async _prepareBackgroundOption(option) {
+    const replacements = new Map(this._clone.getFlag("crucible", "substitutions") ?? []);
+    if ( !replacements.size ) return option;
+    const features = await Promise.all(option.features.map(async f => {
+      if ( (f.id !== "talents") || !f.uuids.some(uuid => replacements.has(uuid)) ) return f;
+      const uuids = f.uuids.map(uuid => replacements.get(uuid) ?? uuid);
+      const items = await Promise.all(uuids.map(uuid => this.constructor._renderFeatureItem(uuid)));
+      return {...f, items, uuids};
+    }));
+    return {...option, features};
   }
 
   /* -------------------------------------------- */
@@ -893,15 +915,19 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
   async chooseAncestry(ancestryId) {
     if ( !(ancestryId in this._state.ancestries) ) throw new Error(`Invalid Ancestry identifier "${ancestryId}"`);
     const actor = this._clone;
-    const ancestryItem = this._state.ancestries[ancestryId].item;
+    const ancestryItem = await this._chooseAncestry(ancestryId);
 
     // Update the Actor clone
+    const substitutions = await actor._promptTalentSubstitutions({ancestry: ancestryItem.system});
+    if ( !substitutions ) return;
     await actor._applyDetailItem(ancestryItem, {type: "ancestry", local: true, notify: false});
+    await actor._reapplyBackground(substitutions, {local: true});
     this._state.ancestryId = ancestryId;
     await this.render({parts: ["header", this.step]});
   }
 
   /* -------------------------------------------- */
+
   /**
    * Choose a Background.
    * @param {string|CrucibleItem} background
@@ -909,32 +935,14 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
    */
   async chooseBackground(background) {
     const actor = this._clone;
-    let backgroundId;
-    let backgroundItem;
-
-    // Background ID
-    if ( typeof background === "string" ) {
-      backgroundId = background;
-      if ( !(backgroundId in this._state.backgrounds) ) {
-        throw new Error(`Invalid Background identifier "${backgroundId}"`);
-      }
-      backgroundItem = this._state.backgrounds[backgroundId].item;
-    }
-
-    // Background Item
-    else if ( background instanceof CrucibleItem ) {
-      backgroundId = background.system.identifier;
-      backgroundItem = background;
-    }
-
-    // Remove background
-    else {
-      backgroundItem = null;
-      backgroundId = undefined;
-    }
+    const backgroundItem = await this._chooseBackground(background);
+    const backgroundId = backgroundItem?.system.identifier;
 
     // Update the Actor clone
-    await actor._applyDetailItem(backgroundItem, {type: "background", local: true, notify: false, canClear: true});
+    const substitutions = await actor._promptTalentSubstitutions({background: backgroundItem?.system ?? null});
+    if ( !substitutions ) return;
+    await actor._applyDetailItem(backgroundItem, {type: "background", local: true, notify: false, canClear: true,
+      substitutions});
     this._state.backgroundId = backgroundId;
     await this.render({parts: ["header", this.step]});
   }
@@ -950,7 +958,7 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
     if ( tree.actor === this._clone ) return;
     await tree.open(this._clone, {parentApp: this});
     const tab = this.element.querySelector(".tab[data-tab=talents]");
-    tab.replaceChildren(tree.canvas);
+    tab.replaceChildren(tree.canvas, tree.filter.element);
   }
 
   /* -------------------------------------------- */
@@ -964,6 +972,34 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
       await crucible.tree.close();
       document.body.append(crucible.tree.canvas);
     }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prepare the Ancestry Item which is applied to the Actor when an Ancestry is chosen.
+   * @param {string} ancestryId           The identifier of the chosen Ancestry
+   * @returns {Promise<CrucibleItem>}     The Ancestry Item to apply
+   * @protected
+   */
+  async _chooseAncestry(ancestryId) {
+    return this._state.ancestries[ancestryId].item;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prepare the Background Item which is applied to the Actor when a Background is chosen.
+   * @param {string|CrucibleItem} [background]  The identifier of a Background option, a Background Item, or nothing
+   *                                            to remove the Background
+   * @returns {Promise<CrucibleItem|null>}      The Background Item to apply, or null to remove the Background
+   * @protected
+   */
+  async _chooseBackground(background) {
+    if ( background instanceof CrucibleItem ) return background;
+    if ( typeof background !== "string" ) return null;
+    if ( !(background in this._state.backgrounds) ) throw new Error(`Invalid Background identifier "${background}"`);
+    return this._state.backgrounds[background].item;
   }
 
   /* -------------------------------------------- */
@@ -1200,20 +1236,20 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
     for ( const {item, quantity, scaledPrice} of Object.values(this._state.equipment) ) {
       if ( quantity <= 0 ) continue;
       const itemData = this._clone._cleanItemData(item);
-      delete itemData._id
+      delete itemData._id;
+
+      // Unstack individual units of an item so they can each have different stateful properties
+      let units;
       if ( itemData.system.properties.includes("stackable") ) {
         itemData.system.quantity = quantity;
-        creationData.items.push(itemData);
+        units = [itemData];
       }
-      else {
-        // Deep clone each unit so that can have different stateful properties
-        const units = Array.from({length: quantity}, () => foundry.utils.deepClone(itemData));
-        creationData.items.push(...units);
+      else units = Array.from({length: quantity}, () => foundry.utils.deepClone(itemData));
+      creationData.items.push(...units);
 
-        // Each individually equippable unit of a purchased Weapon or Armor is a candidate for auto-equip
-        if ( ["weapon", "armor"].includes(item.type) ) {
-          for ( const unitData of units ) autoEquipCandidates.push({itemData: unitData, sourceItem: item, scaledPrice});
-        }
+      // Each individually equippable unit of purchased gear is a candidate for auto-equip
+      if ( ["weapon", "armor", "tool", "consumable", "accessory"].includes(item.type) ) {
+        for ( const unitData of units ) autoEquipCandidates.push({itemData: unitData, sourceItem: item, scaledPrice});
       }
       spent += scaledPrice * quantity;
     }
@@ -1226,22 +1262,22 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
   /* -------------------------------------------- */
 
   /**
-   * Auto-equips purchased Weapons and Armor, favoring higher-value items.
-   * Armor occupies a single slot; Weapons are assigned to available hand slots according to their category.
+   * Auto-equips purchased gear, favoring higher-value items. Armor occupies a single slot.
+   * Weapons are assigned to available hand slots according to their category.
+   * Tools and Consumables fill the Toolbelt, and Accessories fill the Accessory slots.
    * @param {{itemData: object, sourceItem: CrucibleItem, scaledPrice: number}[]} candidates
    * @protected
    */
-   _autoEquipPurchasedItems(candidates) {
+  _autoEquipPurchasedItems(candidates) {
     const SLOTS = SYSTEM.WEAPON.SLOTS;
-    const byHighestValue = (a, b) => (b.scaledPrice - a.scaledPrice) || a.sourceItem.name.localeCompare(b.sourceItem.name);
+    const byHighestValue = (a, b) => {
+      return (b.scaledPrice - a.scaledPrice) || a.sourceItem.name.localeCompare(b.sourceItem.name);
+    };
 
     // Armor: equip the single highest-value Armor unit, if any was purchased
     const armors = candidates.filter(c => c.sourceItem.type === "armor").sort(byHighestValue);
     const bestArmor = armors[0];
-    if ( bestArmor ) {
-      bestArmor.itemData.system.equipped = true;
-      if ( bestArmor.sourceItem.system.requiresInvestment ) bestArmor.itemData.system.invested = true;
-    }
+    if ( bestArmor ) bestArmor.itemData.system.equipped = true;
 
     // Weapons: greedily fill the Mainhand, Offhand, and Twohand slots with the highest-value options that fit
     const weapons = candidates.filter(c => c.sourceItem.type === "weapon").sort(byHighestValue);
@@ -1258,7 +1294,6 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
         if ( !(mainhandFree && offhandFree) ) continue;
         itemData.system.equipped = true;
         itemData.system.slot = SLOTS.TWOHAND;
-        if ( sourceItem.system.requiresInvestment ) itemData.system.invested = true;
         mainhandFree = offhandFree = false;
       }
 
@@ -1266,15 +1301,27 @@ export default class CrucibleHeroCreationSheet extends HandlebarsApplicationMixi
       else if ( category.main && mainhandFree ) {
         itemData.system.equipped = true;
         itemData.system.slot = SLOTS.MAINHAND;
-        if ( sourceItem.system.requiresInvestment ) itemData.system.invested = true;
         mainhandFree = false;
       }
       else if ( category.off && offhandFree ) {
         itemData.system.equipped = true;
         itemData.system.slot = SLOTS.OFFHAND;
-        if ( sourceItem.system.requiresInvestment ) itemData.system.invested = true;
         offhandFree = false;
       }
+    }
+
+    // Fill the Toolbelt with highest-value Tools and Consumables. A stack occupies one slot regardless of quantity
+    const {accessorySlots, toolbeltSlots} = this._clone.equipment;
+    const toolbelt = candidates.filter(c => ["consumable", "tool"].includes(c.sourceItem.type)).sort(byHighestValue);
+    for ( const {itemData} of toolbelt.slice(0, toolbeltSlots) ) itemData.system.equipped = true;
+
+    // Fill the Accessory slots with the highest-value options
+    const accessories = candidates.filter(c => c.sourceItem.type === "accessory").sort(byHighestValue);
+    for ( const {itemData} of accessories.slice(0, accessorySlots) ) itemData.system.equipped = true;
+
+    // Any equipped items that required investment start in the invested state
+    for ( const {itemData, sourceItem} of candidates ) {
+      if ( itemData.system.equipped && sourceItem.system.requiresInvestment ) itemData.system.invested = true;
     }
   }
 

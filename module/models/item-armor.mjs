@@ -62,7 +62,7 @@ export default class CrucibleArmorItem extends CruciblePhysicalItem {
 
     // Armor Defense
     this.armor.base = Math.clamp(this.armor.base, category.armor.min, category.armor.max);
-    this.armor.bonus = quality.bonus;
+    this.armor.bonus = Math.max(quality.bonus, -this.armor.base);
 
     // Dodge Defense
     this.dodge ||= {};
@@ -137,6 +137,9 @@ export default class CrucibleArmorItem extends CruciblePhysicalItem {
     if ( source.properties?.includes("organic") ) {
       source.properties.findSplice(p => p === "organic", "natural");
     }
+
+    /** @deprecated since 0.11.2 */
+    if ( ["clothingCommon", "clothingDress"].includes(source.identifier) ) source.identifier = "clothing";
 
     return source;
   }

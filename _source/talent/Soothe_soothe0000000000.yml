@@ -4,18 +4,19 @@ _id: soothe0000000000
 img: icons/magic/life/heart-cross-strong-blue.webp
 system:
   description: >-
-    You administer a soothing Performance which rallies your allies, restoring
-    Morale.
+    <p>You administer a soothing performance which rallies your allies,
+    restoring @Rule[resource.morale].</p>
   actions:
     - id: soothe
       description: >-
         <p>You perform a calming verse, benefiting all allies who can perceive
-        you within 12 feet. Make a <strong>Performance Check</strong> against
-        the Madness threshold of each ally. On success, each ally's Morale is
-        restored.</p>
+        you within <strong>12 feet</strong>. Make a @Rule[skill.performance]
+        check against the @Rule[defense.madness] of each ally. On success, each
+        ally's @Rule[resource.morale] is restored.</p>
       tags:
         - rallying
         - morale
+        - skill
         - performance
       cost:
         action: 3
@@ -37,31 +38,28 @@ system:
         maximum: null
         weapon: false
         minimum: null
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
+  keywords:
+    - playstyle.utility
+    - target.rallying
+    - skill.performance
   nodes:
-    - pre2a
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - pre2c
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: performance
 effects: []
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160148
-  modifiedTime: 1773514792615
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789496774020
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-folder: 4Ll3b4Q4us2mp4Fu
+folder: fldPerformance00
 sort: -50000
 ownership:
   default: 0

@@ -6,15 +6,21 @@ system:
   description: >-
     <p>You are an expert at firing shots with ranged weaponry while evading
     enemy attacks.</p>
+  keywords:
+    - playstyle.ranged
+    - action.movement
+    - weapon.projectile
+    - weapon.mechanical
+    - weapon.talisman
   nodes:
-    - dex3a
+    - dex2a
   actions:
     - id: evasiveShot
       name: Evasive Shot
       img: icons/skills/ranged/person-archery-bow-attack-orange.webp
       description: >-
         <p>After performing a ranged weapon attack, you may move up to half your
-        <strong>Stride</strong> for free.</p>
+        @Rule[movement.stride] for free.</p>
       condition: ''
       cost:
         action: 0
@@ -38,22 +44,17 @@ system:
       tags:
         - movement
       autoFavorite: false
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: projectile
 effects: []
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.4
-  coreVersion: '14.363'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160131
-  modifiedTime: 1780501752118
-  lastModifiedBy: ZXJsFnFZuf21WDAk
+  modifiedTime: 1788278850920
+  lastModifiedBy: WRGzDgYAt3ZuX6TU
   compendiumSource: null
   duplicateSource: null
   exportSource: null

@@ -2,6 +2,10 @@ name: Swooping Strike
 type: talent
 img: icons/creatures/abilities/dragon-breath-purple.webp
 system:
+  keywords:
+    - playstyle.melee
+    - weapon.natural
+    - action.movement
   nodes: []
   description: >-
     <p>This @ref[actor.name]{creature} swoops from high above into a diving
@@ -13,10 +17,11 @@ system:
       condition: ''
       description: >-
         <p>This attack may be used after a <strong>Move</strong> which descended
-        at least 10 feet towards the target. The attack gains <strong>+1
-        Boon</strong> per 10 feet of elevation decrease in that
-        movement.</p><p>If this attack is a <strong>Critical Hit</strong>, the
-        target of the attack is immediately knocked @Condition[prone].</p>
+        at least 10 feet towards the target. The attack gains
+        @Rule[dice.boon]{+1 Boon} per 10 feet of elevation decrease in that
+        movement.</p><p>If this attack is a @Rule[dice.criticalSuccess]{Critical
+        Hit}, the target of the attack is immediately knocked
+        @Condition[prone].</p>
       cost:
         action: 0
         focus: 0
@@ -52,13 +57,7 @@ system:
       summon:
         actorUuid: null
         permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: jPlehJgYr7sjtA8J
 ownership:

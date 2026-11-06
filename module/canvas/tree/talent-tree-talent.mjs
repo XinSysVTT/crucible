@@ -37,12 +37,12 @@ export default class CrucibleTalentTreeTalent extends CrucibleTalentIcon {
   _configure({active, accessible, ...config}={}) {
     config = super._configure(config);
     const spritesheet = crucible.tree.spritesheet;
-    const {actions, rune, gesture, inflection, iconicSpells, training} = this.talent.system;
+    const {actions, spellcraft, iconicSpells} = this.talent.system;
     const nodeColor = this.node.node.color;
 
     // Defaults
     config.texture = foundry.canvas.getTexture(this.talent.img);
-    config.alpha = active ? 1.0 : 0.6;
+    config.highlightColor = nodeColor;
     config.underglowColor = active ? nodeColor : null;
     config.frameTint = active ? 0xFFFFFF : 0x7f7f7f; // 50%
     config.iconTint = active ? 0xFFFFFF : Color.fromHSL([nodeColor.hsl[0], 0.05, 0.4]);
@@ -54,12 +54,7 @@ export default class CrucibleTalentTreeTalent extends CrucibleTalentIcon {
     }
 
     // Spellcraft Talents
-    else if ( rune || gesture || inflection || iconicSpells ) {
-      config.shape = "hex";
-    }
-
-    // Training Talents
-    else if ( training.type && training.rank ) {
+    else if ( spellcraft || iconicSpells ) {
       config.shape = "hex";
     }
 
@@ -86,6 +81,15 @@ export default class CrucibleTalentTreeTalent extends CrucibleTalentIcon {
         break;
     }
     return config;
+  }
+
+  /* -------------------------------------------- */
+
+  /** @override */
+  _getHighlightState() {
+    const matches = crucible.tree.highlights;
+    if ( !matches ) return null;
+    return !!matches.get(this.node.node)?.has(this.talent.id);
   }
 
   /* -------------------------------------------- */

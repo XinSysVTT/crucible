@@ -13,10 +13,11 @@ system:
       name: Second Wind
       condition: ''
       description: >-
-        <p>You focus your energy and recover your <strong>Toughness</strong>
-        score in <strong>Health</strong>.</p>
+        <p>You focus your energy and recover your @Rule[ability.toughness] score
+        in @Rule[resource.health].</p>
       tags:
         - healing
+        - subtle
       cost:
         action: 2
         focus: 1
@@ -38,22 +39,20 @@ system:
         actorUuid: null
         permanent: true
       autoFavorite: false
+  keywords:
+    - playstyle.defensive
+    - target.healing
   nodes:
-    - tou2c
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - tou1b
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: medicine
 _stats:
   systemId: crucible
-  systemVersion: 0.9.4
-  coreVersion: '14.363'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160145
-  modifiedTime: 1779907167895
-  lastModifiedBy: ZXJsFnFZuf21WDAk
+  modifiedTime: 1788277560168
+  lastModifiedBy: WRGzDgYAt3ZuX6TU
   compendiumSource: Item.V4stscWtnt2GFRY2
   duplicateSource: null
   exportSource: null

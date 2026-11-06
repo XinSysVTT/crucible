@@ -4,6 +4,9 @@ type: talent
 _id: acidAbsorption00
 img: icons/magic/acid/dissolve-drip-droplet-smoke.webp
 system:
+  keywords:
+    - playstyle.defensive
+    - defense.resistance
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} has an exceptional ability to thrive
@@ -11,13 +14,7 @@ system:
     and if that resistance would reduce an amount of damage below zero, the
     negative amount is received as <strong>Healing</strong> instead.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 sort: 0
 ownership:

@@ -16,6 +16,7 @@ system:
     dexterity: 2
   movement:
     size: 10
+    heightRatio: 1.25
     stride: 12
   resistances:
     bludgeoning:
@@ -59,14 +60,10 @@ system:
       level: null
     - item: Compendium.crucible.adversary-talents.Item.selfrepair000000
       level: null
-    - item: Compendium.crucible.talent.Item.naturalWeaponTra
+    - item: Compendium.crucible.talent.Item.wildStrike000000
       level: 0
-    - item: Compendium.crucible.talent.Item.heavyWeaponTrain
+    - item: Compendium.crucible.talent.Item.heavyStrike00000
       level: 0
-    - item: Compendium.crucible.talent.Item.heavyWeaponProfi
-      level: 4
-    - item: Compendium.crucible.talent.Item.naturalWeaponPro
-      level: 4
   characteristics:
     equipment: true
     spells: false

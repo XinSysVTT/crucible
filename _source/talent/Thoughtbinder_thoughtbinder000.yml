@@ -2,23 +2,24 @@ name: Thoughtbinder
 type: talent
 img: icons/magic/control/hypnosis-mesmerism-watch.webp
 system:
+  keywords:
+    - playstyle.spellcraft
+    - spell.physical
+    - damageType.psychic
+    - target.morale
   nodes:
     - wis3b
   description: >-
-    <p>You are highly skilled in weaving the Rune of Control. When you cast a
-    Spell or use an action that involves this Rune, your Critical Hits which
-    deal damage cause the @Condition[dominated] condition.</p><p>The Dominated
-    effect lasts for <strong>3 Rounds</strong> and deals the ability score your
-    <strong>Rune of Control</strong> scales with as additional
-    <strong>Psychic</strong> damage to <strong>Morale</strong>.</p>
+    <p>You are highly skilled in weaving the <strong>Rune of Control</strong>.
+    When you cast a <strong>Spell</strong> or use an action that involves this
+    <strong>Rune</strong>, your @Rule[dice.criticalSuccess]{Critical Hits} which
+    deal damage cause the @Condition[dominated] condition.</p><p>The
+    <strong>Dominated</strong> effect lasts for <strong>3 Rounds</strong> and
+    deals the ability score your <strong>Rune of Control</strong> scales with as
+    additional <strong>Psychic</strong> damage to @Rule[resource.morale].</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: physical
 effects: []
 folder: jpipM4v8QX2Amfpx
 ownership:
@@ -29,11 +30,11 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.363'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.4
+  systemVersion: 0.10.2
   createdTime: 1762832897720
-  modifiedTime: 1780502985149
+  modifiedTime: 1789499179301
   lastModifiedBy: ZXJsFnFZuf21WDAk
 _id: thoughtbinder000
 sort: 125000

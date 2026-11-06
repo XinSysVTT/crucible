@@ -5,20 +5,16 @@ img: icons/commodities/flowers/clover.webp
 system:
   description: >-
     <p>You are able to compartmentalize and brush off setbacks, providing a
-    remarkable ability to recover from damage to your Morale.</p>
-
-    <p>Your <strong>Rallying Threshold</strong> is reduced by 1, making you
-    easier to heal.</p>
+    remarkable ability to recover from damage to your
+    @Rule[resource.morale].</p><p>Your @Rule[defense.madness] is reduced by 1,
+    making you easier to heal.</p>
   actions: []
+  keywords:
+    - playstyle.defensive
+    - defense.madness
   nodes:
-    - pre2a
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - pre3a
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 4Ll3b4Q4us2mp4Fu
 sort: -75000
@@ -28,11 +24,11 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160128
-  modifiedTime: 1773514792563
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789492227618
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

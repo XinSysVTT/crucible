@@ -7,18 +7,15 @@ system:
     <p>Your body responds eagerly to healing, demonstrating a remarkable ability
     to recover from wounds.</p>
 
-    <p>Your <strong>Healing Threshold</strong> is reduced by 1, making you
-    easier to heal.</p>
+    <p>Your @Rule[defense.wounds] is reduced by 1, making you easier to
+    heal.</p>
   actions: []
+  keywords:
+    - playstyle.defensive
+    - defense.wounds
   nodes:
     - tou2c
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 ownership:
   default: 0

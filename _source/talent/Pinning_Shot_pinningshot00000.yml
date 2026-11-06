@@ -47,7 +47,6 @@ system:
             maintenance: null
             regions: []
             summons: []
-            dc: null
             properties: []
       name: Pinning Shot
       img: icons/skills/ranged/arrow-strike-glowing-teal.webp
@@ -56,15 +55,15 @@ system:
         weapon: true
         minimum: null
       summon: null
+  keywords:
+    - playstyle.ranged
+    - weapon.projectile
+    - weapon.mechanical
+    - weapon.talisman
   nodes:
     - dex3a
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: mechanical
 effects: []
 flags: {}
 _stats:

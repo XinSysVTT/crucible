@@ -1,0 +1,45 @@
+name: Unblinking Eye
+type: weapon
+img: icons/commodities/biological/eye-purple.webp
+system:
+  identifier: unblinkingEye
+  category: talisman1
+  quantity: 1
+  weight: 1
+  price: 720
+  quality: standard
+  broken: false
+  enchantment: mundane
+  equipped: false
+  invested: false
+  properties:
+    - ambush
+  description:
+    public: >-
+      <p>A glassy eye set in a ring of dark sinew, which never closes and always
+      seems to be watching. Spellcasters may focus their spellcraft through this
+      talisman, or use it to strike foes with @Rule[damageType.void] damage.</p>
+    private: ''
+  actions: []
+  damageType: void
+  dropped: false
+  slot: 0
+effects: []
+folder: uvvY6c0nbJBhAjM6
+ownership:
+  default: 0
+  AnoypGxxNIMOS0XY: 3
+flags: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.368'
+  systemId: crucible
+  systemVersion: 0.11.1
+  createdTime: 1791157224348
+  modifiedTime: 1791159798764
+  lastModifiedBy: WRGzDgYAt3ZuX6TU
+_id: unblinkingEye000
+sort: 0
+_key: '!items!unblinkingEye000'

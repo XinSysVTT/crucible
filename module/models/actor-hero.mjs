@@ -56,6 +56,9 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
     return schema;
   }
 
+  /** @override */
+  static biologyName = "ancestry";
+
   /* -------------------------------------------- */
 
   /**
@@ -74,6 +77,7 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
    * Advancement points that are available to spend and have been spent.
    * @type {{
    *   ability: {pool: number, total: number, bought: number, spent: number, available: number},
+   *   proficiency: {base: number, bonus: number, total: number, spent: number, available: number},
    *   talent: {total: number, spent: number, available: number}
    * }}
    */
@@ -81,7 +85,7 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
 
   /**
    * Carrying capacity for physical equipment.
-   * @type {{value: number, max: number}}
+   * @type {{value: number, max: number, bonus: number}}
    */
   capacity;
 
@@ -97,12 +101,13 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
 
   /* -------------------------------------------- */
 
-  /** @override */
-  _prepareBaseMovement() {
-    super._prepareBaseMovement();
-    const {size=4, stride=10} = this.details.ancestry.movement;
-    this.movement.baseSize = size;
-    this.movement.baseStride = stride;
+  /** @inheritDoc */
+  _configureProgression() {
+    const config = super._configureProgression();
+    const {perLevel} = SYSTEM.PROFICIENCY.PROFICIENCY_POINTS;
+    const level = Math.max(this.advancement.level, 1); // Level zero is mid-creation, not beneath level one
+    config.trainingCap = Math.min(perLevel * level, SYSTEM.PROFICIENCY.POINTS_MAX);
+    return config;
   }
 
   /* -------------------------------------------- */
@@ -113,8 +118,11 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
   #prepareAdvancement() {
     const adv = this.advancement;
     const effectiveLevel = Math.max(adv.level, 1) - 1;
+    const proficiency = SYSTEM.PROFICIENCY.PROFICIENCY_POINTS;
     this.points = {
       ability: {pool: 9, total: effectiveLevel, bought: 0, spent: 0, available: 0},
+      proficiency: {base: proficiency.initial + (effectiveLevel*proficiency.perLevel), bonus: 0, total: 0, spent: 0,
+        available: 0},
       talent: {total: 3 + (effectiveLevel*3), spent: 0, available: 0}
     };
     const level = SYSTEM.ACTOR.LEVELS[adv.level];
@@ -202,9 +210,40 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
   /** @inheritDoc */
   prepareItems(items) {
     super.prepareItems(items);
-    const points = this.points.talent;
-    points.spent = Math.max(this.talentIds.size - this.permanentTalentIds.size, 0) + this.advancement.talentNodes.size;
-    points.available = points.total - points.spent;
+
+    // Talent Points
+    const talent = this.points.talent;
+    talent.spent = Math.max(this.talentIds.size - this.permanentTalentIds.size, 0) + this.advancement.talentNodes.size;
+    talent.available = talent.total - talent.spent;
+
+    // Proficiency Points, one spent per allocated training point
+    const proficiency = this.points.proficiency;
+    for ( const t of Object.values(this.training) ) proficiency.spent += t.increases;
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  _prepareTraining() {
+    super._prepareTraining();
+
+    // Grant one training point for each proficiency a Background names
+    for ( const type of this.details.background?.training ?? [] ) {
+      const t = this.training[type];
+      if ( t ) t.initial += 1;
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  _prepareFinalTraining() {
+    super._prepareFinalTraining();
+
+    // Proficiency Points, including any bonus granted by prepareTraining hooks
+    const proficiency = this.points.proficiency;
+    proficiency.total = proficiency.base + proficiency.bonus;
+    proficiency.available = proficiency.total - proficiency.spent;
   }
 
   /* -------------------------------------------- */
@@ -224,7 +263,7 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
    * @protected
    */
   _prepareCapacity(items) {
-    this.capacity = {value: 0, max: 0};
+    this.capacity = {value: 0, max: 0, bonus: 0};
     for ( const type of SYSTEM.ITEM.PHYSICAL_ITEM_TYPES ) {
       for ( const item of items[type] ) {
         this.capacity.value += (item.system.weight * item.system.quantity);
@@ -238,7 +277,7 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
   _prepareFinalMovement() {
     super._prepareFinalMovement();
     const c = this.capacity;
-    c.max = this.abilities.strength.value * 30;
+    c.max = (this.abilities.strength.value * 30) + c.bonus;
     c.overflow = c.max - c.value;
     c.pct = Math.clamp(c.value / c.max, 0, 1);
   }
@@ -256,11 +295,12 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
    */
   async applyAncestry(ancestry, {force=false}={}) {
     const actor = this.parent;
-    await actor._applyDetailItem(ancestry, {
-      type: "ancestry",
-      canApply: (actor.isL0 && !actor.points.ability.spent) || force,
-      canClear: actor.isL0 || force
-    });
+    const canApply = (actor.isL0 && !actor.points.ability.spent) || force;
+    const substitutions = canApply ? await actor._promptTalentSubstitutions({ancestry: ancestry?.system ?? null})
+      : undefined;
+    if ( substitutions === null ) return;
+    await actor._applyDetailItem(ancestry, {type: "ancestry", canApply, canClear: actor.isL0 || force});
+    await actor._reapplyBackground(substitutions);
   }
 
   /* -------------------------------------------- */
@@ -274,11 +314,11 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
    */
   async applyBackground(background, {force=false}={}) {
     const actor = this.parent;
-    await actor._applyDetailItem(background, {
-      type: "background",
-      canApply: actor.isL0 || force,
-      canClear: actor.isL0 || force
-    });
+    const canApply = actor.isL0 || force;
+    const substitutions = canApply ? await actor._promptTalentSubstitutions({background: background?.system ?? null})
+      : undefined;
+    if ( substitutions === null ) return;
+    await actor._applyDetailItem(background, {type: "background", canApply, canClear: canApply, substitutions});
   }
 
   /* -------------------------------------------- */
@@ -294,6 +334,15 @@ export default class CrucibleHeroActor extends CrucibleBaseActor {
     if ( scope === "short" ) return tags;
     if ( this.details.signatureName ) tags.signatureName = this.details.signatureName;
     return tags;
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  async _prepareEmbedContext(config) {
+    const context = await super._prepareEmbedContext(config);
+    context.subtitle = [this.details.ancestry?.name, this.details.background?.name].filterJoin(" ");
+    return context;
   }
 
   /* -------------------------------------------- */

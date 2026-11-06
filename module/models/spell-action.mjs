@@ -118,17 +118,24 @@ export default class CrucibleSpellAction extends CrucibleAction {
     if ( this.isIconic ) this.composition = STATES.COMPOSED;
     if ( !this.rune || !this.gesture ) this.composition = Math.min(this.composition, STATES.COMPOSING);
 
-    // Common Attributes
+    // A spell may legitimately lack components while being composed in the dialog
+    if ( !this.rune || !this.gesture ) {
+      this.damage = {base: 0, bonus: 0, multiplier: 1, type: this.damageType};
+      return;
+    }
     this.scaling = [this.rune.scaling, this.gesture.scaling];
-    this.training = [this.rune.id];
+    this.training = [this.rune.training];
     this.damage = CrucibleSpellAction.#prepareDamage.call(this);
     this.usage.defenseType = CrucibleSpellAction.#prepareDefense.call(this);
+    this.usage.region.color = this.rune.color;
 
     // Composed Spells Only
     if ( this.isComposed ) {
       this.cost = CrucibleSpellAction.#prepareCost.call(this);
       this.target = {...this.gesture.target};
-      this.range = this.gesture.range;
+      if ( this.rune.restoration && (this.target.type === "single") ) this.target.self = true;
+      this.range = {...this.gesture.range};
+      this._prepareRegionBehavior(); // The gesture supplies the target type, which super() resolved too early to see
       if ( this.composition >= STATES.COMPOSING ) {
         this.nameFormat = this.gesture.nameFormat ?? this.rune.nameFormat;
         this.name = CrucibleSpellAction.getComposedName(this);
@@ -201,8 +208,7 @@ export default class CrucibleSpellAction extends CrucibleAction {
       base: this.gesture.damage.base ?? 0,
       bonus: this.gesture.damage.bonus ?? 0,
       multiplier: 1,
-      type: this.damageType ?? this.rune.damageType,
-      restoration: this.rune.restoration
+      type: this.damageType ?? this.rune.damageType
     };
   }
 
@@ -235,7 +241,7 @@ export default class CrucibleSpellAction extends CrucibleAction {
     nameFormat ||= rune.nameFormat;
     switch ( nameFormat ) {
       case SYSTEM.SPELL.NAME_FORMATS.NOUN:
-        name = _loc("SPELL.NameFormatNoun", {rune, gesture});
+        name = _loc("SPELL.NameFormatNoun", {rune: rune.spellName, gesture});
         break;
       case SYSTEM.SPELL.NAME_FORMATS.ADJ:
         name = _loc("SPELL.NameFormatAdj", {rune: rune.adjective, gesture});
@@ -250,6 +256,13 @@ export default class CrucibleSpellAction extends CrucibleAction {
   /** @inheritDoc */
   _configureUsage() {
     super._configureUsage();
+
+    // A composed spell is its components, so its Rune determines restoration. An iconic spell's components are only
+    // prerequisites for knowing it, so it must declare restoration explicitly with the healing or rallying tag.
+    if ( this.isComposed ) this.usage.restoration = !!this.rune.restoration;
+
+    // Spellcasting is always Intuitive if you know the rune
+    this.usage.bonuses.skill = this.actor.getSkillBonus(this.training, {intuitive: true});
 
     // The base class resets cost fields from _source, but for composed spells the action cost is computed
     // dynamically from gesture and inflection components and is not stored in _source (which retains schema
@@ -277,6 +290,10 @@ export default class CrucibleSpellAction extends CrucibleAction {
 
   /** @inheritDoc */
   _prepare() {
+
+    // Inflections are vocalized, so tag before super() in order that hooks observe the final tag set
+    if ( this.inflection ) this.tags.add(this._isInflectionSubtle() ? "subtle" : "vocal");
+
     super._prepare();
 
     // Add Weapon cost
@@ -290,6 +307,19 @@ export default class CrucibleSpellAction extends CrucibleAction {
     if ( this.composition !== CrucibleSpellAction.COMPOSITION_STATES.COMPOSED ) {
       this.cost.action = this.cost.focus = this.cost.health = this.cost.heroism = this.cost.hands = 0;
     }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Does Legerdemain allow this spell's Inflection to be applied by hand alone, without vocalization?
+   * @returns {boolean}
+   * @protected
+   */
+  _isInflectionSubtle() {
+    if ( !this.actor.talentIds.has("legerdemain00000") ) return false;
+    const talent = crucible.api.models.CrucibleSpellcraftInflection.getGrantingTalent(this.inflection.id);
+    return (talent?.tier ?? 0) <= 2;
   }
 
   /* -------------------------------------------- */
@@ -309,14 +339,6 @@ export default class CrucibleSpellAction extends CrucibleAction {
       }
       if ( this.inflection && !g.inflections.has(this.inflection.id) ) {
         throw new Error(_loc("ACTION.WARNINGS.RequiresInflection"));
-      }
-    }
-
-    // Cannot use inflections while silenced
-    if ( this.inflection && this.actor.statuses.has("silenced") ) {
-      const inflectionTalent = crucible.api.models.CrucibleSpellcraftInflection.getGrantingTalent(this.inflection.id);
-      if ( !this.actor.talentIds.has("legerdemain00000") || ((inflectionTalent?.tier ?? 0) > 2) ) {
-        throw new Error(_loc("SPELL.WARNINGS.CannotUseSilenced"));
       }
     }
   }
@@ -434,18 +456,6 @@ export default class CrucibleSpellAction extends CrucibleAction {
     if ( this.damage.healing ) tags.action.healing = _loc("ACTION.TAG.Healing");
     else tags.action.defense = SYSTEM.DEFENSES[this.usage.defenseType].label;
     tags.action.resource = SYSTEM.RESOURCES[this.rune.resource].label;
-
-    // Show unmet for inflection if silenced
-    if ( tags.context.inflection && this.actor?.statuses.has("silenced") ) {
-      const inflectionTalent = crucible.api.models.CrucibleSpellcraftInflection.getGrantingTalent(this.inflection.id);
-      if ( !this.actor.talentIds.has("legerdemain00000") || ((inflectionTalent?.tier ?? 0) > 2) ) {
-        tags.context.inflection = {
-          label: tags.context.inflection,
-          unmet: true,
-          tooltip: _loc("SPELL.WARNINGS.CannotUseSilenced")
-        };
-      }
-    }
     return tags;
   }
 

@@ -3,12 +3,15 @@ type: talent
 _id: swallow000000000
 img: icons/creatures/fish/fish-fangtooth-skeletal-green.webp
 system:
+  keywords:
+    - playstyle.melee
+    - weapon.natural
   nodes: []
   description: >-
-    <p>The @ref[actor.name]{creature} can swallow whole a creature whose Size is
-    at least 2 less than its own. Only one creature may be swallowed at a time,
-    unless an additional creature is one-quarter of this creature's Size or
-    less.</p>
+    <p>The @ref[actor.name]{creature} can swallow whole a creature whose
+    @Rule[movement.size] is at least 2 less than its own. Only one creature may
+    be swallowed at a time, unless an additional creature is one-quarter of this
+    creature's @Rule[movement.size] or less.</p>
   actions:
     - id: swallow
       name: Swallow
@@ -29,7 +32,7 @@ system:
       range:
         minimum: null
         maximum: null
-        weapon: false
+        weapon: true
       target:
         type: single
         number: 1
@@ -52,7 +55,6 @@ system:
             expired: false
           system:
             changes: []
-            dc: null
             dot: []
             maintenance: null
             properties: []
@@ -71,7 +73,6 @@ system:
             expired: false
           system:
             changes: []
-            dc: null
             dot: []
             maintenance: null
             properties: []
@@ -109,13 +110,7 @@ system:
       effects: []
       tags:
         - harmless
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 9uAW3eV4LNZ2lQ0V
 ownership:
@@ -125,12 +120,12 @@ flags:
   ember:
     crucibleOverride: true
 _stats:
-  coreVersion: '14.364'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.10.0
+  systemVersion: 0.10.2
   createdTime: 1774708342875
-  modifiedTime: 1781567840388
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1789416018230
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   exportSource: null
   compendiumSource: null
   duplicateSource: null

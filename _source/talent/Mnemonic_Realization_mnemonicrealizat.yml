@@ -5,18 +5,18 @@ img: icons/magic/perception/eye-ringed-green.webp
 system:
   description: >-
     <p>Your sharpened mind is full of secrets and techniques to remember them.
-    Once per Day you may focus your thoughts and attempt to recall a word that
-    sparks your memory.</p>
-
-    <p>The Gamemaster must provide you with a one-word clue that is appropriate
-    for your direction of inquiry. It is left to Gamemaster discretion how
-    direct or vague to be with the clue they provide.</p>
+    Once per day you may focus your thoughts and attempt to recall a word that
+    sparks your memory.</p><p>The <strong>Gamemaster</strong> must provide you
+    with a one-word clue that is appropriate for your direction of inquiry. It
+    is left to <strong>Gamemaster's</strong> discretion how direct or vague to
+    be with the clue they provide.</p>
   actions:
     - id: mnemonicRealization
       description: >-
         <p>You survey your memories attempting to recall a clue for your current
         situation.</p>
-      tags: []
+      tags:
+        - subtle
       cost:
         action: 3
         focus: 1
@@ -39,17 +39,14 @@ system:
       summon:
         actorUuid: null
         permanent: true
+  keywords:
+    - playstyle.utility
   nodes:
-    - int1b
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - int0b
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: science
 effects: []
-folder: F5y85kE9ocaa5R4R
+folder: fldScience000000
 sort: 50000
 ownership:
   default: 0
@@ -57,11 +54,11 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160139
-  modifiedTime: 1773514792597
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789496917061
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

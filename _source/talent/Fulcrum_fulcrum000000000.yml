@@ -40,16 +40,13 @@ system:
         actorUuid: null
         permanent: true
       autoFavorite: false
+  keywords:
+    - playstyle.defensive
+    - action.reaction
   nodes:
     - sig3.toughness
     - sig3.intellect
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 ownership:
   default: 0

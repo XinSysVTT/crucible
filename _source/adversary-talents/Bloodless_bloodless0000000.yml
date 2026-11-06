@@ -3,20 +3,16 @@ type: talent
 _id: bloodless0000000
 img: icons/magic/earth/construct-stone.webp
 system:
+  keywords:
+    - playstyle.defensive
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} has no blood, vital organs, or exploitable
     weak points. It is immune to the @Condition[bleeding] condition, and the
-    critical hit threshold for <strong>Strikes</strong> against it is increased
-    by 2.</p>
+    @Rule[dice.criticalSuccessThreshold] for <strong>Strikes</strong> against it
+    is increased by 2.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 9Ej4QwUt1yVpv4Wn
 ownership:

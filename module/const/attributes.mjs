@@ -3,12 +3,12 @@ import {defineEnum} from "./enum.mjs";
 /**
  * The primary attributes which are called abilities.
  * @type {{
- *   strength: {id: string, label: string, abbreviation: string},
- *   toughness: {id: string, label: string, abbreviation: string},
- *   dexterity: {id: string, label: string, abbreviation: string},
- *   intellect: {id: string, label: string, abbreviation: string},
- *   presence: {id: string, label: string, abbreviation: string},
- *   wisdom: {id: string, label: string, abbreviation: string}
+ *   strength: {id: string, label: string, abbreviation: string, tooltip: string},
+ *   toughness: {id: string, label: string, abbreviation: string, tooltip: string},
+ *   dexterity: {id: string, label: string, abbreviation: string, tooltip: string},
+ *   intellect: {id: string, label: string, abbreviation: string, tooltip: string},
+ *   presence: {id: string, label: string, abbreviation: string, tooltip: string},
+ *   wisdom: {id: string, label: string, abbreviation: string, tooltip: string}
  * }}
  */
 export const ABILITIES = Object.freeze({
@@ -16,6 +16,7 @@ export const ABILITIES = Object.freeze({
     id: "wisdom",
     label: "ABILITIES.Wisdom",
     abbreviation: "ABILITIES.WisdomAbbr",
+    tooltip: "ABILITIES.TOOLTIPS.Wisdom",
     type: "mental",
     group: "ABILITIES.GROUPS.Power",
     groupInternal: "power",
@@ -27,6 +28,7 @@ export const ABILITIES = Object.freeze({
     id: "presence",
     label: "ABILITIES.Presence",
     abbreviation: "ABILITIES.PresenceAbbr",
+    tooltip: "ABILITIES.TOOLTIPS.Presence",
     type: "mental",
     group: "ABILITIES.GROUPS.Resilience",
     groupInternal: "resilience",
@@ -38,6 +40,7 @@ export const ABILITIES = Object.freeze({
     id: "intellect",
     label: "ABILITIES.Intellect",
     abbreviation: "ABILITIES.IntellectAbbr",
+    tooltip: "ABILITIES.TOOLTIPS.Intellect",
     type: "mental",
     group: "ABILITIES.GROUPS.Speed",
     groupInternal: "speed",
@@ -49,6 +52,7 @@ export const ABILITIES = Object.freeze({
     id: "strength",
     label: "ABILITIES.Strength",
     abbreviation: "ABILITIES.StrengthAbbr",
+    tooltip: "ABILITIES.TOOLTIPS.Strength",
     type: "physical",
     group: "ABILITIES.GROUPS.Power",
     groupInternal: "power",
@@ -60,6 +64,7 @@ export const ABILITIES = Object.freeze({
     id: "toughness",
     label: "ABILITIES.Toughness",
     abbreviation: "ABILITIES.ToughnessAbbr",
+    tooltip: "ABILITIES.TOOLTIPS.Toughness",
     type: "physical",
     group: "ABILITIES.GROUPS.Resilience",
     groupInternal: "resilience",
@@ -71,6 +76,7 @@ export const ABILITIES = Object.freeze({
     id: "dexterity",
     label: "ABILITIES.Dexterity",
     abbreviation: "ABILITIES.DexterityAbbr",
+    tooltip: "ABILITIES.TOOLTIPS.Dexterity",
     type: "physical",
     group: "ABILITIES.GROUPS.Speed",
     groupInternal: "speed",
@@ -91,7 +97,8 @@ export const DAMAGE_CATEGORIES = defineEnum({
     label: "DAMAGE.Physical"
   },
   elemental: {
-    label: "DAMAGE.Elemental"
+    label: "DAMAGE.Elemental",
+    conditions: ["burning", "freezing", "corroding", "shocked"]
   },
   spiritual: {
     label: "DAMAGE.Spiritual"
@@ -105,41 +112,37 @@ export const DAMAGE_CATEGORIES = defineEnum({
  * @type {Readonly<Record<string, {id: string, label: string, type: string}>>}
  */
 export const DAMAGE_TYPES = defineEnum({
+  acid: {
+    label: "DAMAGE.Acid",
+    type: "elemental"
+  },
   bludgeoning: {
     label: "DAMAGE.Bludgeoning",
     type: "physical"
+  },
+  cold: {
+    label: "DAMAGE.Cold",
+    type: "elemental"
   },
   corruption: {
     label: "DAMAGE.Corruption",
     type: "spiritual"
   },
-  piercing: {
-    label: "DAMAGE.Piercing",
-    type: "physical"
-  },
-  slashing: {
-    label: "DAMAGE.Slashing",
-    type: "physical"
-  },
-  poison: {
-    label: "DAMAGE.Poison",
-    type: "physical"
-  },
-  acid: {
-    label: "DAMAGE.Acid",
+  electricity: {
+    label: "DAMAGE.Electricity",
     type: "elemental"
   },
   fire: {
     label: "DAMAGE.Fire",
     type: "elemental"
   },
-  cold: {
-    label: "DAMAGE.Cold",
-    type: "elemental"
+  piercing: {
+    label: "DAMAGE.Piercing",
+    type: "physical"
   },
-  electricity: {
-    label: "DAMAGE.Electricity",
-    type: "elemental"
+  poison: {
+    label: "DAMAGE.Poison",
+    type: "physical"
   },
   psychic: {
     label: "DAMAGE.Psychic",
@@ -148,6 +151,10 @@ export const DAMAGE_TYPES = defineEnum({
   radiant: {
     label: "DAMAGE.Radiant",
     type: "spiritual"
+  },
+  slashing: {
+    label: "DAMAGE.Slashing",
+    type: "physical"
   },
   void: {
     label: "DAMAGE.Void",
@@ -269,32 +276,43 @@ export const DEFENSES = {
   physical: {
     id: "physical",
     label: "DEFENSES.Physical",
+    formula: "DEFENSES.FORMULAS.Physical",
+    tooltip: "DEFENSES.TOOLTIPS.Physical",
     type: "physical"
   },
   armor: {
     id: "armor",
     label: "DEFENSES.Armor",
+    formula: "DEFENSES.FORMULAS.Armor",
+    tooltip: "DEFENSES.TOOLTIPS.Armor",
     type: "physical"
   },
   block: {
     id: "block",
     label: "DEFENSES.Block",
+    formula: "DEFENSES.FORMULAS.Block",
+    tooltip: "DEFENSES.TOOLTIPS.Block",
     type: "physical"
   },
   dodge: {
     id: "dodge",
     label: "DEFENSES.Dodge",
+    formula: "DEFENSES.FORMULAS.Dodge",
+    tooltip: "DEFENSES.TOOLTIPS.Dodge",
     type: "physical"
   },
   parry: {
     id: "parry",
     label: "DEFENSES.Parry",
+    formula: "DEFENSES.FORMULAS.Parry",
+    tooltip: "DEFENSES.TOOLTIPS.Parry",
     type: "physical"
   },
   fortitude: {
     id: "fortitude",
     label: "DEFENSES.Fortitude",
     abilities: ["strength", "wisdom"],
+    formula: "DEFENSES.FORMULAS.Fortitude",
     tooltip: "DEFENSES.TOOLTIPS.Fortitude",
     type: "save"
   },
@@ -302,6 +320,7 @@ export const DEFENSES = {
     id: "willpower",
     label: "DEFENSES.Willpower",
     abilities: ["toughness", "presence"],
+    formula: "DEFENSES.FORMULAS.Willpower",
     tooltip: "DEFENSES.TOOLTIPS.Willpower",
     type: "save"
   },
@@ -309,6 +328,7 @@ export const DEFENSES = {
     id: "reflex",
     label: "DEFENSES.Reflex",
     abilities: ["dexterity", "intellect"],
+    formula: "DEFENSES.FORMULAS.Reflex",
     tooltip: "DEFENSES.TOOLTIPS.Reflex",
     type: "save"
   },
@@ -316,6 +336,7 @@ export const DEFENSES = {
     id: "wounds",
     label: "DEFENSES.Wounds",
     shortLabel: "DEFENSES.WoundsShort",
+    formula: "DEFENSES.FORMULAS.Wounds",
     tooltip: "DEFENSES.TOOLTIPS.Wounds",
     type: "threshold"
   },
@@ -323,8 +344,11 @@ export const DEFENSES = {
     id: "madness",
     label: "DEFENSES.Madness",
     shortLabel: "DEFENSES.MadnessShort",
+    formula: "DEFENSES.FORMULAS.Madness",
     tooltip: "DEFENSES.TOOLTIPS.Madness",
     type: "threshold"
   }
 };
-
+for ( const d of Object.values(DEFENSES) ) {
+  d.page = "Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.Defenses00000000";
+}

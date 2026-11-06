@@ -6,17 +6,15 @@ system:
   description: >-
     <p>You seize any opportunity you can to capitalize on an enemy who turns
     their back on you. You may make a @Action[default reactiveStrike] even if
-    you are otherwise <strong>Fully Engaged</strong>.</p>
+    you are otherwise @Rule[movement.fullyEngaged].</p>
   actions: []
+  keywords:
+    - playstyle.melee
+    - movement.engagement
+    - action.reaction
   nodes:
-    - intdex2
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - intdex1
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: aB808IWOdgwmFCIF
 sort: 200000
@@ -26,11 +24,11 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.5
-  coreVersion: '14.364'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160140
-  modifiedTime: 1781203140541
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1788278797765
+  lastModifiedBy: WRGzDgYAt3ZuX6TU
   compendiumSource: null
   duplicateSource: null
   exportSource: null

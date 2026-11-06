@@ -2,6 +2,9 @@ name: Restraining Chomp
 type: talent
 img: icons/creatures/abilities/mouth-teeth-crooked-blue.webp
 system:
+  keywords:
+    - playstyle.melee
+    - weapon.natural
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} uses its powerful jaws to bite and hold a
@@ -13,10 +16,10 @@ system:
       condition: ''
       description: >-
         <p>The creature chomps down upon its target. If the attack is successful
-        and the target is equal or lesser in <strong>Size</strong>, the target
-        is also @Condition[restrained] until this creature chooses to release it
-        or the restraint is otherwise broken. Only one target may be restrained
-        by this action at a given time.</p>
+        and the target is equal or lesser in @Rule[movement.size], the target is
+        also @Condition[restrained] until this creature chooses to release it or
+        the restraint is otherwise broken. Only one target may be restrained by
+        this action at a given time.</p>
       cost:
         action: 0
         focus: 1
@@ -52,13 +55,7 @@ system:
       summon:
         actorUuid: null
         permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 9uAW3eV4LNZ2lQ0V
 ownership:

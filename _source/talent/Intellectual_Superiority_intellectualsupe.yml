@@ -4,19 +4,17 @@ _id: intellectualsupe
 img: icons/magic/light/projectile-smoke-blue-light.webp
 system:
   description: >-
-    It is sometimes a marvel how slowly others around you think. You gain
-    <strong>+1 Boon</strong> on any Strike or Spell attack against an enemy
-    lower than you in Initiative order.
+    <p>It is sometimes a marvel how slowly others around you think. You gain
+    @Rule[dice.boon]{+1 Boon} on any <strong>Strike</strong> or
+    <strong>Spell</strong> attack against an enemy lower than you in
+    <strong>Initiative</strong> order.</p>
   actions: []
+  keywords:
+    - initiative
   nodes:
     - int4d
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: science
 effects: []
 folder: BevAJzzLeFbSaVic
 sort: -50000
@@ -26,11 +24,11 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160136
-  modifiedTime: 1773514792588
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789486130268
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

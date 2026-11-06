@@ -1,0 +1,70 @@
+name: Spellcatch
+type: talent
+img: icons/magic/defensive/shield-barrier-blades-teal.webp
+system:
+  description: >-
+    <p>A spell cast towards you is something to grasp rather than avoid. You
+    have learned a technique to catch an incoming spell with your
+    <strong>Talisman</strong> and extract its essence for your own purposes.</p>
+  actions:
+    - id: spellcatch
+      name: Spellcatch
+      img: icons/magic/defensive/shield-barrier-blades-teal.webp
+      condition: ''
+      description: >-
+        <p>When you are targeted by a <strong>Spell</strong> you may catch it
+        upon your <strong>Talisman</strong>. The <strong>Spell</strong> has no
+        effect upon you and you recover @Rule[resource.focus] equal to the
+        @Rule[resource.focus] which was spent to cast it.</p>
+
+        <h3 class="divider">Playtest Notes</h3>
+
+        <p>This action is not yet automated.</p>
+      cost:
+        action: 0
+        focus: 0
+        heroism: 1
+        hands: 0
+        weapon: true
+      range:
+        minimum: null
+        maximum: null
+        weapon: false
+      target:
+        type: self
+        number: 1
+        scope: 1
+        self: false
+      effects: []
+      tags:
+        - talisman
+        - reaction
+        - ranged
+      summon: null
+  keywords:
+    - playstyle.defensive
+    - weapon.talisman
+    - action.reaction
+    - resource.focus
+  nodes:
+    - pre4b
+  iconicSpells: 0
+  training: talisman
+effects: []
+folder: zQ7pKvR3mNxL8sTa
+ownership:
+  default: 0
+flags: {}
+_stats:
+  systemId: crucible
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
+  createdTime: 1788278400000
+  modifiedTime: 1789491243437
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+_id: spellcatch000000
+sort: 1100000
+_key: '!items!spellcatch000000'

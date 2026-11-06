@@ -2,6 +2,10 @@ name: Ensnare
 type: talent
 img: icons/magic/nature/root-vine-entangle-foot-green.webp
 system:
+  keywords:
+    - playstyle.melee
+    - target.reflex
+    - damageType.bludgeoning
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} lashes out with a grasping tendril, coil,
@@ -13,10 +17,10 @@ system:
       condition: ''
       description: >-
         <p>The @ref[actor.name]{creature} reaches out to seize a single target
-        within range, attacking its <strong>Reflex</strong>. On a success the
+        within range, attacking its @Rule[defense.reflex]. On a success the
         target is dragged back into reach and becomes @Condition[restrained].
         This action may only be used on creatures which are eligible targets for
-        @Action[Compendium.crucible.talent.Item.unarmedCombatTra
+        @Action[Compendium.crucible.talent.Item.grapple000000000
         grapple].</p><p>The hold is maintained until the
         @ref[actor.name]{creature} releases it, the target escapes, or a
         different creature is targeted with Ensnare.</p>
@@ -54,7 +58,6 @@ system:
             maintenance: null
             regions: []
             summons: []
-            dc: null
             properties: []
       tags:
         - generic
@@ -65,13 +68,7 @@ system:
       summon:
         actorUuid: null
         permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 9uAW3eV4LNZ2lQ0V
 ownership:

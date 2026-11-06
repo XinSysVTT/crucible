@@ -4,29 +4,29 @@ _id: unarmedblocking0
 img: icons/magic/earth/strike-fist-stone-light.webp
 system:
   description: >-
-    Your honed reflexes and physical toughness allow you to block enemy blows
-    using your bare limbs. While <strong>Unarmed</strong> or wielding only
-    natural weapons, half your Toughness score contributes to your
-    <strong>Block</strong> defense.
+    <p>Through long practice and toughened resolve you are able to block enemy
+    blows using your bare limbs. While <strong>Unarmed</strong> or wielding only
+    <strong>Natural</strong> weapons, half your @Rule[ability.toughness] score
+    contributes to your @Rule[defense.block] defense.</p>
   actions: []
+  keywords:
+    - playstyle.defensive
+    - weapon.unarmed
+    - weapon.natural
+    - defense.block
   nodes:
-    - tou1a
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - tou0a
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: unarmed
 effects: []
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160153
-  modifiedTime: 1773514792625
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789487920252
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

@@ -1,0 +1,108 @@
+folder: fldAthletics0000
+name: Grapple
+type: talent
+img: icons/magic/control/buff-strength-muscle-damage.webp
+system:
+  description: >-
+    <p>You are familiar with basic martial arts and hand-to-hand combat. You
+    know how to subdue or restrain opponents using your physical strength.</p>
+  actions:
+    - id: grapple
+      img: icons/magic/control/buff-strength-muscle-damage.webp
+      cost:
+        action: 3
+        focus: 0
+        heroism: 0
+        hands: 1
+        weapon: false
+      range:
+        minimum: null
+        maximum: 1
+        weapon: false
+      target:
+        type: single
+        number: 1
+        scope: 3
+        self: false
+      effects:
+        - name: Grappled
+          scope: 4
+          result:
+            type: success
+            all: false
+          statuses:
+            - restrained
+          duration:
+            value: 1
+            units: rounds
+            expiry: turnStart
+            expired: false
+          system:
+            dot: []
+            maintenance:
+              cost: null
+              hands: 0
+            regions: []
+            summons: []
+            changes: []
+            properties: []
+        - name: Grappling
+          scope: 1
+          result:
+            type: success
+            all: false
+          statuses:
+            - restrained
+          duration:
+            value: 1
+            units: rounds
+            expiry: turnStart
+            expired: false
+          system:
+            dot: []
+            maintenance:
+              cost: null
+              hands: 0
+            regions: []
+            summons: []
+            changes: []
+            properties: []
+      tags:
+        - difficult
+        - harmless
+        - skill
+        - athletics
+      name: Grapple
+      condition: ''
+      description: >-
+        <p>You attempt to physically restrain or subdue an opponent. Perform an
+        @Rule[skill.athletics] skill attack against an adjacent target contested
+        by their passive @Rule[skill.athletics] skill.  If successful, both you
+        and your target are @Condition[restrained] for <strong>1
+        Round</strong>.</p>
+      summon: null
+  iconicSpells: 0
+  training: unarmed
+  keywords:
+    - playstyle.utility
+    - skill.athletics
+  nodes:
+    - str0b
+effects: []
+flags: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.367'
+  systemId: crucible
+  systemVersion: 0.10.2
+  createdTime: 1772307160153
+  modifiedTime: 1789495625777
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+ownership:
+  default: 0
+  AnoypGxxNIMOS0XY: 3
+_id: grapple000000000
+sort: 125000
+_key: '!items!grapple000000000'

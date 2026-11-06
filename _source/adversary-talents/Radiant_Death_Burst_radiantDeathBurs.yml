@@ -2,6 +2,9 @@ name: Radiant Death Burst
 type: talent
 img: icons/magic/fire/explosion-fireball-large-orange.webp
 system:
+  keywords:
+    - damageType.radiant
+    - target.fortitude
   nodes: []
   description: >-
     <p>When the @ref[actor.name]{creature} dies, it explodes in a volatile burst
@@ -14,7 +17,7 @@ system:
       description: >-
         <p>When the @ref[actor.name]{creature} becomes @Condition[dead], it
         explodes in a pulse of <strong>Radiant</strong> energy which attacks the
-        <strong>Fortitude</strong> defense of all nearby creatures that fail to
+        @Rule[defense.fortitude] defense of all nearby creatures that fail to
         resist the effect and upon critical success afflicting them with the
         @Condition[irradiated] condition for <strong>3 rounds</strong>.</p>
       cost:
@@ -60,13 +63,7 @@ system:
       summon:
         actorUuid: null
         permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: myBrb0NP4oQkwiz5
 ownership:
@@ -80,12 +77,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.360'
+  coreVersion: '14.369'
   systemId: crucible
   systemVersion: 0.9.1
   createdTime: 1777227102876
-  modifiedTime: 1777227102916
+  modifiedTime: 1792085984078
   lastModifiedBy: QvBFYpRRXHRBcOfP
 _id: radiantDeathBurs
-sort: 0
+sort: 500000
 _key: '!items!radiantDeathBurs'

@@ -43,7 +43,7 @@ HOOKS.aspect = {
 
     // Standard Aspect: buff the caster
     this.recordEvent({type: "effect", effects: [{
-      _id: SYSTEM.EFFECTS.getEffectId(`aspect${this.damage.type}`),
+      _id: SYSTEM.EFFECTS.getEffectId("aspect"),
       name: this.name,
       img: this.gesture.img,
       duration: {value: 6, units: "rounds", expiry: "turnEnd"},
@@ -61,26 +61,50 @@ HOOKS.aspect = {
 /* -------------------------------------------- */
 
 HOOKS.aura = {
+  _targetScope(rune) {
+    return SYSTEM.ACTION.TARGET_SCOPES[rune?.restoration ? "ALLIES" : "ENEMIES"];
+  },
   initialize() {
     this.tags.add("maintained");
+    this.regionBehavior = {}; // Being truthy means this will be prepared with appropriate default values
+  },
+  prepare() {
+    // The initial cast is self-target no roll or damage
+    this.usage.hasDice = false;
+    this.damage.base = 0;
+    this.target.scope = SYSTEM.ACTION.TARGET_SCOPES.SELF;
+
+    // The region action resolves as a spell attack with scaling and damage based on its components
+    const regionTags = ["spell"];
+    if ( this.rune.restoration ) regionTags.push((this.rune.resource === "health") ? "healing" : "rallying");
+    Object.assign(this.regionBehavior.system.action, {
+      id: "spellAuraRegion",
+      target: {scope: HOOKS.aura._targetScope(this.rune)},
+      spellcraft: {rune: this.rune.id, gesture: this.gesture.id, inflection: this.inflection?.id ?? ""},
+      tags: regionTags
+    });
+  },
+  canUse() {
+    if ( !this.actor.inCombat ) throw new Error(_loc("SPELL.WARNINGS.AuraRequiresCombat"));
+  },
+  postActivate() {
+    const {effect} = this.selfEvents?.getPrimaryEffect() ?? {};
+    if ( !effect ) return;
+    effect.duration = {expiry: "combatEnd"};
   }
 };
 
 /* -------------------------------------------- */
 
 HOOKS.conjure = {
-  prepare() {
-    _prepareSummon.call(this, this.actor.system.advancement.threatLevel);
+  initialize() {
+    this.tags.add("maintained");
   },
-  postActivate() {
-    const summonEvent = this.events.find(e => e.type === "summon");
-    if ( summonEvent ) summonEvent.effects.push({
-      _id: summonEvent.summon.effectId,
-      img: this.img,
-      name: this.name,
-      duration: {rounds: 12},
-      system: {}
-    });
+  prepare() {
+    _prepareSummon.call(this, this.actor.system.advancement.level);
+  },
+  preActivate() {
+    _recordSummonEffect.call(this, 12);
   }
 };
 
@@ -88,17 +112,11 @@ HOOKS.conjure = {
 
 HOOKS.create = {
   prepare() {
-    _prepareSummon.call(this, Math.ceil(this.actor.system.advancement.threatLevel / 2));
+    const {level} = this.actor.system.advancement;
+    _prepareSummon.call(this, Math.min(level, Math.ceil(level / 2)));
   },
-  postActivate() {
-    const summonEvent = this.events.find(e => e.type === "summon");
-    if ( summonEvent ) summonEvent.effects.push({
-      _id: summonEvent.summon.effectId,
-      img: this.img,
-      name: this.name,
-      duration: {rounds: 6},
-      system: {}
-    });
+  preActivate() {
+    _recordSummonEffect.call(this, 6);
   }
 };
 
@@ -114,7 +132,7 @@ HOOKS.react = {
 
 HOOKS.reshape = {
   prepare() {
-    if ( this.damage.restoration ) this.target.scope = SYSTEM.ACTION.TARGET_SCOPES.ALLIES;
+    if ( this.rune.restoration ) this.target.scope = SYSTEM.ACTION.TARGET_SCOPES.ALLIES;
     else this.target.scope = SYSTEM.ACTION.TARGET_SCOPES.ENEMIES;
   }
 };
@@ -146,27 +164,17 @@ HOOKS.sense = {
     this.usage.region.wallRestriction = false;
   },
   postActivate() {
-    this.recordEvent({type: "effect", effects: [{
-      _id: SYSTEM.EFFECTS.getEffectId(this.gesture.id),
-      img: this.img,
-      name: this.name,
-      // TODO: Move this logic into token data prep
-      system: {
-        changes: [{
-          key: "token.detectionModes.senseCreature",
-          type: "override",
-          value: {
-            enabled: true,
-            range: this.target.size
-          }
-        }]
-      },
-      flags: {
-        crucible: {
-          runes: [this.rune.id]
-        }
+    const {effect: trackingEffect} = this.selfEvents?.getPrimaryEffect() ?? {};
+    if ( !trackingEffect ) return;
+    trackingEffect.system.changes = [{
+      key: "token.detectionModes.senseCreature",
+      type: "override",
+      value: {
+        enabled: true,
+        range: this.target.size
       }
-    }]});
+    }];
+    foundry.utils.setProperty(trackingEffect, "flags.crucible.runes", [this.rune.id]);
   }
 };
 
@@ -184,7 +192,7 @@ HOOKS.step = {
 HOOKS.strike = {
   prepare() {
     const mh = this.actor.equipment.weapons.mainhand;
-    this.scaling = mh.config.category.scaling.split(".");
+    this.scaling = mh.system.scaling.split(".");
     this.damage.base = mh.system.damage.base;
     this.usage.strikes = [mh];
   }
@@ -236,18 +244,45 @@ function _prepareSummon(level) {
   // Configure summon data
   const summonUUIDs = SYSTEM.SPELL.GESTURE_SUMMONS[this.gesture.id];
   const actorUuid = summonUUIDs[this.rune.id] || summonUUIDs.fallback;
+  const family = this.rune.training;
   const tokenData = {
     delta: {
       system: {
-        details: {
+        advancement: {
           level,
           rank: "minion"
+        }
+      },
+      flags: {
+        crucible: {
+          summoner: {
+            actor: this.actor.uuid,
+            training: {[family]: this.actor.system.training[family].points}
+          }
         }
       }
     }
   };
   const effectId = SYSTEM.EFFECTS.getEffectId(this.gesture.id);
   this.usage.summons = [{actorUuid, tokenData, effectId}];
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Record the self effect which owns a summon spell's summoned creature for a duration in rounds.
+ * Recorded before postActivate so that tags such as maintained can configure it as the primary effect.
+ * @param {number} rounds
+ */
+function _recordSummonEffect(rounds) {
+  const [{effectId}] = this.usage.summons;
+  this.recordEvent({type: "effect", target: this.actor, effects: [{
+    _id: effectId,
+    img: this.img,
+    name: this.name,
+    duration: {rounds},
+    system: {}
+  }]});
 }
 
 /* -------------------------------------------- */

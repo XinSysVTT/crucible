@@ -177,6 +177,14 @@ export const statusEffects = {
     hud: nonGroupTypes,
     page: "Compendium.crucible.rules.JournalEntry.crucibleConditio.JournalEntryPage.exposed000000000"
   },
+  hexed: {
+    id: "hexed",
+    name: "ACTIVE_EFFECT.STATUSES.Hexed",
+    img: "systems/crucible/icons/statuses/hexed.svg",
+    hud: nonGroupTypes,
+    generator: EFFECTS.hexed,
+    page: "Compendium.crucible.rules.JournalEntry.crucibleConditio.JournalEntryPage.hexed00000000000"
+  },
   overrun: {
     id: "overrun",
     name: "ACTIVE_EFFECT.STATUSES.Overrun",
@@ -279,7 +287,7 @@ export const statusEffects = {
     name: "ACTIVE_EFFECT.STATUSES.Decaying",
     img: "icons/magic/unholy/strike-beam-blood-red-purple.webp",
     hud: false,
-    generator: EFFECTS.decay,
+    generator: EFFECTS.decaying,
     page: "Compendium.crucible.rules.JournalEntry.crucibleConditio.JournalEntryPage.decaying00000000"
   },
   dominated: {
@@ -288,7 +296,7 @@ export const statusEffects = {
     img: "icons/magic/control/hypnosis-mesmerism-watch.webp",
     hud: false,
     generator: EFFECTS.dominated,
-    page: "" // TODO
+    page: "Compendium.crucible.rules.JournalEntry.crucibleConditio.JournalEntryPage.dominated0000000"
   },
   entropy: {
     id: "entropy",

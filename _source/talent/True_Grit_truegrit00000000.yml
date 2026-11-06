@@ -5,18 +5,15 @@ img: icons/magic/symbols/mask-yellow-orange.webp
 system:
   description: >-
     <p>Your physical tenacity allows you to remain composed while surrounded by
-    foes. Your <strong>Engagement</strong> increases by +1, allowing you to
+    foes. Your @Rule[movement.engagement] increases by +1, allowing you to
     simultaneously engage more adjacent foes.</p>
   actions: []
+  keywords:
+    - movement.engagement
   nodes:
-    - tou0b
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - toustr2
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: intimidation
 effects: []
 folder: aB808IWOdgwmFCIF
 sort: 275000
@@ -26,10 +23,10 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160152
-  modifiedTime: 1773514792623
+  modifiedTime: 1788277899221
   lastModifiedBy: WRGzDgYAt3ZuX6TU
   compendiumSource: null
   duplicateSource: null

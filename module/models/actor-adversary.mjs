@@ -1,6 +1,7 @@
 import CrucibleBaseActor from "./actor-base.mjs";
 import CrucibleTaxonomyItem from "./item-taxonomy.mjs";
 import CrucibleArchetypeItem from "./item-archetype.mjs";
+import {allocatePoints} from "../advancement.mjs";
 
 /**
  * Data schema, attributes, and methods specific to Adversary type Actors.
@@ -50,18 +51,23 @@ export default class CrucibleAdversaryActor extends CrucibleBaseActor {
       languages: new fields.SetField(new fields.StringField({blank: false}))
     });
 
-    // Adversaries do not track ability advancement
+    // Adversaries do not track ability or training advancement, both being derived from Taxonomy and Archetype
     for ( const abilityField of Object.values(schema.abilities.fields) ) {
       delete abilityField.fields.base;
       delete abilityField.fields.increases;
     }
+    delete schema.training.element.fields.increases;
     return schema;
   }
 
+  /** @override */
+  static biologyName = "taxonomy";
+
   /**
-   * The Handlebars template path used to render an @Embed block for adversaries.
+   * The order in which abilities claim a point when automatic allocation would otherwise be tied.
+   * @type {string[]}
    */
-  static EMBED_TEMPLATE = "systems/crucible/templates/embeds/actor-adversary.hbs";
+  static #ABILITY_PRIORITY = ["toughness", "strength", "dexterity", "presence", "intellect", "wisdom"];
 
   /* -------------------------------------------- */
   /*  Properties                                  */
@@ -91,6 +97,19 @@ export default class CrucibleAdversaryActor extends CrucibleBaseActor {
   }
 
   /**
+   * The number of training points this Adversary allocates according to Archetype preference.
+   * The flat grant buys parity with a level 1 hero's points from background and starting choices, above which the
+   * rate scales on effective threat so an Elite out-trains a Normal of the same level.
+   * @type {number}
+   */
+  get trainingBudget() {
+    const {initial, perLevel} = SYSTEM.PROFICIENCY.ADVERSARY_POINTS;
+    return initial + Math.ceil(perLevel * this.advancement.threat);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Does this Adversary use physical equipment?
    * @type {boolean}
    */
@@ -113,7 +132,8 @@ export default class CrucibleAdversaryActor extends CrucibleBaseActor {
       heroismMax: threatConfig.heroismMax,
       healthPerLevel: expectedSize + 2,
       moralePerLevel: expectedSize + 2,
-      abilityMax: 18
+      abilityMax: 18,
+      talentTraining: false // Talent counts vary too widely between Archetypes to serve as a progression basis
     });
 
     // Cap reserve pools for Important adversaries using the Normal threat baseline
@@ -128,78 +148,25 @@ export default class CrucibleAdversaryActor extends CrucibleBaseActor {
 
   /** @override */
   _prepareBaseAbilities() {
-    const {archetype, taxonomy} = this.details;
+    const {archetype, taxonomy: tax} = this.details;
     const {level, threat} = this.advancement;
-    let toSpend = level > 0 ? 5 + level : Math.ceil(6 * threat);
-
-    // Assign base Taxonomy ability scores
+    const {abilityMax} = this.details.progression;
+    const budget = level > 0 ? 5 + level : Math.ceil(6 * threat);
+    const weights = {};
+    const caps = {};
     for ( const k in SYSTEM.ABILITIES ) {
       const a = this.abilities[k];
-      a.base = taxonomy.abilities[k];
+      a.base = tax.abilities[k];
       a.initial = a.increases = 0;
       a.value = a.base;
+      weights[k] = a.base > 0 ? archetype.abilities[k] : 0; // An ability the Taxonomy denies can never be raised
+      caps[k] = Math.max(abilityMax - a.base, 0);
     }
-
-    // Compute Archetype scaling
-    const abilities = {};
-    const total = {points: 0, points2: 0};
+    const order = CrucibleAdversaryActor.#ABILITY_PRIORITY.toSorted((a, b) => tax.abilities[b] - tax.abilities[a]);
+    const increases = allocatePoints(budget, weights, {caps, order});
     for ( const k in SYSTEM.ABILITIES ) {
-      const ability = {points: taxonomy.abilities[k] > 0 ? archetype.abilities[k] : 0};
-      abilities[k] = ability;
-      total.points += ability.points;
-    }
-    for ( const k in abilities ) abilities[k].weight = abilities[k].points / total.points;
-
-    // Pass 1: Unconstrained Increases
-    const nFull = Math.floor(toSpend / total.points);
-    if ( nFull > 0 ) {
-      for ( const [k, abl] of Object.entries(abilities) ) {
-        const a = this.abilities[k];
-        a.increases += (abl.points * nFull);
-        a.value = a.base + a.increases;
-      }
-      toSpend -= (nFull * total.points);
-    }
-    if ( toSpend === 0 ) return;
-
-    // Pass 2: Iterative Assignment
-    const allocation = {};
-    for ( const k in abilities ) {
-      const w = abilities[k].weight;
-      const v0 = toSpend * w;
-      const t0 = Math.min(v0, (18 - this.abilities[k].value), abilities[k].points);
-      const p0 = Math.floor(t0);
-
-      // How many more points are needed to get another +1?
-      const t1 = Math.min(v0 + 1, (18 - this.abilities[k].value), abilities[k].points);
-      const p1 = Math.floor(t1);
-      const needed = (p1 - t0) / w;
-      allocation[k] = {w, v0, t0, p0, t1, p1, needed};
-    }
-
-    // Unambiguous allocation
-    const remainder = [];
-    for ( const k in allocation ) {
-      const {p0, p1, needed} = allocation[k];
       const a = this.abilities[k];
-      a.increases += p0;
-      toSpend -= p0;
-      a.value = a.base + a.increases;
-      if ( (p1 > p0) && Number.isFinite(needed) ) remainder.push({ability: k, needed});
-    }
-    if ( toSpend === 0 ) return;
-
-    // Sort remainder
-    const tiebreaker = {toughness: 1, strength: 2, dexterity: 3, presence: 4, intellect: 5, wisdom: 6};
-    remainder.sort((a, b) => {
-      return (a.needed - b.needed)                                          // Fewest points needed
-        || (taxonomy.abilities[b.ability] - taxonomy.abilities[a.ability])     // Taxonomy preference
-        || (tiebreaker[a.ability] - tiebreaker[b.ability]);                       // Heuristic tiebreaker
-    });
-    for ( const {ability} of remainder.slice(0, toSpend) ) {
-      const a = this.abilities[ability];
-      a.increases += 1;
-      toSpend -= 1;
+      a.increases = increases[k];
       a.value = a.base + a.increases;
     }
   }
@@ -221,16 +188,6 @@ export default class CrucibleAdversaryActor extends CrucibleBaseActor {
       const base = this.advancement.threat * perLevel;
       res.base = base < 0 ? Math.floor(base) : Math.ceil(base);
     }
-  }
-
-  /* -------------------------------------------- */
-
-  /** @override */
-  _prepareBaseMovement() {
-    super._prepareBaseMovement();
-    const {size=4, stride=10} = this.details.taxonomy?.movement || {};
-    this.movement.baseSize = size;
-    this.movement.baseStride = stride;
   }
 
   /* -------------------------------------------- */
@@ -266,24 +223,47 @@ export default class CrucibleAdversaryActor extends CrucibleBaseActor {
     adv.threat = adv.threatLevel * adv.threatFactor;
 
     // Automatic training and maximum action configuration
-    this.advancement.autoTrainingRank = Math.clamp(1 + Math.floor(adv.threatLevel / 6), 0, 4);
+    this.advancement.autoTrainingRank = Math.clamp(1 + Math.floor(adv.threatLevel / 6), 0, SYSTEM.PROFICIENCY.RANK_MAX);
   }
 
   /* -------------------------------------------- */
 
-  /** @override */
+  /** @inheritDoc */
   _prepareTraining() {
+    super._prepareTraining();
 
     // Automatic natural weapon training if the taxonomy does not use equipment
     if ( !this.usesEquipment ) {
-      this.training.natural = Math.max(this.training.natural || 0, this.advancement.autoTrainingRank);
+      const {required} = SYSTEM.PROFICIENCY.RANK_VALUES[this.advancement.autoTrainingRank];
+      const natural = this.training.natural;
+      natural.initial = Math.max(natural.initial, required);
     }
 
-    // Automatic skill progression
-    const skills = this.details.archetype?.skills || [];
-    for ( const skillId of skills ) {
-      this.training[skillId] = Math.max(this.training[skillId] || 0, this.advancement.autoTrainingRank);
+    // Allocate the training budget by Archetype preference, breaking ties on aptitude
+    const budget = this.trainingBudget;
+    const {trainingCap} = this.details.progression;
+    const preferences = this.details.archetype?.training ?? {};
+    const weights = {};
+    const caps = {};
+    const aptitude = {};
+    for ( const id in SYSTEM.PROFICIENCIES ) {
+      weights[id] = preferences[id] ?? 0;
+      caps[id] = Math.max(trainingCap - this.training[id].initial, 0);
+      aptitude[id] = this.parent.getAbilityBonus(SYSTEM.PROFICIENCIES[id].abilities);
     }
+    const order = SYSTEM.PROFICIENCY.getAllocationOrder(aptitude);
+    const increases = allocatePoints(budget, weights, {caps, order});
+
+    // A declared weight of zero claims an equal share of whatever the weighted proficiencies cannot absorb
+    let surplus = budget;
+    for ( const id in increases ) surplus -= increases[id];
+    if ( surplus > 0 ) {
+      const spare = {};
+      for ( const id in preferences ) if ( preferences[id] === 0 ) spare[id] = 1;
+      const leftovers = allocatePoints(surplus, spare, {caps, order});
+      for ( const id in leftovers ) increases[id] += leftovers[id];
+    }
+    for ( const id in SYSTEM.PROFICIENCIES ) this.training[id].increases = increases[id];
   }
 
   /* -------------------------------------------- */
@@ -315,7 +295,7 @@ export default class CrucibleAdversaryActor extends CrucibleBaseActor {
    * @returns {Promise<void>}
    */
   async applyArchetype(item) {
-    return this.parent._applyDetailItem(item, {type: "archetype", canApply: true, canClear: true, skillTalents: false});
+    return this.parent._applyDetailItem(item, {type: "archetype", canApply: true, canClear: true});
   }
 
   /* -------------------------------------------- */
@@ -347,32 +327,14 @@ export default class CrucibleAdversaryActor extends CrucibleBaseActor {
 
   /* -------------------------------------------- */
 
-  /** @override */
-  async toEmbed(config, _options) {
-    const block = new foundry.applications.elements.HTMLDocumentEmbedElement();
-    block.className = "block actor";
-    config.inline ??= false; // Never use figures
-
-    // Prepare actor data
-    const actor = this.parent;
-    const rank = actor.system.advancement.rank || "normal";
+  /** @inheritDoc */
+  async _prepareEmbedContext(config) {
+    const context = await super._prepareEmbedContext(config);
+    const rank = this.advancement.rank || "normal";
     const rankName = rank !== "normal" ? SYSTEM.THREAT_RANKS[rank]?.label : "";
-    const context = {
-      name: actor.name,
-      img: config.image === "token" ? actor.prototypeToken.texture.src : actor.img,
-      link: actor.toAnchor().outerHTML,
-      count: config.count,
-      threat: [actor.system.advancement.threatLevel, rankName ? `(${rankName})` : ""].filterJoin(" "),
-      subtitle: [this.details.taxonomy?.name || "Unknown", this.details.archetype?.name || "Unknown"].join(" "),
-      readaloud: await CONFIG.ux.TextEditor.enrichHTML(this.details.biography.appearance, {
-        relativeTo: actor,
-        secrets: actor.isOwner
-      })
-    };
-
-    // Render the Embed
-    block.innerHTML = await foundry.applications.handlebars.renderTemplate(this.constructor.EMBED_TEMPLATE, context);
-    return block;
+    context.level = [this.advancement.threatLevel, rankName ? `(${rankName})` : ""].filterJoin(" ");
+    context.subtitle = [this.details.taxonomy?.name || "Unknown", this.details.archetype?.name || "Unknown"].join(" ");
+    return context;
   }
 
   /* -------------------------------------------- */

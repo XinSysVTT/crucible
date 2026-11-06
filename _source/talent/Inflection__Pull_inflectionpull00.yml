@@ -5,29 +5,28 @@ system:
   description: >-
     <p>Empower a spell to attract affected creatures toward the caster.
     Creatures affected by a spell with the <strong>Pull</strong> inflection move
-    are forcibly moved a distance towards the spellcaster equal to the Ability
-    Bonus that applied to the Spell, potentially colliding with walls or other
-    movement-blocking obstacles.</p>
+    are forcibly moved a distance towards the spellcaster equal to the
+    <strong>Ability Bonus</strong> that applied to the <strong>Spell</strong>,
+    potentially colliding with walls or other movement-blocking obstacles.</p>
   actions: []
-  inflection: pull
+  spellcraft: pull
   iconicSpells: 1
+  training: enchanting
+  keywords:
+    - playstyle.spellcraft
+    - spell.inflection
   nodes:
     - wispre2
-  rune: ''
-  gesture: ''
-  training:
-    type: ''
-    rank: null
 effects: []
 flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.4
-  coreVersion: '14.363'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160135
-  modifiedTime: 1779733759613
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1789498500642
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: Compendium.crucible.talent.inflectionpull00
   duplicateSource: null
   exportSource: null

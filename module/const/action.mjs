@@ -1,8 +1,7 @@
-import {SKILLS} from "./skills.mjs";
+import {SKILLS} from "./proficiencies.mjs";
 import {ABILITIES, DAMAGE_TYPES, RESOURCES} from "./attributes.mjs";
 import {MOVEMENT_ACTIONS} from "./actor.mjs";
 import {defineEnum, defineIntEnum} from "./enum.mjs";
-import AttackRoll from "../dice/attack-roll.mjs";
 
 /**
  * The different required conditions under which an Active Effect can be applied from an Action.
@@ -52,9 +51,9 @@ export const TARGET_SCOPES = defineIntEnum({
 /**
  * @typedef ActionTargetRegion
  * @property {string} shape             The Region shape type from BaseShapeData.TYPES
- * @property {boolean} ephemeral        Default behavior: true if no RegionDocument is created.
- *                                      Individual actions may override this default.
  * @property {"self"|"vertex"} anchor   Placement position: "self" (token center) or "vertex" (snapped to grid corner)
+ * @property {boolean} [ephemeral]      true if no RegionDocument can be persisted, false if one must be persisted.
+ *                                      If not provided, defaults to ephemeral, but can be chosen per-Action.
  * @property {number} [angle]           Interior angle in degrees, for cone shapes
  * @property {number} [width]           Width in grid units, for line and rectangle shapes
  * @property {number} [size]            Size in grid units, for rectangle shapes
@@ -78,6 +77,11 @@ export const TARGET_TYPES = defineEnum({
     region: null,
     scope: TARGET_SCOPES.SELF
   },
+  party: {
+    label: "ACTION.TARGET_TYPES.Party",
+    region: null,
+    scope: TARGET_SCOPES.ALLIES
+  },
   single: {
     label: "ACTION.TARGET_TYPES.Single",
     region: null,
@@ -90,8 +94,7 @@ export const TARGET_TYPES = defineEnum({
       angle: 60,
       directionDelta: 15,
       anchor: "self",
-      addSize: true,
-      ephemeral: true
+      addSize: true
     },
     scope: TARGET_SCOPES.ALL
   },
@@ -102,18 +105,16 @@ export const TARGET_TYPES = defineEnum({
       angle: 210,
       directionDelta: 15,
       anchor: "self",
-      addSize: true,
-      ephemeral: true
+      addSize: true
     },
     scope: TARGET_SCOPES.ALL
   },
   pulse: {
     label: "ACTION.TARGET_TYPES.Pulse",
     region: {
-      shape: "circle",
+      shape: "emanation",
       anchor: "self",
-      addSize: true,
-      ephemeral: true
+      addSize: false // Accounted for directly by emanation shape
     },
     scope: TARGET_SCOPES.ALL
   },
@@ -131,8 +132,7 @@ export const TARGET_TYPES = defineEnum({
     label: "ACTION.TARGET_TYPES.Blast",
     region: {
       shape: "circle",
-      anchor: "vertex",
-      ephemeral: true
+      anchor: "vertex"
     },
     scope: TARGET_SCOPES.ALL
   },
@@ -143,8 +143,7 @@ export const TARGET_TYPES = defineEnum({
       width: 1,
       directionDelta: 3,
       anchor: "self",
-      addSize: true,
-      ephemeral: true
+      addSize: true
     },
     scope: TARGET_SCOPES.ALL
   },
@@ -204,7 +203,7 @@ export const TAG_CATEGORIES = defineEnum({
  * @property {string} label           A short label for this tag
  * @property {string} [tooltip]       A tooltip displayed when this tag is hovered
  * @property {string[]} propagate     Propagate this tag to also apply other tags
- * @property {number} [priority]      A priority that this tag should be resolved in. Lower values are higher priority
+ * @property {number} [priority=0]    A priority that this tag should be resolved in. Lower values are higher priority
  * @property {number} [category]      A category that determines how this tag is grouped and sorted
  * @property {(this: CrucibleAction) => void} [initialize]
  * @property {(this: CrucibleAction) => void} [prepare]
@@ -214,7 +213,7 @@ export const TAG_CATEGORIES = defineEnum({
  * @property {(this: CrucibleAction, target: CrucibleActor, token: CrucibleTokenObject) => void} [roll]
  * @property {(this: CrucibleAction, reverse: boolean) => Promise<void>} [confirm]
  * @property {(this: CrucibleAction, reverse: boolean) => Promise<void>} [postConfirm]
- * @property {(this: CrucibleAction, vfxConfig: object|null) => object|null} [configureVFX]
+ * @property {(this: CrucibleAction, vfxConfig: object|null) => object|null|false} [configureVFX]  False suppresses VFX
  * @property {(this: CrucibleAction, vfxEffect: VFXEffect, references: Record<string, any>) => void} [resolveVFX]
  * @property {(this: CrucibleAction, vfxEffect: VFXEffect, references: Record<string, any>) => void} [finalizeVFX]
  */
@@ -260,11 +259,12 @@ export const TAGS = {
     priority: 5,
     prepare() {
       for ( const c of this.usage.weaponChoices ?? [] ) {
-        if ( !c.item.config.category.scaling.includes("dexterity") ) c.viable = false;
+        if ( !c.item.system.scaling.includes("dexterity") ) c.viable = false;
       }
     },
     canUse() {
-      if ( !this.usage.strikes.every(w => w.config.category.scaling.includes("dexterity")) ) {
+      const weaponsUsed = this.usage.strikes?.length ? this.usage.strikes : [this.actor.equipment.weapons.mainhand];
+      if ( !weaponsUsed.every(w => w?.system.scaling.includes("dexterity")) ) {
         throw new Error(_loc("ACTION.WARNINGS.MustScaleDex"));
       }
     }
@@ -279,11 +279,12 @@ export const TAGS = {
     priority: 5,
     prepare() {
       for ( const c of this.usage.weaponChoices ?? [] ) {
-        if ( !c.item.config.category.scaling.includes("strength") ) c.viable = false;
+        if ( !c.item.system.scaling.includes("strength") ) c.viable = false;
       }
     },
     canUse() {
-      if ( !this.usage.strikes.every(w => w.config.category.scaling.includes("strength")) ) {
+      const weaponsUsed = this.usage.strikes?.length ? this.usage.strikes : [this.actor.equipment.weapons.mainhand];
+      if ( !weaponsUsed.every(w => w?.system.scaling.includes("strength")) ) {
         throw new Error(_loc("ACTION.WARNINGS.MustScaleStrength"));
       }
     }
@@ -343,7 +344,7 @@ export const TAGS = {
     tooltip: "ACTION.TAG.TalismanTooltip",
     category: "requirements",
     priority: 5,
-    propagate: ["strike"],
+    propagate: ["ranged"],
     prepare() {
       for ( const c of this.usage.weaponChoices ?? [] ) {
         if ( !c.item.config.category.training.includes("talisman") ) c.viable = false;
@@ -400,7 +401,20 @@ export const TAGS = {
     }
   },
 
-  // Immediately follows a Rest
+  // Requires membership in the primary party
+  party: {
+    tag: "party",
+    label: "ACTION.TAG.Party",
+    tooltip: "ACTION.TAG.PartyTooltip",
+    category: "requirements",
+    canUse() {
+      if ( !crucible.party?.system.actors.has(this.actor) ) {
+        throw new Error(_loc("ACTION.WARNINGS.MustJoinParty", {action: this.name}));
+      }
+    }
+  },
+
+  // Performed during a Rest
   rest: {
     tag: "rest",
     label: "ACTION.TAG.Rest",
@@ -408,9 +422,21 @@ export const TAGS = {
     category: "requirements",
     propagate: ["noncombat"],
     canUse() {
+      const activeRest = crucible.api.models.CrucibleRestMessage.getActiveRest(this.actor);
+      if ( activeRest ) {
+        if ( this.message === activeRest ) return;
+        throw new Error(_loc("ACTION.WARNINGS.MustUseRestCard", {action: this.name}));
+      }
       if ( this.actor.lastConfirmedAction?.id !== "rest" ) {
         throw new Error(_loc("ACTION.WARNINGS.MustFollowRest", {action: this.name}));
       }
+    },
+    async confirm(reverse) {
+      // A group rest card extends its own duration by the time cost instead
+      const {hours} = this.usage.rest;
+      if ( reverse || !hours || (this.message?.type === "rest") ) return;
+      // Only for rest actions performed outside a party rest
+      await game.time.advance(hours * 3600);
     }
   },
 
@@ -421,7 +447,7 @@ export const TAGS = {
     tooltip: "ACTION.TAG.VocalTooltip",
     category: "requirements",
     canUse() {
-      if ( this.actor.statuses.has("silenced") ) throw new Error(game.i18n.localize("ACTION.WARNINGS.Silenced"));
+      if ( this.actor.statuses.has("silenced") ) throw new Error(_loc("ACTION.WARNINGS.Silenced"));
     }
   },
 
@@ -514,9 +540,11 @@ export const TAGS = {
     },
     preActivate() {
       const item = this.usage.consumable;
+      const uses = this.usage.consumeUses ?? 1;
+      if ( !uses ) return;
       const updateEvent = this.selfUpdateEvent;
       updateEvent.itemSnapshots.push(item.snapshot());
-      updateEvent.actorUpdates.items.push(item.system.consume(1, {save: false}));
+      updateEvent.actorUpdates.items.push(item.system.consume(uses, {save: false}));
     }
   },
 
@@ -560,17 +588,15 @@ export const TAGS = {
       this.usage.context.tags.gesture = _loc("SPELL.COMPONENTS.GestureSpecific", {gesture: this.gesture.name});
       if ( this.inflection ) this.usage.context.tags.inflection = _loc("SPELL.COMPONENTS.InflectionSpecific", {inflection: this.inflection.name});
       this.usage.actorFlags.lastSpell = this.id;
-      this.usage.isAttack = true;
-      this.usage.isRanged = (this.gesture.target.type !== "self") && (this.range.maximum > 1);
     },
     configureVFX(vfxConfig) {
-      return crucible.api.canvas.vfx.spells.configureSpellVFXEffect(this, vfxConfig);
+      return crucible.api.canvas.vfx.spells.configureEffect(this, vfxConfig);
     },
     resolveVFX(vfxEffect, references) {
-      crucible.api.canvas.vfx.spells.resolveSpellVFXReferences(this, vfxEffect, references);
+      crucible.api.canvas.vfx.spells.resolveEffect(this, vfxEffect, references);
     },
     finalizeVFX(vfxEffect, references) {
-      crucible.api.canvas.vfx.spells.finalizeSpellVFXEffect(this, vfxEffect, references);
+      crucible.api.canvas.vfx.spells.finalizeEffect(this, vfxEffect, references);
     }
   },
 
@@ -596,17 +622,21 @@ export const TAGS = {
     async postActivate() {
       const summonEvents = this.events.filter(e => e.type === "summon");
       if ( !summonEvents.length ) return;
-      const effectEvents = this.events.filter(e => (e.target === this.actor) && e.effects.length);
+      const {effect: selfEffect} = this.selfEvents?.getPrimaryEffect() ?? {};
       for ( const event of summonEvents ) {
         const position = this.region?.shapes[0] || this.token;
         event.summon.tokenData ||= {};
         event.summon.tokenData.x ??= position.x;
         event.summon.tokenData.y ??= position.y;
+        if ( this.region ) {
+          event.summon.tokenData.elevation ??= this.region.elevation.bottom;
+          event.summon.tokenData.level ??= this.region.flags.crucible?.targetLevel ?? this.region.levels.first();
+        }
         if ( this.token ) {
           event.summon.tokenData.elevation ??= this.token.elevation;
           event.summon.tokenData.level ??= this.token.level;
         }
-        if ( (event.summon.permanent === false) && !effectEvents.length ) {
+        if ( (event.summon.permanent === false) && !selfEffect ) {
           throw new Error(_loc("ACTION.WARNINGS.MissingSummonEffect", {action: this.id}));
         }
       }
@@ -637,20 +667,15 @@ export const TAGS = {
         const tokenData = foundry.utils.mergeObject({
           name: tokenName,
           disposition: this.actor.prototypeToken.disposition,
-          delta: {
-            name: tokenName,
-            system: {
-              resources: {
-                "health.value": worldActor.resources.health.max,
-                "morale.value": worldActor.resources.morale.max,
-                "action.value": worldActor.resources.action.max,
-                "focus.value": worldActor.resources.focus.max
-              }
-            }
-          }
+          delta: {name: tokenName}
         }, summon.tokenData || {});
         Object.assign(tokenData, {actorId: worldActor.id, actorLink: false});
         const preparedToken = await worldActor.getTokenDocument(tokenData, {parent: this.token.parent});
+
+        // Recover resource pools as prepared with the summon's token data, retaining any explicitly configured values
+        const recovery = preparedToken.actor._getRecoveryData();
+        foundry.utils.mergeObject(recovery.system.resources, tokenData.delta.system?.resources ?? {});
+        preparedToken.updateSource({delta: recovery});
         const token = await TokenDocument.implementation.create(preparedToken, {parent: this.token.parent});
         if ( !event.summon.permanent ) summonedTokens.push(token.uuid);
 
@@ -666,8 +691,7 @@ export const TAGS = {
       }
 
       // Update Active Effect with summoned token UUIDs
-      const effectEvent = this.events.find(e => (e.target === this.actor) && e.effects.length);
-      const ae = effectEvent?.effects[0];
+      const {effect: ae} = this.selfEvents?.getPrimaryEffect() ?? {};
       if ( ae ) ae.system.summons = summonedTokens;
     }
   },
@@ -679,29 +703,21 @@ export const TAGS = {
   // Perform a Strike sequence
   strike: {
     tag: "strike",
+    label: "ACTION.TAG.Strike",
+    tooltip: "ACTION.TAG.StrikeTooltip",
     priority: Infinity, // Last
     internal: true,
     initialize() {
-      this.usage.strikes = []; // Reset strike sequence
+      this.usage.strikes = [];  // Reset strike sequence
+      this.usage.weapon = null; // Reset weapon requirement
     },
     prepare() {
       // Capture the non-weapon cost before weapon cost is added, so candidate affordability can be measured against it
       this.usage.baseActionCost = this.cost.action;
       this.usage.focusBlock.enraged = false; // Strikes may be made while enraged
 
-      // Resolve a specific weapon when a choice is allowed. Honor explicit user selection as usage.weaponChoice.
-      // Otherwise, pick the best available weapon for the current target.
-      if ( this.usage.weaponChoices ) {
-        const choices = this.getValidWeaponChoices();
-        const locked = this.usage.weaponChoice ? choices.find(c => c.id === this.usage.weaponChoice)?.item : null;
-        const target = (canvas.ready && this.token?.object && game.user.targets.size)
-          ? game.user.targets.values().next().value : null;
-        this.usage.weapon = locked ?? choices.reduce((best, c) => {
-          let {rank} = this._getWeaponAvailability(c.item, {target});
-          if ( c.item.system.properties.has("natural") ) rank -= 0.5; // Prefer equipped > natural at same rank
-          return (!best || (rank > best.rank)) ? {item: c.item, rank} : best;
-        }, null)?.item;
-      }
+      // Resolve a specific weapon when a choice is allowed
+      if ( this.usage.weaponChoices ) this.usage.weapon = this._chooseBestWeapon();
       const strikes = this.usage.strikes;
 
       // Default weapon-based strikes
@@ -712,16 +728,12 @@ export const TAGS = {
       this.usage.weapon ??= strikes[0];
 
       // Record usage properties
-      this.usage.actorStatus.hasAttacked = true;
       this.usage.hasDice = true;
-      this.usage.isAttack = true;
-      if ( this.tags.has("ranged") ) {
-        if ( strikes.every(w => w.config.category.ranged) ) this.usage.isRanged = true;
-        else this.tags.delete("ranged");
-      }
-      if ( this.tags.has("melee") ) {
-        if ( strikes.every(w => !w.config.category.ranged) ) this.usage.isMelee = true;
-        else this.tags.delete("melee");
+
+      // An action capable of melee or ranged keeps only the tag which its strike weapons satisfy
+      if ( this.tags.has("melee") && this.tags.has("ranged") ) {
+        if ( strikes.every(w => w.config.category.ranged) ) this.tags.delete("melee");
+        else if ( strikes.every(w => !w.config.category.ranged) ) this.tags.delete("ranged");
       }
       this.usage.defenseType ??= "physical";
 
@@ -729,7 +741,7 @@ export const TAGS = {
       let weaponRange = 0;
       const contextTags = {};
       for ( const [i, weapon] of strikes.entries() ) {
-        this.scaling.push(...weapon.config.category.scaling.split("."));
+        this.scaling.push(...weapon.system.scaling.split("."));
         if ( this.cost.weapon ) this.cost.action += (weapon.system.actionCost || 0);
         if ( this.range.weapon ) {
           if ( !weaponRange ) weaponRange = weapon.system.range;
@@ -764,6 +776,10 @@ export const TAGS = {
           this.range.maximum = Math.max(this.range.maximum ?? 0, baseMaximum + weaponRange);
         }
       }
+      else if ( this.tags.has("thrown") ) {
+        const thrownRange = Math.min(...strikes.map(w => w.system.thrownRange));
+        this.range.maximum = (this._source.range.maximum ?? 0) + thrownRange;
+      }
     },
     acquireTargets(targets) {
       const weapon = this.usage.strikes[0];
@@ -778,6 +794,7 @@ export const TAGS = {
     preActivate() {
       const updateEvent = this.selfUpdateEvent;
       for ( const w of this.usage.strikes ) {
+        if ( !this.actor.items.has(w.id) ) continue; // Generated weapons (like "Headbutt") have no persisted state
         updateEvent.itemSnapshots.push(w.snapshot());
         if ( w.config.category.reload ) {
           updateEvent.actorUpdates.items.push({_id: w.id, "system.loaded": false});
@@ -813,9 +830,11 @@ export const TAGS = {
       }
     },
     canUse() {
-      if ( !this.actor.equipment.weapons.melee ) {
-        throw new Error(_loc("ACTION.WARNINGS.RequiresMelee"));
-      }
+      if ( this.tags.has("ranged") ) return;
+      const strikes = this.usage.strikes ?? [];
+      const isMelee = strikes.length ? strikes.every(w => !w.config.category.ranged)
+        : this.actor.equipment.weapons.melee;
+      if ( !isMelee ) throw new Error(_loc("ACTION.WARNINGS.RequiresMelee"));
     }
   },
 
@@ -828,13 +847,13 @@ export const TAGS = {
     propagate: ["strike"],
     priority: 1,
     canUse() {
-      if ( !this.actor.equipment.weapons.ranged ) {
-        throw new Error(_loc("ACTION.WARNINGS.RequiresRanged"));
-      }
+      if ( this.tags.has("melee") ) return;
+      const strikes = this.usage.strikes ?? [];
+      const isRanged = strikes.length ? strikes.every(w => w.config.category.ranged)
+        : this.actor.equipment.weapons.ranged;
+      if ( !isRanged ) throw new Error(_loc("ACTION.WARNINGS.RequiresRanged"));
     },
     prepare() {
-      this.usage.actorStatus.rangedAttack = true;
-
       // A ranged action cannot use a melee weapon unless the action is also melee-capable
       if ( !this.tags.has("melee") ) {
         for ( const c of this.usage.weaponChoices ?? [] ) {
@@ -908,8 +927,7 @@ export const TAGS = {
       }
     },
     prepare() {
-      this.range.maximum ??= 10;
-      this.range.weapon = false;
+      this.range.weapon = false; // Thrown range is resolved per weapon by the strike tag
     },
     preActivate() {
       if ( !this.usage.strikes?.length ) return;
@@ -928,10 +946,10 @@ export const TAGS = {
     category: "attack",
     label: "ACTION.TAG.Natural",
     tooltip: "ACTION.TAG.NaturalTooltip",
-    propagate: ["melee"],
+    propagate: ["strike"],
     priority: 9,
     canUse() {
-      if ( !this.usage.strikes.every(w => w.system.properties.has("natural")) ) {
+      if ( !this.usage.strikes.length || !this.usage.strikes.every(w => w.system.properties.has("natural")) ) {
         throw new Error(_loc("ACTION.WARNINGS.RequiresNatural"));
       }
     },
@@ -953,6 +971,9 @@ export const TAGS = {
       this.usage.defenseType ??= "physical";
       this.usage.bonuses.ability = this.usage.danger;
       this.usage.bonuses.base = 1;
+    },
+    configure() {
+      this.target.isAttack = false; // An environmental hazard is not an attack made by a creature
     },
     async roll(target) {
       const n = this.target.multiple ?? 1;
@@ -981,30 +1002,8 @@ export const TAGS = {
       this.usage.damageType ??= "void";
     },
     async roll(target) {
-      const {bonuses, damageType, defenseType, resource} = this.usage;
-
-      // Create and evaluate a generic roll
-      const roll = new AttackRoll({
-        actorId: this.id,
-        target: target.uuid,
-        ability: bonuses.ability ?? 0,
-        skill: bonuses.skill ?? 0,
-        enchantment: bonuses.enchantment,
-        defenseType,
-        damageType,
-        dc: target.defenses[defenseType].total
-      });
-      await roll.evaluate();
-
-      // Resolve the outcome and structured damage against the target's defenses
-      roll.resolveDamage(this.actor, target, {
-        multiplier: bonuses.multiplier ?? 1,
-        base: bonuses.base ?? 0,
-        bonus: bonuses.damageBonus ?? 0,
-        resource,
-        damageType,
-        restoration: this.usage.restoration ?? false
-      });
+      const {multiplier, damageBonus} = this.usage.bonuses;
+      const roll = await target.receiveAttack(this, {multiplier, damageBonus});
       this.recordEvent({type: "strike", target, roll});
     }
   },
@@ -1124,10 +1123,10 @@ export const TAGS = {
       }
     }
   },
-  undetectable: {
-    tag: "undetectable",
-    label: "ACTION.TAG.Undetectable",
-    tooltip: "ACTION.TAG.UndetectableTooltip",
+  subtle: {
+    tag: "subtle",
+    label: "ACTION.TAG.Subtle",
+    tooltip: "ACTION.TAG.SubtleTooltip",
     category: "modifiers"
   },
   weakened: {
@@ -1234,11 +1233,31 @@ export const TAGS = {
     label: "ACTION.TAG.Maintained",
     tooltip: "ACTION.TAG.MaintainedTooltip",
     category: "resources",
-    postActivate() {
-      const selfEffectEvent = this.events.find(e => (e.target === this.actor) && e.effects.length);
-      if ( !selfEffectEvent ) return;
+    async postActivate() {
+      const {effect} = this.selfEvents?.getPrimaryEffect() ?? {};
+      if ( !effect ) return;
       const maintainedCost = this.actor.actions[this.id]?.cost.focus ?? this.gesture?.cost.focus ?? 1;
-      selfEffectEvent.effects[0].system.maintenance = {cost: maintainedCost};
+      effect.system.maintenance = {cost: maintainedCost};
+      effect.system.properties = Array.from(new Set(effect.system.properties).add("maintained"));
+
+      // End maintained effects of the player's choosing beyond the actor's limit
+      const others = this.actor.maintainedEffects.filter(e => e.id !== effect._id);
+      const excess = others.length + 1 - this.actor.resources.focus.maintained;
+      if ( excess <= 0 ) return;
+      const {SetField, StringField} = foundry.data.fields;
+      const choices = Object.fromEntries(others.map(e => [e.id, e.name]));
+      const fieldOptions = {label: _loc("BASE_EFFECT.MAINTENANCE.EndLabel"),
+        hint: _loc("BASE_EFFECT.MAINTENANCE.EndHint", {count: excess, effect: effect.name})};
+      const field = (excess === 1) ? new StringField({required: true, blank: false, choices, ...fieldOptions})
+        : new SetField(new StringField({choices}), fieldOptions);
+      const inputOptions = (excess === 1) ? {name: "ended"} : {name: "ended", type: "checkboxes"};
+      const result = await foundry.applications.api.DialogV2.input({
+        window: {title: _loc("BASE_EFFECT.MAINTENANCE.EndTitle")},
+        content: field.toFormGroup({stacked: true}, inputOptions).outerHTML
+      });
+      const ended = [result?.ended ?? []].flat();
+      if ( ended.length < excess ) throw new Error(_loc("BASE_EFFECT.WARNINGS.MaintainedCancelled", {action: this.name}));
+      this.recordEvent({type: "effect", target: this.actor, effects: ended.map(_id => ({_id, _action: "delete"}))});
     }
   },
 
@@ -1252,6 +1271,7 @@ export const TAGS = {
     tooltip: "ACTION.TAG.MovementTooltip",
     category: "movement",
     canUse() {
+      if ( this.usage.movement.ignoreRestrained ) return;
       if ( this.actor.statuses.has("restrained") ) throw new Error(_loc("ACTION.WARNINGS.Restrained"));
     },
     prepare() {
@@ -1365,8 +1385,9 @@ TAGS.skill = {
   category: "skills"
 };
 
-// Specific Skills
-for ( const {id, abilities, label} of Object.values(SKILLS) ) {
+// Specific Skills. Trade Skills produce artifacts rather than resolve contests, so they never back an attack
+for ( const {id, abilities, label, group} of Object.values(SKILLS) ) {
+  if ( group === "trade" ) continue;
   TAGS[id] = {
     tag: id,
     label,
@@ -1491,6 +1512,21 @@ export const DEFAULT_ACTIONS = Object.freeze([
     autoFavorite: true
   },
 
+  // Interact
+  {
+    id: "interact",
+    name: "ACTION.DEFAULT_ACTIONS.Interact.Name",
+    img: "icons/sundries/misc/key-round-steel-blue.webp",
+    description: "ACTION.DEFAULT_ACTIONS.Interact.Description",
+    target: {
+      type: "self",
+      scope: 1
+    },
+    cost: {
+      action: 1
+    }
+  },
+
   // Reactive Strike
   {
     id: "reactiveStrike",
@@ -1584,7 +1620,7 @@ export const DEFAULT_ACTIONS = Object.freeze([
     autoFavorite: true
   },
 
-  // Rest (never auto-favorited; rests are managed through the party UI)
+  // Rest (never auto-favorite; rests are managed through the party UI)
   {
     id: "rest",
     name: "ACTION.DEFAULT_ACTIONS.Rest.Name",
@@ -1599,6 +1635,60 @@ export const DEFAULT_ACTIONS = Object.freeze([
       action: 0
     },
     tags: ["noncombat"]
+  },
+
+  // Convalesce
+  {
+    id: "convalesce",
+    name: "ACTION.DEFAULT_ACTIONS.Convalesce.Name",
+    img: "icons/consumables/food/soup-broth-bowl-wooden-yellow.webp",
+    description: "ACTION.DEFAULT_ACTIONS.Convalesce.Description",
+    target: {
+      type: "self",
+      number: 0,
+      scope: 1
+    },
+    cost: {
+      action: 0
+    },
+    tags: ["rest", "noncombat"]
+  },
+
+  // Meditate
+  {
+    id: "meditate",
+    name: "ACTION.DEFAULT_ACTIONS.Meditate.Name",
+    img: "icons/magic/holy/meditation-chi-focus-blue.webp",
+    description: "ACTION.DEFAULT_ACTIONS.Meditate.Description",
+    target: {
+      type: "self",
+      number: 0,
+      scope: 1
+    },
+    cost: {
+      action: 0
+    },
+    tags: ["rest", "noncombat"]
+  },
+
+  // Search
+  {
+    id: "search",
+    name: "ACTION.DEFAULT_ACTIONS.Search.Name",
+    img: "icons/creatures/eyes/human-single-blue.webp",
+    description: "ACTION.DEFAULT_ACTIONS.Search.Description",
+    target: {
+      type: "self",
+      number: 0,
+      scope: 1
+    },
+    range: {
+      maximum: 30
+    },
+    cost: {
+      action: 3
+    },
+    tags: ["awareness", "subtle", "harmless"]
   },
 
   // Basic Strike

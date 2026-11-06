@@ -52,14 +52,15 @@ export default class CrucibleTalentItem extends foundry.abstract.TypeDataModel {
         choices: () => CrucibleTalentNode.getChoices()})),
       description: new fields.HTMLField(),
       actions: new fields.ArrayField(new crucibleFields.CrucibleActionField()),
-      rune: new fields.StringField({...blankString, choices: SYSTEM.SPELL.RUNES}),
-      gesture: new fields.StringField({...blankString, choices: SYSTEM.SPELL.GESTURES}),
-      inflection: new fields.StringField({...blankString, choices: SYSTEM.SPELL.INFLECTIONS}),
+      spellcraft: new fields.StringField({...blankString, choices: SYSTEM.SPELL.COMPONENTS}),
       iconicSpells: new fields.NumberField({required: true, nullable: false, initial: 0, integer: true, min: 0}),
-      training: new fields.SchemaField({
-        type: new fields.StringField({...blankString, choices: SYSTEM.TALENT.TRAINING_TYPES}),
-        rank: new fields.NumberField({required: true, nullable: true, initial: null, integer: true, min: 1, max: 4})
+      requirements: new fields.SchemaField({
+        training: new fields.TypedObjectField(new fields.NumberField({required: true, nullable: false,
+          integer: true, min: 1, max: SYSTEM.PROFICIENCY.RANK_MAX}), {validateKey: key => key in SYSTEM.PROFICIENCIES})
       }),
+      training: new fields.StringField({...blankString, choices: SYSTEM.PROFICIENCIES}),
+      keywords: new fields.SetField(new fields.StringField({required: true, blank: false,
+        choices: SYSTEM.TALENT.KEYWORDS}))
     };
   }
 
@@ -77,6 +78,22 @@ export default class CrucibleTalentItem extends foundry.abstract.TypeDataModel {
    * @type {string}
    */
   static CARD_TEMPLATE_PATH = "systems/crucible/templates/sheets/item/talent-card.hbs";
+
+  /**
+   * Keyword group labels in ascending sort priority, used to order keyword optgroups.
+   * @type {string[]}
+   */
+  static get keywordGroups() {
+    return Object.values(SYSTEM.TALENT.KEYWORD_GROUPS).sort((a, b) => a.sort - b.sort).map(g => g.label);
+  }
+
+  /**
+   * Is this talent provided by the origin node?
+   * @type {boolean}
+   */
+  get isOrigin() {
+    return [...this.nodes].some(n => n.type === "origin");
+  }
 
   /**
    * Is this a signature talent?
@@ -99,18 +116,14 @@ export default class CrucibleTalentItem extends foundry.abstract.TypeDataModel {
     for ( const node of this.nodes ) node.talents.add(talent);
 
     // Update Metadata
-    const components = [
-      {type: "rune", cls: crucible.api.models.CrucibleSpellcraftRune, options: SYSTEM.SPELL.RUNES},
-      {type: "gesture", cls: crucible.api.models.CrucibleSpellcraftGesture, options: SYSTEM.SPELL.GESTURES},
-      {type: "inflection", cls: crucible.api.models.CrucibleSpellcraftInflection, options: SYSTEM.SPELL.INFLECTIONS}
-    ];
-    for ( const {type, cls, options} of components ) {
-      if ( !this[type] ) continue;
-      const component = options[this[type]];
+    if ( this.spellcraft ) {
+      const {type} = SYSTEM.SPELL.COMPONENTS[this.spellcraft];
+      const component = SYSTEM.SPELL.COMPONENT_RECORDS[type][this.spellcraft];
       component.img = talent.img;
       const tier = this.nodes.reduce((minTier, node) => (minTier < node.tier) ? minTier : node.tier, Infinity);
-      cls.grantingTalents[this[type]] ??= [];
-      cls.grantingTalents[this[type]].push({uuid: this.parent.uuid, tier});
+      const {grantingTalents} = component.constructor;
+      grantingTalents[this.spellcraft] ??= [];
+      grantingTalents[this.spellcraft].push({uuid: this.parent.uuid, tier});
     }
   }
 
@@ -139,8 +152,8 @@ export default class CrucibleTalentItem extends foundry.abstract.TypeDataModel {
     for ( const node of this.nodes ) {
       Object.assign(requirements, foundry.utils.deepClone(node.requirements));
     }
-    if ( this.training.rank > 1 ) {
-      foundry.utils.setProperty(requirements, `training.${this.training.type}`, this.training.rank - 1);
+    for ( const [type, rank] of Object.entries(this.requirements.training) ) {
+      foundry.utils.setProperty(requirements, `training.${type}.rank`, rank);
     }
     return CrucibleTalentNode.preparePrerequisites(requirements);
   }
@@ -151,16 +164,23 @@ export default class CrucibleTalentItem extends foundry.abstract.TypeDataModel {
 
   /**
    * Return an object of string formatted tag data which describes this item type.
-   * @returns {Record<string, string>}    The tags which describe this Talent
+   * @param {"full"|"short"} [scope="full"]   The scope of tags being retrieved
+   * @returns {Record<string, string>}        The tags which describe this Talent
    */
-  getTags() {
+  getTags(scope="full") {
     const tags = {};
+    if ( this.isOrigin ) tags.origin = _loc("TALENT.NODES.Origin");
     for ( const [k, v] of Object.entries(this.prerequisites || {}) ) {
       tags[k] = `${v.label} ${v.value}`;
     }
     if ( this.iconicSpells ) {
       tags.iconicSpells = this.iconicSpells === 1 ? _loc("SPELL.Iconic")
         : `${this.iconicSpells} ${_loc("SPELL.IconicPl")}`;
+    }
+    if ( scope === "full" ) {
+      const keywords = Array.from(this.keywords, k => SYSTEM.TALENT.KEYWORDS[k]);
+      keywords.sort((a, b) => (a.sort - b.sort) || a.label.localeCompare(b.label, game.i18n.lang));
+      for ( const k of keywords ) tags[k.id] = k.label;
     }
     return tags;
   }
@@ -271,7 +291,7 @@ export default class CrucibleTalentItem extends foundry.abstract.TypeDataModel {
       uuid: uuid ?? this.parent.uuid,
       name: this.parent.name,
       img: this.parent.img,
-      tags: this.getTags(),
+      tags: this.getTags("short"),
       showRemove,
       showLevel,
       talentIndex,
@@ -321,8 +341,12 @@ export default class CrucibleTalentItem extends foundry.abstract.TypeDataModel {
       name: talent.name,
       img: talent.img,
       actions: await talent.prepareActionsContext(),
-      tags: this.getTags(),
-      prerequisites: reqs
+      tags: this.getTags("short"),
+      prerequisites: reqs,
+      origin: this.isOrigin ? _loc("TALENT.NODES.Origin") : null,
+      training: this.training
+        ? _loc("TALENT.TrainingGrant", {training: SYSTEM.PROFICIENCIES[this.training].label})
+        : null
     });
   }
 
@@ -357,7 +381,21 @@ export default class CrucibleTalentItem extends foundry.abstract.TypeDataModel {
       delete source.node;
     }
     if ( source.rune === "lightning" ) source.rune = "storm";
-    if ( source.training?.type === "lightning" ) source.training.type = "storm";
+
+    /** @deprecated since 0.10.3 - training named a rank to grant, which is now always a flat single point */
+    if ( source.training && (typeof source.training === "object") ) source.training = source.training.type ?? "";
+    if ( source.training === "lightning" ) source.training = "storm";
+
+    /** @deprecated since 0.10.3 - the rune, gesture, and inflection fields collapsed into one spellcraft field */
+    if ( !("spellcraft" in source) ) {
+      const granted = source.rune || source.gesture || source.inflection;
+      if ( granted ) source.spellcraft = granted;
+    }
+    delete source.rune;
+    delete source.gesture;
+    delete source.inflection;
+    const runeFamily = SYSTEM.SPELL.RUNES[source.training]?.training;
+    if ( runeFamily ) source.training = runeFamily;
     return source;
   }
 }

@@ -2,6 +2,11 @@ name: Noxious Spit
 type: talent
 img: icons/magic/acid/projectile-smoke-glowing.webp
 system:
+  keywords:
+    - playstyle.ranged
+    - weapon.natural
+    - damageType.poison
+    - target.reflex
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} produces a salivary toxin that it can
@@ -13,10 +18,10 @@ system:
       condition: ''
       description: >-
         <p>The @ref[actor.name]{creature} spits globule of toxin at a target
-        creature within 20 feet, attacking its <strong>Reflex</strong> and
-        dealing <strong>Poison </strong>damage.</p><p>On a <strong>Critical
-        Hit</strong> the attack causes the @Condition[poisoned] condition for
-        <strong>3 Turns</strong>.</p>
+        creature within 20 feet, attacking its @Rule[defense.reflex] and dealing
+        <strong>Poison</strong> damage.</p><p>On a
+        @Rule[dice.criticalSuccess]{Critical Hit} the attack causes the
+        @Condition[poisoned] condition for <strong>3 Turns</strong>.</p>
       cost:
         action: 0
         focus: 1
@@ -54,17 +59,10 @@ system:
             summons: []
             changes: []
       tags:
-        - melee
         - natural
         - reflex
         - poison
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: pfqBQPVP2KV9fQFs
 ownership:

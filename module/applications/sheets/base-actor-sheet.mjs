@@ -1,6 +1,13 @@
 const {api, sheets} = foundry.applications;
 
 /**
+ * Values shared by every training type rendered onto the Proficiency tab.
+ * @typedef CrucibleTrainingContext
+ * @property {number} cap           The greatest number of points this Actor may hold in any one training
+ * @property {boolean} canAllocate  Does this Actor allocate its own Proficiency Points?
+ */
+
+/**
  * A base ActorSheet built on top of ApplicationV2 and the Handlebars rendering backend.
  */
 export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSheetV2) {
@@ -25,17 +32,30 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       effectCreate: CrucibleBaseActorSheet.#onEffectCreate,
       effectEdit: CrucibleBaseActorSheet.#onEffectEdit,
       effectDelete: CrucibleBaseActorSheet.#onEffectDelete,
+      effectMaintain: CrucibleBaseActorSheet.#onEffectMaintain,
       effectToggle: CrucibleBaseActorSheet.#onEffectToggle,
       expandSection: CrucibleBaseActorSheet.#onExpandSection,
+      proficiencyFilter: CrucibleBaseActorSheet.#onProficiencyFilter,
       skillRoll: CrucibleBaseActorSheet.#onSkillRoll,
       resourcePip: {handler: CrucibleBaseActorSheet.#onResourcePip, buttons: [0, 2]},
       editEngagement: CrucibleBaseActorSheet.#onEditEngagement,
       editSize: CrucibleBaseActorSheet.#onEditSize,
       editStride: CrucibleBaseActorSheet.#onEditStride,
-      editDetailsProperty: CrucibleBaseActorSheet.#onEditDetailsProperty
+      editDetailsProperty: CrucibleBaseActorSheet.#onEditDetailsProperty,
+      syncActor: CrucibleBaseActorSheet.#onSyncActor
     },
     form: {
       submitOnChange: true
+    },
+    window: {
+      controls: [
+        {
+          action: "syncActor",
+          icon: "fa-solid fa-rotate",
+          label: "ACTOR.ACTIONS.SyncActor",
+          ownership: "OWNER"
+        }
+      ]
     },
     actor: {
       type: undefined // Defined by subclass
@@ -74,9 +94,10 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       template: "systems/crucible/templates/sheets/actor/inventory.hbs",
       scrollable: [".inventory-sections"]
     },
-    skills: {
-      id: "skills",
-      template: "systems/crucible/templates/sheets/actor/skills.hbs"
+    proficiency: {
+      id: "proficiency",
+      template: "systems/crucible/templates/sheets/actor/proficiency.hbs",
+      scrollable: [""]
     },
     talents: {
       id: "talents",
@@ -105,7 +126,7 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
         {id: "actions", icon: "systems/crucible/ui/tabs/actions.webp"},
         {id: "inventory", icon: "systems/crucible/ui/tabs/inventory.webp"},
         {id: "talents", icon: "systems/crucible/ui/tabs/talents.webp"},
-        {id: "skills", icon: "systems/crucible/ui/tabs/skills.webp"},
+        {id: "proficiency", icon: "systems/crucible/ui/tabs/skills.webp"},
         {id: "spells", icon: "systems/crucible/ui/tabs/spells.webp"},
         {id: "effects", icon: "systems/crucible/ui/tabs/effects.webp"},
         {id: "biography", icon: "systems/crucible/ui/tabs/biography.webp"}
@@ -114,6 +135,13 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       labelPrefix: "ACTOR.TABS"
     }
   };
+
+  /**
+   * List every proficiency, or only those the Actor has invested in. Heroes allocate their own points and want the
+   * full menu, while an adversary's training is granted, so the short list of what it is actually good at reads better.
+   * @type {boolean}
+   */
+  #showAllProficiencies = !!this.actor.system.points;
 
   /**
    * The mapping of Item types to equipment sections they belong to.
@@ -186,9 +214,10 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
         tooltip: "ACTOR.LABELS.BackgroundLanguageTooltip",
         hints: {hero: "ACTOR.LABELS.LanguagesHint", adversary: "ACTOR.LABELS.LanguagesHintAdversary"}
       }),
+      proficiency: this.#prepareProficiencies(),
       resistances: this.#prepareResistances(),
       resources: this.#prepareResources(),
-      skillCategories: this.#prepareSkills(),
+      sizeTooltip: this.#prepareSizeBreakdown(),
       source: this.document.toObject(),
       spells: this.#prepareSpells(iconicSpells),
       tabs: this._prepareTabs("sheet"),
@@ -309,13 +338,7 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
     for ( const [id, defense] of Object.entries(SYSTEM.DEFENSES) ) {
       if ( defense.type === "physical" ) continue;
       const d = foundry.utils.mergeObject(defense, data[id], {inplace: false});
-      d.tooltip = _loc(d.tooltip, {base: SYSTEM.PASSIVE_BASE});
       d.id = id;
-      if ( d.bonus !== 0 ) {
-        const sign = d.bonus > 0 ? "+" : "-";
-        d.tooltip += ` ${sign} ${Math.abs(d.bonus)}`;
-      }
-      if ( ["wounds", "madness"].includes(id) ) d.tooltip = `${d.label}<br>${d.tooltip}`;
       defenses[id] = d;
     }
     return defenses;
@@ -372,7 +395,6 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
         signature: {label: _loc("ACTOR.SECTIONS.SIGNATURE.header"), items: []},
         active: {label: _loc("ACTOR.SECTIONS.ACTIVE.header"), items: []},
         passive: {label: _loc("ACTOR.SECTIONS.PASSIVE.header"), items: []},
-        training: {label: _loc("ACTOR.SECTIONS.TRAINING.header"), items: []},
         spell: {label: _loc("ACTOR.SECTIONS.SPELL.header"), items: []}
       },
       inventory: {
@@ -413,10 +435,8 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
             const tags = action.getTags();
             d.tags = Object.assign({}, tags.action, tags.activation);
           }
-          const spellComp = i.system.rune || i.system.gesture || i.system.inflection;
           if ( i.system.isSignature ) section = sections.talents.signature;           // Signature
-          else if ( spellComp ) section ||= sections.talents.spell;                   // Spellcraft
-          else if ( i.system.training.type ) section ||= sections.talents.training;   // Training
+          else if ( i.system.spellcraft ) section ||= sections.talents.spell;         // Spellcraft
           else if ( action ) section ||= sections.talents.active;                     // Actives
           else section ||= sections.talents.passive;                                  // Passives
           break;
@@ -495,7 +515,7 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
     // Flag an equipped weapon which the actor lacks the training to wield effectively
     if ( (item.type === "weapon") && config.equipped ) {
       const tooltip = item.system._getUntrainedTooltip(this.actor);
-      if ( tooltip ) config.tags.category = {label: config.tags.category, unmet: true, tooltip};
+      if ( tooltip ) config.tags.category = {...config.tags.category, unmet: true, tooltip};
     }
   }
 
@@ -513,14 +533,19 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       reaction: {label: _loc("ACTOR.SHEET.HEADERS.ActionsReaction"), actions: []},
       movement: {label: _loc("ACTOR.SHEET.HEADERS.ActionsMovement"), actions: []},
       consumable: {label: _loc("ACTOR.SHEET.HEADERS.ActionsConsumable"), actions: []},
-      general: {label: _loc("ACTOR.SHEET.HEADERS.ActionsGeneral"), actions: []}
+      general: {label: _loc("ACTOR.SHEET.HEADERS.ActionsGeneral"), actions: []},
+      rest: {label: _loc("ACTOR.SHEET.HEADERS.ActionsRest"), actions: [],
+        sort: (a, b) => a.action.tags.has("rest") - b.action.tags.has("rest")}
     };
+    const defaultIds = new Set(SYSTEM.ACTION.DEFAULT_ACTIONS.map(a => a.id));
     const favorites = [];
 
     // Iterate over all Actions
     for ( const [actionId, action] of Object.entries(this.actor.actions) ) {
       const a = {
         id: actionId,
+        action,
+        isDefault: defaultIds.has(actionId),
         name: action.name,
         img: action.img,
         tags: action.getTags().activation,
@@ -536,8 +561,9 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       if ( action.suppressFromSheet ) continue;
 
       // Classify actions
-      let section = "general";
+      let section = ["rest", "recover"].includes(actionId) ? "rest" : "general";
       const tagMapping = {
+        rest: "rest",
         reaction: "reaction",
         strike: "attack",
         spell: "spell",
@@ -555,10 +581,14 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       sections[section].actions.push(a);
     }
 
-    // Sort each section
+    // Sort each section by its own ordering first, then default actions before others, then by name
     for ( const [k, section] of Object.entries(sections) ) {
-      if ( !section.actions.length ) delete sections[k];
-      else section.actions.sort((a, b) => a.name.localeCompare(b.name));
+      if ( !section.actions.length ) {
+        delete sections[k];
+        continue;
+      }
+      section.actions.sort((a, b) => section.sort?.(a, b) || (b.isDefault - a.isDefault)
+        || a.name.localeCompare(b.name));
     }
     favorites.sort((a, b) => a.name.localeCompare(b.name));
     return {sections, favorites};
@@ -592,7 +622,8 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
         seconds: context.t,
         uuid: effect.uuid,
         disabled: effect.disabled ? {icon: "fa-solid fa-toggle-off", tooltip: "ACTIVE_EFFECT.ACTIONS.Enable"}
-          : {icon: "fa-solid fa-toggle-on", tooltip: "ACTIVE_EFFECT.ACTIONS.Disable"}
+          : {icon: "fa-solid fa-toggle-on", tooltip: "ACTIVE_EFFECT.ACTIONS.Disable"},
+        maintain: this.#prepareEffectMaintenance(effect)
       };
       sections[context.section].effects.push(e);
     }
@@ -603,6 +634,20 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       else section.effects.sort((a, b) => (a.seconds - b.seconds) || (a.name.localeCompare(b.name)));
     }
     return sections;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prepare the tooltip of the Maintain control, shown only while an effect's maintenance can be paid.
+   * @param {CrucibleActiveEffect} effect
+   * @returns {string|null}
+   */
+  #prepareEffectMaintenance(effect) {
+    if ( !this.actor.maintainedEffects.includes(effect) || !effect.system.suppression.maintenance ) return null;
+    if ( game.combat?.combatant?.actor !== this.actor ) return null;
+    const {cost} = effect.system.getMaintainAction();
+    return _loc("BASE_EFFECT.ACTIONS.MaintainCost", {cost: cost.focus});
   }
 
   /* -------------------------------------------- */
@@ -769,56 +814,126 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
   /* -------------------------------------------- */
 
   /**
-   * Organize skills by category in alphabetical order.
-   * @returns {Record<string, {
-   *   label: string,
-   *   defaultIcon: string,
-   *   color: Color,
-   *   abilityAbbrs: [string, string],
-   *   pips: [string, string, string, string, string],
-   *   css: string,
-   *   canIncrease: boolean,
-   *   canDecrease: boolean,
-   *   rankName: string,
-   *   pathName: string,
-   *   tooltips: {value: string, passive: string},
-   * }>}
+   * Account for an Actor's size and the height derived from it.
+   * @returns {string}  An HTML breakdown for use as tooltip content
    */
-  #prepareSkills() {
-    const skills = this.document.system.skills;
-    const categories = foundry.utils.deepClone(SYSTEM.SKILL.CATEGORIES);
-    const signed = n => `${n < 0 ? "-" : "+"} ${Math.abs(n)}`; // Pretty formatting for signed addition
-    for ( const skill of Object.values(SYSTEM.SKILLS) ) {
-      const s = foundry.utils.mergeObject(skill, skills[skill.id], {inplace: false});
-      const category = categories[skill.category];
-      const a1 = SYSTEM.ABILITIES[skill.abilities[0]];
-      const a2 = SYSTEM.ABILITIES[skill.abilities[1]];
+  #prepareSizeBreakdown() {
+    const {baseSize, sizeBonus, size, height} = this.document.system.movement;
+    const row = (label, value, cssClass="") => `<div class="counter ${cssClass}"><label>${label}</label>`
+      + `<span class="value">${value}</span></div>`;
+    const rows = [
+      row(_loc("ACTOR.FIELDS.movement.size.base"), baseSize),
+      row(_loc("ACTOR.FIELDS.movement.sizeBonus.label"), sizeBonus.signedString()),
+      row(_loc("ACTOR.FIELDS.movement.size.label"), size, "total"),
+      row(`${_loc("Height")} (${game.system.grid.units})`, height)
+    ];
+    return `<div class="size-breakdown flexcol">${rows.join("")}</div>`;
+  }
 
-      // Skill data
-      s.abilityAbbrs = [a1.abbreviation, a2.abbreviation];
-      s.pips = Array.fromRange(4).map(i => i < s.rank ? "full" : "");
+  /* -------------------------------------------- */
 
-      // Specialization status
-      const rank = SYSTEM.TALENT.TRAINING_RANK_VALUES[s.rank];
-      s.rankTags = [rank.label];
-      s.hexClass = skill.abilities.toSorted().join("-");
+  /**
+   * Prepare training data for the Proficiency tab, grouped by the kind of training.
+   * Actors without a Proficiency Point pool, such as adversaries, receive their training directly from their
+   * Taxonomy and Archetype, so the allocation controls are omitted rather than shown disabled.
+   * @returns {{sections: object[], ticks: string[], pools: {available: number, spent: number}|null}}
+   */
+  #prepareProficiencies() {
+    const {RANKS, POINTS_MAX, GROUPS, PROFICIENCIES} = SYSTEM.PROFICIENCY;
+    const {training, points, details} = this.actor.system;
+    const ctx = {
+      cap: details.progression.trainingCap,
+      canAllocate: !!points
+    };
+    const showAll = this.#showAllProficiencies;
 
-      // Tooltips annotate each term of the formula with the value it contributes
-      const abilities = this.actor.system.abilities;
-      s.tooltips = {
-        value: _loc("SKILL.TooltipCheck", {
-          a1: a1.label, v1: abilities[skill.abilities[0]].value,
-          a2: a2.label, v2: abilities[skill.abilities[1]].value,
-          rank: rank.label, skill: signed(s.skillBonus), enchantment: signed(s.enchantmentBonus)
-        }),
-        passive: _loc("SKILL.TooltipPassive", {score: s.score})
-      };
+    // Every bar spans the full point range, marked with the rank thresholds
+    const ticks = Object.values(RANKS).filter(r => (r.required > 0) && (r.required < POINTS_MAX))
+      .map(r => CrucibleBaseActorSheet.#trainingPct(r.required));
 
-      // Add to category
-      category.skills ||= {};
-      category.skills[skill.id] = s;
+    // One section per group, omitting any section left with nothing to show once collapsed
+    const sections = [];
+    for ( const group of Object.values(GROUPS) ) {
+      const color = group.color.css;
+      const types = Object.values(PROFICIENCIES)
+        .filter(p => (p.group === group.id) && (showAll || (training[p.id].total > 0)))
+        .map(p => this.#prepareProficiency(p, color, ctx));
+      if ( types.length ) sections.push({label: _loc(group.label), color, types});
     }
-    return categories;
+
+    // Heroes allocate from a pool; everyone else is told what their training amounts to
+    const pools = ctx.canAllocate
+      ? {available: points.proficiency.available, spent: points.proficiency.spent, canAllocate: true}
+      : {granted: Object.values(training).reduce((s, t) => s + t.points, 0)};
+    return {sections, ticks, pools, showAll};
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prepare the display data for one proficiency.
+   * @param {object} config                The proficiency configuration, from {@link SYSTEM.PROFICIENCIES}
+   * @param {string} color                 The CSS color of the group this proficiency belongs to
+   * @param {CrucibleTrainingContext} ctx  Values shared across every proficiency on the sheet
+   * @returns {object}                     Display data for one row of the Proficiency tab
+   */
+  #prepareProficiency(config, color, ctx) {
+    const {RANK_VALUES, POINTS_MAX} = SYSTEM.PROFICIENCY;
+    const actor = this.actor;
+    const t = actor.system.training[config.id];
+    const abilities = config.abilities ?? [];
+    const rank = RANK_VALUES[t.rank];
+    const atCap = (ctx.cap < POINTS_MAX) && (t.total >= ctx.cap);
+    return {
+      ...config, color, rank, score: t.score, passive: t.passive, points: t.total,
+      rollable: config.id in SYSTEM.SKILLS, // Only skills offer a check to roll from their title
+      label: config.short ?? config.label, // Each row sits beneath its group heading, so shorthand reads better
+      widthPct: CrucibleBaseActorSheet.#trainingPct(t.total),
+      abilityAbbrs: abilities.map(a => SYSTEM.ABILITIES[a].abbreviation),
+      hexClass: abilities.toSorted().join("-"),
+      tooltips: {
+        value: CrucibleBaseActorSheet.#sumExpression([
+          // Only the labels within the formula are localized; its notation is arithmetic, not prose
+          `[(${abilities.map(a => `${actor.system.abilities[a].value} ${SYSTEM.ABILITIES[a].abbreviation}`)
+            .join(" + ")}) / ${abilities.length * 2}]`,
+          t.skillBonus, rank.label,
+          t.enchantmentBonus, _loc("DICE.Enchantment")
+        ]),
+        passive: CrucibleBaseActorSheet.#sumExpression([SYSTEM.PASSIVE_BASE, t.score]),
+        points: this.#prepareTrainingBreakdown(t, ctx)
+      },
+      capTick: atCap ? CrucibleBaseActorSheet.#trainingPct(ctx.cap) : null,
+      canIncrease: actor.canPurchaseTraining(config.id, 1),
+      canDecrease: actor.canPurchaseTraining(config.id, -1)
+    };
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Account for where a training's points came from and what the next rank would cost.
+   * Contributing sources appear only when they contribute, so the rows always sum to the total.
+   * @param {object} t                     The prepared training data for one proficiency
+   * @param {CrucibleTrainingContext} ctx  Values shared across every proficiency on the sheet
+   * @returns {string}                     An HTML table for use as tooltip content
+   */
+  #prepareTrainingBreakdown(t, {cap, canAllocate}) {
+    const {RANKS, POINTS_MAX} = SYSTEM.PROFICIENCY;
+    const rows = [];
+    const row = (key, value, {cssClass="", ...data}={}) => rows.push(
+      `<div class="counter ${cssClass}"><label>${_loc(`TRAINING.BREAKDOWN.${key}`, data)}</label>`
+      + `<span class="value">${value}</span></div>`);
+    if ( t.initial ) row("Granted", t.initial);
+    if ( t.talents ) row("Talents", t.talents);
+    if ( canAllocate ) row("Increases", t.increases);
+    if ( t.bonus ) row("Bonus", t.bonus.signedString());
+    const capped = (cap < POINTS_MAX) && (t.total > cap);
+    // Display a total row if there are multiple sources to sum
+    if ( capped || !canAllocate || t.initial || t.talents || t.bonus ) row("Total", t.total, {cssClass: "total"});
+    if ( capped ) row("Cap", cap, {cssClass: "cap"});
+    const next = Object.values(RANKS).find(r => r.required > t.points); // Ascending by points required
+    if ( next ) row("Next", next.required, {rank: _loc(next.label)});
+    return `<div class="training-breakdown flexcol">${rows.join("")}</div>`;
   }
 
   /* -------------------------------------------- */
@@ -895,18 +1010,7 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
     const actionId = target.closest(".action").dataset.actionId;
     const action = this.actor.actions[actionId];
     if ( !action ) return;
-
-    // Restrict favorites to actions which still exist
-    const priorFavorites = this.actor.system.favorites;
-    const favorites = new Set();
-    for ( const action of Object.values(this.actor.actions) ) {
-      if ( priorFavorites.has(action.id) ) favorites.add(action.id);
-    }
-
-    // Toggle favorite state for this action
-    if ( favorites.has(action.id) ) favorites.delete(action.id);
-    else favorites.add(action.id);
-    await this.actor.update({"system.favorites": favorites});
+    await action.toggleFavorite();
   }
 
   /* -------------------------------------------- */
@@ -1043,6 +1147,18 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
   /* -------------------------------------------- */
 
   /**
+   * Pay the maintenance cost of a maintained ActiveEffect on the actor.
+   * @this {CrucibleBaseActorSheet}
+   * @type {ApplicationClickAction}
+   */
+  static async #onEffectMaintain(event, target) {
+    const effect = this.#getEventEffect(event, target);
+    await effect.system.getMaintainAction()?.use();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Toggle the disabled state of an ActiveEffect on the actor.
    * @this {CrucibleBaseActorSheet}
    * @type {ApplicationClickAction}
@@ -1063,6 +1179,18 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
   #getEventEffect(_event, target) {
     const effectUuid = target.closest(".effect")?.dataset.uuid;
     return fromUuidSync(effectUuid);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Toggle between listing every proficiency and listing only those the Actor has invested in.
+   * @this {CrucibleBaseActorSheet}
+   * @type {ApplicationClickAction}
+   */
+  static async #onProficiencyFilter() {
+    this.#showAllProficiencies = !this.#showAllProficiencies;
+    await this.render({parts: ["proficiency"]});
   }
 
   /* -------------------------------------------- */
@@ -1128,7 +1256,7 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       minValue: 0,
       editLabel: "ACTOR.ACTIONS.EditEngagement",
       baseLabel: "ACTOR.FIELDS.movement.engagement.base",
-      baseHint: _loc("ACTOR.FIELDS.movement.engagement.tooltip").split("<br>")[0]
+      baseHint: "ACTOR.FIELDS.movement.engagement.hint"
     });
   }
 
@@ -1164,7 +1292,7 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
       minValue: 0,
       editLabel: "ACTOR.ACTIONS.EditMovement",
       baseLabel: "ACTOR.FIELDS.movement.stride.base",
-      baseHint: "ACTOR.FIELDS.movement.stride.tooltip"
+      baseHint: "ACTOR.FIELDS.movement.stride.hint"
     });
   }
 
@@ -1199,6 +1327,30 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
     if ( !formData ) return;
     formData[propertyPath] = formData[propertyPath].filter(value => !toDisable.has(value));
     await this.actor.update(formData);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Re-sync this Actor's Talents and detail items against their current compendium sources.
+   * @this {CrucibleBaseActorSheet}
+   * @type {ApplicationClickAction}
+   */
+  static async #onSyncActor() {
+    const confirm = await api.DialogV2.confirm({
+      window: {title: _loc("ACTOR.ACTIONS.SyncActorTitle", {actor: this.actor.name})},
+      content: _loc("ACTOR.ACTIONS.SyncActorContent")
+    });
+    if ( !confirm ) return;
+    const {toCreate, toUpdate, toDelete} = await this.actor.syncTalents();
+    const {applied, unresolved} = await this.actor.syncDetailItems();
+    ui.notifications.info(_loc("ACTOR.ACTIONS.SyncActorResult", {
+      actor: this.actor.name, synced: toCreate.length + toUpdate.length, deleted: toDelete.length,
+      details: applied.length
+    }));
+    if ( unresolved.length ) ui.notifications.warn(_loc("ACTOR.ACTIONS.SyncActorUnresolved", {
+      actor: this.actor.name, details: unresolved.join(", ")
+    }));
   }
 
   /* -------------------------------------------- */
@@ -1331,5 +1483,34 @@ export default class CrucibleBaseActorSheet extends api.HandlebarsApplicationMix
     // Create the new item
     const itemData = this.actor._cleanItemData(item);
     await Item.implementation.create(itemData, {parent: this.actor, keepId: !isPhysical});
+  }
+
+  /* -------------------------------------------- */
+  /*  Formatting Helpers                          */
+  /* -------------------------------------------- */
+
+  /**
+   * Express a point total as a percentage of the maximum any training may hold, for use as a CSS width.
+   * @param {number} points
+   * @returns {string}
+   */
+  static #trainingPct(points) {
+    return `${(Math.clamp(points / SYSTEM.PROFICIENCY.POINTS_MAX, 0, 1) * 100).toFixed(2)}%`;
+  }
+
+  /* -------------------------------------------- */
+  /**
+   * Join terms into an additive expression, each operator taking the sign of the term which follows it.
+   * @param {Array<string|number>} terms   Terms in display order
+   * @returns {string}                     For example "12 - 3"
+   */
+  static #sumExpression(terms) {
+    let expression = "";
+    for ( const term of terms ) {
+      if ( !expression ) expression = String(term);
+      else if ( typeof term === "string" ) expression += ` ${term}`;
+      else expression += ` ${term < 0 ? "-" : "+"} ${Math.abs(term)}`;
+    }
+    return expression;
   }
 }

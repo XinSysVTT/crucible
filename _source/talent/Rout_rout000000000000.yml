@@ -1,0 +1,35 @@
+name: Rout
+type: talent
+img: icons/magic/control/fear-fright-mask-yellow.webp
+system:
+  description: >-
+    <p>You understand that panic can be contagious, you just have to cause it.
+    When you cause a foe to become @Condition[broken] or @Condition[insane],
+    every enemy within <strong>10 feet</strong> who can see that creature
+    suffers damage to their @Rule[resource.morale] equal to your
+    @Rule[ability.presence].</p>
+  actions: []
+  keywords:
+    - target.morale
+  nodes:
+    - pre4a
+  iconicSpells: 0
+  training: intimidation
+effects: []
+folder: 4Ll3b4Q4us2mp4Fu
+ownership:
+  default: 0
+flags: {}
+_stats:
+  systemId: crucible
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
+  createdTime: 1788364800000
+  modifiedTime: 1789492402918
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+_id: rout000000000000
+sort: 800000
+_key: '!items!rout000000000000'

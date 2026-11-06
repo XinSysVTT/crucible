@@ -14,19 +14,51 @@ system:
     toughness: 3
     dexterity: 1
   talents:
-    - item: Compendium.crucible.talent.Item.shieldCombatTrai
-      level: null
+    - item: Compendium.crucible.talent.Item.shieldBash000000
+      level: 0
     - item: Compendium.crucible.talent.Item.bulwark000000000
-      level: null
+      level: 0
     - item: Compendium.crucible.talent.Item.intercept0000000
-      level: null
+      level: 3
     - item: Compendium.crucible.talent.Item.holdfast00000000
-      level: null
-  skills:
-    - athletics
-    - medicine
-    - diplomacy
-  equipment: []
+      level: 1
+    - item: Compendium.crucible.talent.Item.bastion000000000
+      level: 3
+    - item: Compendium.crucible.talent.Item.armoredefficienc
+      level: 0
+    - item: Compendium.crucible.talent.Item.counterstrike000
+      level: 2
+    - item: Compendium.crucible.talent.Item.testudo000000000
+      level: 2
+    - item: Compendium.crucible.talent.Item.armoredInstinct0
+      level: 2
+    - item: Compendium.crucible.talent.Item.legsweep00000000
+      level: 1
+    - item: Compendium.crucible.talent.Item.sunderingstrike0
+      level: 3
+  training:
+    athletics: 2
+    awareness: 1
+    medicine: 1
+    society: 0
+    diplomacy: 1
+    heavy: 3
+    shield: 3
+    armor: 3
+    smithing: 0
+  equipment:
+    - item: Compendium.crucible.equipment.Item.towerShield00000
+      quantity: 1
+      equipped: true
+      autoScale: true
+    - item: Compendium.crucible.equipment.Item.warHammer0000000
+      quantity: 1
+      equipped: true
+      autoScale: true
+    - item: Compendium.crucible.equipment.Item.splintMail000000
+      quantity: 1
+      equipped: true
+      autoScale: true
   spells: []
 effects: []
 folder: 6Up7ddrphLept3RW
@@ -38,12 +70,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.369'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.11.2
   createdTime: 1772307157486
-  modifiedTime: 1773514792220
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1792532354026
+  lastModifiedBy: 2g4T1RcAPz2LBKZ1
 _id: protector0000000
-sort: 400000
+sort: 1200000
 _key: '!items!protector0000000'

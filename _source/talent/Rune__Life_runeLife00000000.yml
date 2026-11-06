@@ -3,13 +3,13 @@ type: talent
 img: icons/magic/life/heart-shadow-red.webp
 system:
   description: >-
-    <p>A chaotic force of creation, responsible for living matter. The Life rune
-    governs health and matters relating to biological growth.</p><p>The Life
-    rune scales using <strong>Wisdom</strong> and provides
-    <strong>Restoration</strong> of <strong>Health</strong>. In special
-    circumstances it may be used to inflict <strong>Poison</strong> damage
-    opposed by <strong>Fortitude</strong>. It is opposed by the orderly rune of
-    <strong>Death</strong>.</p>
+    <p>A chaotic force of creation, responsible for living matter. The
+    <strong>Life</strong> rune governs health and matters relating to biological
+    growth.</p><p>The <strong>Life</strong> rune scales using
+    @Rule[ability.wisdom] and provides <strong>Restoration</strong> of
+    @Rule[resource.health]. In special circumstances it may be used to inflict
+    <strong>Poison</strong> damage opposed by @Rule[defense.fortitude]. It is
+    opposed by the orderly rune of <strong>Death</strong>.</p>
   actions:
     - id: bloom
       name: Bloom
@@ -50,14 +50,15 @@ system:
       summon:
         actorUuid: null
         permanent: true
-  rune: life
-  training:
-    type: life
-    rank: 1
+  spellcraft: life
+  training: physical
+  keywords:
+    - playstyle.spellcraft
+    - spell.rune
+    - spell.physical
+    - target.healing
   nodes:
     - wis0b
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
 effects: []
 flags:
@@ -66,12 +67,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.10.2
   createdTime: 1772307160144
-  modifiedTime: 1773514792609
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789498713035
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 folder: Dy9HnwadNE3kSZ4f
 ownership:
   default: 0

@@ -2,22 +2,19 @@ name: Demolitionist
 type: talent
 img: icons/skills/ranged/bomb-grenade-thrown-yellow.webp
 system:
+  keywords:
+    - consumable.bomb
+    - resource.action
   nodes:
     - sig3.dexterity.toughness
   description: >-
     <p>Your remarkable expertise with munitions allows you to wield them
     efficiently amidst the chaos of combat. Each turn, your first usage of a
-    <strong>Bomb</strong> has a reduced cost of <strong>-1 Action</strong>.
-    </p><p>You are no longer targeted by your own bombs, even if you are
-    otherwise within their area of effect.</p>
+    <strong>Bomb</strong> has a reduced cost of @Rule[resource.action]{-1
+    Action}. </p><p>You are no longer targeted by your own bombs, even if you
+    are otherwise within their area of effect.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: fOYHlZJEWUukD7yr
 ownership:

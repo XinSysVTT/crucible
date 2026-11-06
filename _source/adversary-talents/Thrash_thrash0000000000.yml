@@ -2,6 +2,9 @@ name: Thrash
 type: talent
 img: icons/skills/wounds/bone-broken-marrow-red.webp
 system:
+  keywords:
+    - playstyle.melee
+    - weapon.natural
   nodes: []
   description: >-
     <p>Once the @ref[actor.name]{creature} has an enemy restrained, it will
@@ -12,7 +15,7 @@ system:
       img: icons/skills/wounds/bone-broken-marrow-red.webp
       condition: The target is Restrained by this creature.
       description: >-
-        <p>The creature deals <strong>Deadly</strong> damage to a target that it
+        <p>The creature deals @Rule[action.deadly] damage to a target that it
         currently has @Condition[restrained].</p>
       cost:
         action: 0
@@ -37,13 +40,7 @@ system:
       summon:
         actorUuid: null
         permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 9uAW3eV4LNZ2lQ0V
 ownership:

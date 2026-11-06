@@ -1,4 +1,8 @@
 /**
+ * @import {VFXPhaseSoundData} from "./components/vfx-component.mjs";
+ */
+
+/**
  * Choose a random sound to play from a provided list of options.
  * Prefix the returned path with a specific path prefix
  * @param {string} domain     The outer domain in VFX_SOUNDS
@@ -45,6 +49,17 @@ export const VFX_SOUNDS = {
  */
 
 /**
+ * A rune sound library cue with optional playback envelope overrides.
+ * @typedef _RuneSoundCue
+ * @property {string} rune        The rune whose sound library provides the sound
+ * @property {string} type        The sound type within that library, such as "impact" or "crackle"
+ */
+
+/**
+ * @typedef {_RuneSoundCue & Partial<Pick<VFXPhaseSoundData, "volume"|"fade"|"offset"|"release">>} RuneSoundCue
+ */
+
+/**
  * @typedef VFXSoundDescriptor
  * @property {string} src             Full path to the chosen sound file.
  * @property {boolean} loop           Whether the sample loops.
@@ -56,8 +71,9 @@ export const VFX_SOUNDS = {
  * static reference data describing which sound files exist for each rune and their
  * playback metadata. Sound types follow the S1-S4 taxonomy: `charge` (S1 one-shot), `passive`
  * (S2 loop), `damage` (S3 loop), `impact` (S4 one-shot), plus `miss` (one-shot, played when a spell
- * is resisted or misses). The pseudo-rune `generic` holds rune-agnostic sounds such as the
- * projectile `whoosh`.
+ * is resisted or misses). A rune may add sounds of its own, such as the storm `crackle` loop of live electricity
+ * in flight or in a channel, its `thunder` clap, and the `crack` of a bolt released.
+ * The pseudo-rune `generic` holds rune-agnostic sounds such as the projectile `whoosh`.
  * @type {Record<string, {prefix: string} & Record<string, VFXSoundEntry[]>>}
  */
 export const RUNE_SOUNDS = {
@@ -110,6 +126,22 @@ export const RUNE_SOUNDS = {
       {src: "LifeMiss2.ogg", duration: 1.215}
     ]
   },
+  poison: {
+    prefix: "systems/crucible/assets/sfx/poison",
+    charge: [{src: "PoisonChargeUp.ogg", duration: 1.658}],
+    passive: [{src: "PoisonLoopPassive.ogg", loop: true}],
+    damage: [{src: "PoisonLoopDamage.ogg", loop: true}],
+    impact: [
+      {src: "PoisonHit1.ogg", duration: 1.891},
+      {src: "PoisonHit2.ogg", duration: 1.554},
+      {src: "PoisonHit3.ogg", duration: 1.428}
+    ],
+    miss: [
+      {src: "PoisonMiss1.ogg", duration: 1.207},
+      {src: "PoisonMiss2.ogg", duration: 1.189},
+      {src: "PoisonMiss3.ogg", duration: 1.304}
+    ]
+  },
   death: {
     prefix: "systems/crucible/assets/sfx/death",
     charge: [{src: "DeathChargeUp.ogg", duration: 1.915}],
@@ -123,6 +155,28 @@ export const RUNE_SOUNDS = {
     miss: [
       {src: "DeathMiss1.ogg", duration: 2.545},
       {src: "DeathMiss2.ogg", duration: 2.710}
+    ]
+  },
+  storm: {
+    prefix: "systems/crucible/assets/sfx/storm",
+    charge: [
+      {src: "StormChargeUp1.ogg", duration: 1.842},
+      {src: "StormChargeUp2.ogg", duration: 2.031}
+    ],
+    passive: [{src: "StormPassiveLoop.ogg", loop: true}],
+    damage: [{src: "StormDamageLoop.ogg", loop: true}],
+    crackle: [{src: "StormCrackleLoop.ogg", loop: true}],
+    thunder: [{src: "StormThunderClose.ogg", duration: 9.558}],
+    crack: [{src: "StormLightningCrack.ogg", duration: 2.0}],
+    impact: [
+      {src: "StormImpact1.ogg", duration: 0.894},
+      {src: "StormImpact2.ogg", duration: 0.847},
+      {src: "StormImpact3.ogg", duration: 0.811}
+    ],
+    miss: [
+      {src: "StormMiss1.ogg", duration: 1.342},
+      {src: "StormMiss2.ogg", duration: 1.218},
+      {src: "StormMiss3.ogg", duration: 1.161}
     ]
   },
   generic: {
@@ -148,7 +202,8 @@ export function getVFXSound(rune, type) {
   const entries = lib?.[type];
   if ( !entries?.length ) return null;
   const entry = entries[Math.floor(Math.random() * entries.length)];
-  return {src: `${lib.prefix}/${entry.src}`, loop: entry.loop ?? false, duration: entry.duration ?? null};
+  return {src: `${lib.prefix}/${entry.src}`, loop: entry.loop ?? false,
+    duration: entry.duration ?? null};
 }
 
 /* -------------------------------------------- */

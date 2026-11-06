@@ -2,13 +2,18 @@ name: Chirurgeon
 type: talent
 img: icons/equipment/head/mask-plague-grey.webp
 system:
+  keywords:
+    - playstyle.utility
+    - target.healing
+    - target.rallying
+    - skill.medicine
   nodes:
     - sig3.dexterity
     - sig3.wisdom
   description: >-
     <p>Your improvisational expertise with battlefield medicine can save many
-    lives. You make all <strong>Medicine</strong> checks during combat with
-    <strong>+1 Boon</strong>.</p>
+    lives. You make all @Rule[skill.medicine] checks during combat with
+    @Rule[dice.boon]{+1 Boon}.</p>
   actions:
     - id: medicinalCompound
       name: Medicinal Compound
@@ -17,11 +22,12 @@ system:
       description: >-
         <p>You delve into your medical supplies, hastily combining whatever you
         might have available to salve the target's wounds or calm the target's
-        mind. Perform a <strong>Medicine Check</strong>.</p><p>The attempt is
-        contested by the higher of the target's <strong>Healing
-        Threshold</strong> or <strong>Rallying Threshold</strong>. If successful
-        the target immediately regains both Health and Morale as well as half
-        that amount at the beginning of each of the subsequent 3 turns.</p>
+        mind. Perform a @Rule[skill.medicine]{Medicine Check}.</p><p>The attempt
+        is contested by the higher of the target's @Rule[defense.wounds] or
+        @Rule[defense.madness]. If successful the target immediately regains
+        both @Rule[resource.health] and @Rule[resource.morale] as well as half
+        that amount at the beginning of each of their subsequent <strong>3
+        Turns</strong>.</p>
       cost:
         action: 3
         focus: 0
@@ -50,27 +56,23 @@ system:
             value: 3
             units: rounds
             expiry: turnEnd
+            expired: false
           system:
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
             changes: []
+            properties: []
       tags:
         - healing
+        - rallying
         - skill
         - medicine
-        - rallying
-      summon:
-        actorUuid: null
-        permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
+      summon: null
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: fOYHlZJEWUukD7yr
 ownership:
@@ -81,12 +83,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.10.2
   createdTime: 1772307160128
-  modifiedTime: 1773514792563
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789493427462
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 _id: chirurgeon000000
 sort: 0
 _key: '!items!chirurgeon000000'

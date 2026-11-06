@@ -4,6 +4,9 @@ type: talent
 _id: voidAbsorption00
 img: icons/magic/unholy/orb-glowing-purple.webp
 system:
+  keywords:
+    - playstyle.defensive
+    - defense.resistance
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} is no stranger to the orderly force of
@@ -11,13 +14,7 @@ system:
     resistance would reduce an amount of damage below zero, the negative amount
     is received as <strong>Healing</strong> instead.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 sort: 0
 ownership:

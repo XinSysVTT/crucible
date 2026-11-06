@@ -2,8 +2,13 @@ name: Last Stand
 type: talent
 img: icons/skills/wounds/injury-face-impact-orange.webp
 system:
+  keywords:
+    - playstyle.defensive
+    - target.healing
+    - resource.heroism
+    - defense.wounds
   nodes:
-    - tou2b
+    - tou2c
   description: >-
     <p>You can muster the toughness and courage to fight on and stand your
     ground against improbable odds.</p>
@@ -13,10 +18,10 @@ system:
       img: icons/skills/wounds/injury-face-impact-orange.webp
       condition: ''
       description: >-
-        <p>You expend <strong>Heroism</strong> to instantly recover two times
-        your <strong>Toughness</strong> in <strong>Health</strong>. Your
-        <strong>Healing Threshold</strong> is reduced by 2 for the next 3
-        Rounds.</p>
+        <p>You expend @Rule[resource.heroism] to instantly recover two times
+        your @Rule[ability.toughness] in @Rule[resource.health]. Your
+        @Rule[defense.wounds] is reduced by 2 for the next <strong>3
+        Rounds</strong>.</p>
       cost:
         action: 1
         focus: 0
@@ -43,24 +48,21 @@ system:
             value: 3
             units: rounds
             expiry: turnStart
+            expired: false
           system:
             changes: []
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
+            properties: []
       tags:
+        - subtle
         - healing
-      summon:
-        actorUuid: null
-        permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
+      summon: null
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: kvXzGhvDAbUcQsXM
 ownership:
@@ -71,12 +73,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.363'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.5
+  systemVersion: 0.10.2
   createdTime: 1772307160137
-  modifiedTime: 1780938025346
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1789492046687
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 _id: lastStand0000000
 sort: 100000
 _key: '!items!lastStand0000000'

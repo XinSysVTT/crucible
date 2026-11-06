@@ -10,6 +10,10 @@
     padding: var(--sheet-body-gap);
     gap: var(--sheet-body-gap);
   }
+  // Style Damage Over Time damage type input to be wider so it isn't cut off when placed beside amount input
+  fieldset.dot select[name$="damageType"] {
+    flex: 4;
+  }
 }
 
 /* ----------------------------------------- */
@@ -181,14 +185,18 @@
  * ------------------------------------------ */
 
 .crucible.archetype,
+.crucible.talent,
 .crucible.taxonomy {
   .abilities,
-  .resistances {
+  .resistances,
+  .training {
     .form-fields {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       grid-gap: 0.5rem;
-      label {
+      label,
+      .training-weight,
+      .training-requirement {
         padding: 0.25rem;
         border: 1px solid var(--color-frame);
         border-radius: 6px;
@@ -234,6 +242,42 @@
   .resistances .form-fields {
     grid-template-columns: repeat(4, 1fr);
   }
+  .training {
+    .training-weight,
+    .training-requirement {
+      position: relative;
+      .proficiency {
+        display: block;
+      }
+      // A zero weight claims only leftovers, so it recedes behind the proficiencies actually preferred
+      &.spare {
+        border-style: dashed;
+        input,
+        .proficiency {
+          opacity: 0.6;
+        }
+      }
+      // Sits in the cell corner rather than the flow, so cells stay the same shape as the ability tiles above.
+      // Offset and height match the weight input so the icon centres against the number, not the whole cell.
+      .remove {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        display: flex;
+        align-items: center;
+        height: 24px;
+        padding: 0 0.25rem;
+        font-size: var(--font-size-11);
+        opacity: 0.4;
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+    > select {
+      margin-top: 0.5rem;
+    }
+  }
   .equipment {
     gap: 1rem;
     .toggle.active {
@@ -258,6 +302,17 @@
   .talents {
     .talent .tags {
       flex: none;
+    }
+  }
+  .sum {
+    margin-left: 0.25rem;
+    padding: 0.1rem 0.4rem;
+    border: 1px solid green;
+    border-radius: 4px;
+    font-size: var(--font-size-12);
+    white-space: nowrap;
+    &.invalid {
+      border-color: red;
     }
   }
 }

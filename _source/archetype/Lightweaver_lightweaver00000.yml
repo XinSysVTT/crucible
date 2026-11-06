@@ -21,17 +21,26 @@ system:
       level: 4
     - item: Compendium.crucible.talent.Item.gestureray000000
       level: 0
-    - item: Compendium.crucible.talent.Item.talismanWeaponTr
+    - item: Compendium.crucible.talent.Item.refocus000000000
       level: 0
-    - item: Compendium.crucible.talent.Item.talismanWeaponPr
-      level: 4
     - item: Compendium.crucible.talent.Item.runeControl00000
       level: 0
     - item: Compendium.crucible.talent.Item.gesturecreate000
-      level: 0
+      level: 1
     - item: Compendium.crucible.talent.Item.inflectionpull00
       level: 2
-  skills: []
+    - item: Compendium.crucible.talent.Item.lightbringer0000
+      level: 3
+  training:
+    awareness: 1
+    stealth: 0
+    arcana: 2
+    society: 0
+    diplomacy: 1
+    talisman: 3
+    physical: 1
+    elemental: 2
+    spiritual: 4
   spells:
     - item: Compendium.crucible.spell.Item.dawnBeacon000000
       level: 0
@@ -46,14 +55,14 @@ flags:
   ember:
     crucibleOverride: true
 _stats:
-  coreVersion: '14.360'
+  coreVersion: '14.368'
   systemId: crucible
-  systemVersion: 0.9.1
+  systemVersion: 0.10.2
   createdTime: 1776980261367
-  modifiedTime: 1776980261368
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1791130481799
+  lastModifiedBy: 2g4T1RcAPz2LBKZ1
   exportSource: null
   compendiumSource: null
   duplicateSource: null
-sort: 0
+sort: 500000
 _key: '!items!lightweaver00000'

@@ -257,7 +257,7 @@ export default class StandardCheck extends Roll {
 
     // Construct the formula
     const terms = pool.map(p => `1d${p}`).concat([data.ability, data.skill]);
-    if ( data.enchantment > 0 ) terms.push(data.enchantment);
+    if ( data.enchantment !== 0 ) terms.push(data.enchantment);
     const formula = terms.join(" + ");
     return super.parse(formula, data);
   }
@@ -279,11 +279,18 @@ export default class StandardCheck extends Roll {
     damage.hasMultiplier = damage.multiplier !== 1;
     if ( damage.restoration ) damage.typeLabel = SYSTEM.RESOURCES[damage.resource].label;
     else if ( damage.type ) damage.typeLabel = SYSTEM.DAMAGE_TYPES[damage.type].label;
-    damage.resistanceLabel = damage.resistance < 0 ? "DICE.DamageVulnerability" : "DICE.DamageResistance";
-    damage.resistanceValue = (damage.resistance ?? Infinity) === Infinity ? "∞" : Math.abs(damage.resistance);
+
+    // Report only the resistance or vulnerability which applied, so a weak hit does not reveal the full amount
+    let applied = damage.resistance ?? Infinity;
+    if ( applied !== Infinity ) {
+      const preMitigation = crucible.api.models.CrucibleAction.computeDamage({...damage, resistance: 0});
+      applied = Math.clamp(applied, -preMitigation, preMitigation);
+    }
+    damage.resistanceLabel = applied < 0 ? "DICE.DamageVulnerability" : "DICE.DamageResistance";
+    damage.resistanceValue = applied === Infinity ? "∞" : Math.abs(applied);
     damage.cssClass = "";
-    if ( damage.resistance < 0 ) damage.cssClass = "vulnerable";
-    else if ( damage.resistance > 0 ) damage.cssClass = "resistance";
+    if ( applied < 0 ) damage.cssClass = "vulnerable";
+    else if ( applied > 0 ) damage.cssClass = "resistance";
     if ( damage.total === 0 ) damage.cssClass += " ineffective";
     return damage;
   }
@@ -410,11 +417,12 @@ export default class StandardCheck extends Roll {
    * @param {Record<string, GroupCheckSkillConfig>} [options.skills] Skill configurations with per-skill DCs
    * @param {string} [options.messageMode] The chat message visibility mode
    * @param {boolean} [options.aggregate] Whether to show an aggregate result
+   * @param {string} [options.name] A name for the check, shown as the chat card flavor
    * @returns {Promise<void>}
    */
-  async requestGroupCheck({requestedActors, skills, messageMode, aggregate}={}) {
+  async requestGroupCheck({requestedActors, skills, messageMode, aggregate, name}={}) {
     const groupCheckInstance = new crucible.api.dice.GroupCheck(foundry.utils.deepClone(this.data));
-    return groupCheckInstance.requestSubmit({requestedActors, skills, messageMode, aggregate});
+    return groupCheckInstance.requestSubmit({requestedActors, skills, messageMode, aggregate, name});
   }
 
   /* -------------------------------------------- */

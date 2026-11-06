@@ -113,11 +113,23 @@
     }
   }
 
+  // Report tables of labels and right-aligned values, such as chat summaries
+  .report-table {
+    margin: 0.25rem 0 0;
+    td, th {
+      font-size: var(--font-size-12);
+      line-height: 1.5em;
+    }
+    .report-value {
+      text-align: right;
+    }
+  }
+
   // Blockquote
   blockquote {
     margin: 1rem 0;
-    padding: 0 1rem;
-    border-left: 4px solid var(--color-secondary);
+    padding: 0 0 0 1rem;
+    border-left: 2px solid var(--color-secondary);
     font-family: var(--font-quote);
     font-size: var(--font-size-16);
     line-height: 1.2em;
@@ -147,6 +159,36 @@
       > :last-child {
         margin-bottom: 0;
       }
+    }
+  }
+
+  // Lightweight Buttons, the default within applications and opted into elsewhere
+  &.application button,
+  button.plain {
+    --button-text-color: var(--color-tertiary);
+    --button-background-color: transparent;
+    --button-border-color: transparent;
+    --button-hover-background-color: var(--color-frame-bg-75);
+    --button-hover-border-color: var(--color-frame);
+    --button-hover-text-color: var(--color-primary);
+    padding: 0.25rem 0.5rem;
+    text-align: center;
+    opacity: 0.5;
+    &:disabled {
+      opacity: 0.25;
+      pointer-events: none;
+    }
+    &:hover {
+      opacity: 1.0;
+    }
+    &.framed {
+      --button-text-color: var(--color-secondary);
+      --button-background-color: var(--color-frame-bg-75);
+      --button-border-color: var(--color-frame);
+    }
+    &.invisible {
+      visibility: hidden;
+      pointer-events: none;
     }
   }
 
@@ -199,6 +241,10 @@
       &.unmet {
         border-color: darkred;
         color: red;
+      }
+      &.training { // A grant rather than a requirement, so it must not read as a prerequisite
+        border-color: var(--color-accent);
+        color: var(--color-accent);
       }
       &.larger {
         font-size: 1em;
@@ -336,11 +382,40 @@
     color: var(--color-text);
   }
 
+  // Point accounting, following the roll breakdown of a chat card
+  .training-breakdown,
+  .size-breakdown {
+    gap: 0.25rem;
+    .counter {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: var(--font-size-12);
+      label {
+        color: var(--color-secondary);
+      }
+      .value {
+        width: 24px;
+        text-align: center;
+      }
+      &.total,
+      &.cap {
+        font-weight: bold;
+      }
+      &.total {
+        border-top: 1px solid var(--color-frame);
+        padding-top: 0.25rem;
+      }
+    }
+  }
+
   // Bordered hexes
   .hex {
-    --hex-bg: url("../ui/elements/hex-plain.svg");
+    --hex-bg: url("../ui/elements/hex-plain.webp");
     --hex-rotation: 0;
-    --hex-size: 64px;
+    --hex-size: 64px; // Always the hexagon's flat-to-flat measure, whatever the art's orientation
+    --hex-bg-size: var(--hex-size) auto; // The default art is pointy-topped
     position: relative;
     display: flex;
     height: calc(1.25 * var(--hex-size));
@@ -351,56 +426,119 @@
     &::before {
       content: "";
       position: absolute;
-      width: 100%;
+      width: 150%;
+      left: -25%;
       height: 100%;
       background: var(--hex-bg) no-repeat center;
-      background-size: auto var(--hex-size);
+      background-size: var(--hex-bg-size);
       transform: rotate(var(--hex-rotation));
       z-index: -1;
+      pointer-events: none;
     }
     &.filled {
-      --hex-bg: url("../ui/elements/hex-plain-filled.svg");
+      --hex-bg: url("../ui/elements/hex-plain-filled.webp");
+    }
+
+    // Hex orientation helpers
+    &.pointy {
+      --hex-bg-size: var(--hex-size) auto;
+    }
+    &.flat,
+    &.dexterity-intellect, &.dexterity-presence, &.dexterity-strength, &.intellect-presence,
+    &.intellect-strength, &.intellect-toughness, &.intellect-wisdom, &.presence-strength,
+    &.presence-wisdom, &.strength-wisdom, &.toughness-wisdom,
+    &.dexterity, &.toughness, &.strength, &.wisdom, &.presence, &.intellect {
+      --hex-bg-size: auto var(--hex-size);
+    }
+
+    // Hex size tiers
+    &.small {
+      --hex-bg: url("../ui/elements/hex-plain-64.webp");
+      &.filled {--hex-bg: url("../ui/elements/hex-plain-filled-64.webp")}
+      &.intellect-strength {--hex-bg: url("../ui/elements/hex-accent-2a-64.webp")}
+      &.dexterity-intellect, &.intellect-presence, &.presence-wisdom, &.strength-wisdom {
+        --hex-bg: url("../ui/elements/hex-accent-2b-64.webp");
+      }
+      &.dexterity-presence, &.dexterity-strength, &.intellect-toughness, &.intellect-wisdom,
+      &.presence-strength, &.toughness-wisdom {
+        --hex-bg: url("../ui/elements/hex-accent-2c-64.webp");
+      }
+      &.dexterity, &.toughness, &.strength, &.wisdom, &.presence, &.intellect {
+        --hex-bg: url("../ui/elements/hex-accent-single-64.webp");
+      }
+    }
+    &.tiny {
+      --hex-bg: url("../ui/elements/hex-plain-48.webp");
+      &.filled {--hex-bg: url("../ui/elements/hex-plain-filled-48.webp")}
+      &.intellect-strength {--hex-bg: url("../ui/elements/hex-accent-2a-48.webp")}
+      &.dexterity-intellect, &.intellect-presence, &.presence-wisdom, &.strength-wisdom {
+        --hex-bg: url("../ui/elements/hex-accent-2b-48.webp");
+      }
+      &.dexterity-presence, &.dexterity-strength, &.intellect-toughness, &.intellect-wisdom,
+      &.presence-strength, &.toughness-wisdom {
+        --hex-bg: url("../ui/elements/hex-accent-2c-48.webp");
+      }
+      &.dexterity, &.toughness, &.strength, &.wisdom, &.presence, &.intellect {
+        --hex-bg: url("../ui/elements/hex-accent-single-48.webp");
+      }
     }
     &.dexterity-intellect {
-      --hex-bg: url("../ui/elements/hex-accent-2b.svg");
+      --hex-bg: url("../ui/elements/hex-accent-2b.webp");
       --hex-rotation: -120deg;
     }
     &.dexterity-strength {
-      --hex-bg: url("../ui/elements/hex-accent-2c.svg");
+      --hex-bg: url("../ui/elements/hex-accent-2c.webp");
       --hex-rotation: -60deg;
     }
     &.dexterity-presence {
-      --hex-bg: url("../ui/elements/hex-accent-2c.svg");
+      --hex-bg: url("../ui/elements/hex-accent-2c.webp");
       --hex-rotation: 180deg;
     }
     &.intellect-presence {
-      --hex-bg: url("../ui/elements/hex-accent-2b.svg");
+      --hex-bg: url("../ui/elements/hex-accent-2b.webp");
       --hex-rotation: 180deg;
     }
     &.intellect-toughness {
-      --hex-bg: url("../ui/elements/hex-accent-2c.svg");
+      --hex-bg: url("../ui/elements/hex-accent-2c.webp");
       --hex-rotation: -120deg;
     }
     &.intellect-wisdom {
-      --hex-bg: url("../ui/elements/hex-accent-2c.svg");
+      --hex-bg: url("../ui/elements/hex-accent-2c.webp");
       --hex-rotation: 120deg;
     }
     &.presence-strength {
-      --hex-bg: url("../ui/elements/hex-accent-2c.svg");
+      --hex-bg: url("../ui/elements/hex-accent-2c.webp");
       --hex-rotation: 60deg;
     }
     &.presence-wisdom {
-      --hex-bg: url("../ui/elements/hex-accent-2b.svg");
+      --hex-bg: url("../ui/elements/hex-accent-2b.webp");
       --hex-rotation: 120deg;
     }
     &.strength-wisdom {
-      --hex-bg: url("../ui/elements/hex-accent-2c.svg");
-      --hex-rotation: 0;
+      --hex-bg: url("../ui/elements/hex-accent-2b.webp");
+      --hex-rotation: 60deg;
     }
     &.toughness-wisdom {
-      --hex-bg: url("../ui/elements/hex-accent-2c.svg");
+      --hex-bg: url("../ui/elements/hex-accent-2c.webp");
       --hex-rotation: 0;
     }
+    &.intellect-strength {
+      --hex-bg: url("../ui/elements/hex-accent-2a.webp"); // Opposing sextants, so the two-edge accent art
+      --hex-rotation: 60deg;
+    }
+
+    // A training scaling with one ability marks that ability's sextant of the talent tree. Unrotated art
+    // marks the bottom edge, which is Toughness, so each rotation is that sextant's angle less 90 degrees.
+    &.dexterity, &.toughness, &.strength, &.wisdom, &.presence, &.intellect {
+      --hex-bg: url("../ui/elements/hex-accent-single.webp");
+    }
+    &.dexterity {--hex-rotation: -60deg}
+    &.toughness {--hex-rotation: 0}
+    &.strength {--hex-rotation: 60deg}
+    &.wisdom {--hex-rotation: 120deg}
+    &.presence {--hex-rotation: 180deg}
+    &.intellect {--hex-rotation: 240deg}
+
     .value.large {
       font-size: 2em;
     }
@@ -408,17 +546,18 @@
 
   // Labeled Hex
   .labeled-hex {
-    --hex-bg: url("../ui/elements/hex-plain.svg");
+    --hex-bg: url("../ui/elements/hex-plain.webp");
     --hex-size: 64px;
+    --hex-bg-size: var(--hex-size) auto; // Pointy-topped art
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     position: relative;
     height: calc(1.25 * var(--hex-size));
-    padding: 1rem 0 0;
+    padding: calc(0.125 * var(--hex-size)) 0 0; // Center content on the 128x144 hex art anchored at the bottom
     background: var(--hex-bg) no-repeat bottom center;
-    background-size: auto var(--hex-size);
+    background-size: var(--hex-bg-size);
     h4 {
       position: absolute;
       top: 0;
@@ -463,7 +602,7 @@
  *  Tooltips                                  *
  * ------------------------------------------ */
 
-.crucible.crucible-tooltip {
+.crucible-tooltip {
   background: url("../ui/journal/background-texture.webp");
   padding: 1rem 1.5rem;
   border: 12px solid transparent;
@@ -490,7 +629,7 @@
     }
   }
 
-  .tooltip-title {
+  .tooltip-title.divider {
     margin: 0 0 0.5rem;
     font-size: var(--font-size-16);
   }
@@ -498,12 +637,34 @@
   .group-check {
     display: grid;
     grid-template-columns: 200px 200px;
-    gap: 0.5rem 2rem;
+    gap: 0.5rem 1rem;
     .group-member {
-      --title-font-size: var(--font-size-16);
-      --icon-size: 40px;
+      --title-font-size: var(--font-size-14);
+      --icon-size: 36px;
       width: 200px;
       height: var(--icon-size);
+      .action-header {
+        gap: 0.375rem;
+      }
+
+      // Truncate long names and tags rather than wrapping them into the next member
+      .title {
+        min-width: 0;
+        gap: 0;
+        h4 {
+          text-overflow: ellipsis;
+        }
+        .tags {
+          flex-wrap: nowrap;
+          overflow: hidden;
+        }
+        .tag {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
       &.success .icon {
         color: var(--color-result-verygood);
       }
@@ -516,5 +677,20 @@
         font-size: var(--font-size-12);
       }
     }
+  }
+
+  // Rules formulae in tooltips
+  section.formula {
+    font-size: var(--font-size-12);
+    background: none;
+    margin: 0.5rem 0;
+    padding: 0;
+    color: var(--color-tertiary);
+  }
+
+  // Rule tooltips specifically
+  .rule-tooltip {
+    > :first-child { margin-top: 0; }
+    > :last-child { margin-bottom: 0; }
   }
 }

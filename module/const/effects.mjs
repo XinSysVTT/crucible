@@ -5,7 +5,20 @@ import {defineEnum} from "./enum.mjs";
  * @type {Readonly<Record<string, {id: string, label: string, tooltip: string}>>}
  */
 export const PROPERTIES = defineEnum({
-  magical: {label: "BASE_EFFECT.PROPERTIES.Magical", tooltip: "BASE_EFFECT.PROPERTIES.MagicalTooltip"}
+  deployed: {label: "BASE_EFFECT.PROPERTIES.Deployed", tooltip: "BASE_EFFECT.PROPERTIES.DeployedTooltip"},
+  magical: {label: "BASE_EFFECT.PROPERTIES.Magical", tooltip: "BASE_EFFECT.PROPERTIES.MagicalTooltip"},
+  maintained: {label: "BASE_EFFECT.PROPERTIES.Maintained", tooltip: "BASE_EFFECT.PROPERTIES.MaintainedTooltip"},
+  removable: {label: "BASE_EFFECT.PROPERTIES.Removable", tooltip: "BASE_EFFECT.PROPERTIES.RemovableTooltip"}
+});
+
+/**
+ * Labeled reasons an effect may be suppressed through its `system.suppression` record.
+ * This is not a restrictive list, arbitrary suppression reasons can be declared.
+ * This record provides localization labels or additional metadata for expected reasons.
+ * @type {Record<string, {id: string, label: string}>}
+ */
+export const SUPPRESSION_REASONS = defineEnum({
+  maintenance: {label: "BASE_EFFECT.SUPPRESSION.Maintenance"}
 });
 
 /**
@@ -151,6 +164,7 @@ export function corroding(actor, {ability="wisdom", amount, turns=3}={}) {
     img: "icons/magic/earth/orb-stone-smoke-teal.webp",
     duration: {value: turns, units: "rounds", expiry: "turnStart"},
     origin: actor?.uuid,
+    statuses: ["corroding"],
     system: {
       dot: [{
         amount,
@@ -162,12 +176,12 @@ export function corroding(actor, {ability="wisdom", amount, turns=3}={}) {
 }
 
 /**
- * Generate a standardized decay effect, dealing half-Presence in corruption damage to Health.
+ * Generate a standardized decaying effect, dealing half-Presence in corruption damage to Health.
  * @param {Actor} actor
  * @param {CrucibleDoTConfig} options
  * @returns {Partial<ActiveEffectData>}
  */
-export function decay(actor, {ability="presence", amount, turns=3}={}) {
+export function decaying(actor, {ability="presence", amount, turns=3}={}) {
   amount ??= actor.getAbilityBonus(ability, 2);
   return {
     _id: getEffectId("Decaying"),
@@ -175,6 +189,7 @@ export function decay(actor, {ability="presence", amount, turns=3}={}) {
     img: "icons/magic/unholy/strike-beam-blood-red-purple.webp",
     duration: {value: turns, units: "rounds", expiry: "turnStart"},
     origin: actor?.uuid,
+    statuses: ["decaying"],
     system: {
       dot: [{
         amount,
@@ -199,7 +214,7 @@ export function entropy(actor, {ability="presence", amount, turns=1}={}) {
     img: "icons/magic/unholy/orb-swirling-teal.webp",
     duration: {value: turns, units: "rounds", expiry: "turnStart"},
     origin: actor?.uuid,
-    statuses: ["frightened"],
+    statuses: ["entropy", "frightened"],
     system: {
       dot: [{
         amount,
@@ -224,6 +239,7 @@ export function irradiated(actor, {ability="presence", amount, turns=1}={}) {
     img: "icons/magic/light/beams-rays-orange-purple-large.webp",
     duration: {value: turns, units: "rounds", expiry: "turnStart"},
     origin: actor?.uuid,
+    statuses: ["irradiated"],
     system: {
       dot: [{
         amount,
@@ -253,6 +269,7 @@ export function mending(actor, {ability="wisdom", amount, turns=1}={}) {
     img: "icons/magic/life/cross-beam-green.webp",
     duration: {value: turns, units: "rounds", expiry: "turnStart"},
     origin: actor?.uuid,
+    statuses: ["mending"],
     system: {
       dot: [{
         amount,
@@ -277,6 +294,7 @@ export function inspired(actor, {ability="presence", amount, turns=1}={}) {
     img: "icons/magic/light/explosion-star-glow-silhouette.webp",
     duration: {value: turns, units: "rounds", expiry: "turnStart"},
     origin: actor?.uuid,
+    statuses: ["inspired"],
     system: {
       dot: [{
         amount,
@@ -396,9 +414,34 @@ export function shocked(actor, {ability="intellect", amount, turns=3}={}) {
 }
 
 /**
+ * Generate a standardized hexed effect.
+ * @param {Actor} actor
+ * @param {{turns?: number}} [options]
+ * @returns {Partial<ActiveEffectData>}
+ */
+export function hexed(actor, {turns=1}={}) {
+  let {name, img} = CONFIG.statusEffects.hexed;
+  name = _loc(name);
+  return {
+    _id: getEffectId("Hexed"),
+    name,
+    img,
+    duration: {value: turns, units: "rounds", expiry: "turnEnd"},
+    origin: actor?.uuid,
+    statuses: ["hexed"],
+    system: {
+      changes: [
+        {key: "system.rollBonuses.banes.hexed.number", type: "override", value: 1, phase: "initial"},
+        {key: "system.rollBonuses.banes.hexed.label", type: "override", value: name, phase: "initial"}
+      ]
+    }
+  };
+}
+
+/**
  * Generate a standardized staggered effect, applying the staggered status condition to the target.
  * @param {Actor} actor
- * @param {CrucibleDoTConfig} options
+ * @param {{turns?: number}} [options]
  * @returns {Partial<ActiveEffectData>}
  */
 export function staggered(actor, {turns=1}={}) {

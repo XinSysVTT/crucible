@@ -12,13 +12,22 @@ system:
     dexterity: 2
   talents:
     - item: Compendium.crucible.talent.Item.thickskin0000000
-      level: null
+      level: 3
     - item: Compendium.crucible.talent.Item.berserker0000000
-      level: null
-    - item: Compendium.crucible.talent.Item.heavyWeaponTrain
+      level: 3
+    - item: Compendium.crucible.talent.Item.heavyStrike00000
       level: null
   identifier: berserker
-  skills: []
+  training:
+    athletics: 3
+    awareness: 1
+    wilderness: 1
+    intimidation: 2
+    heavy: 4
+    unarmed: 0
+    armor: 1
+    smithing: 0
+    stealth: 1
   spells: []
   equipment: []
 effects: []
@@ -30,14 +39,14 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.368'
   createdTime: 1772307157482
-  modifiedTime: 1773514792215
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1791130481801
+  lastModifiedBy: 2g4T1RcAPz2LBKZ1
   compendiumSource: null
   duplicateSource: null
   exportSource: null
 _id: berserker0000000
-sort: 1900000
+sort: 2700000
 _key: '!items!berserker0000000'

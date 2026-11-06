@@ -1,4 +1,5 @@
 const {api, sheets} = foundry.applications;
+const {FormDataExtended} = foundry.applications.ux;
 
 /**
  * The default sheet for Crucible ActiveEffects.
@@ -12,7 +13,11 @@ export default class CrucibleActiveEffectSheet extends sheets.ActiveEffectConfig
   /** @inheritDoc */
   static DEFAULT_OPTIONS = {
     classes: ["crucible", "effect", "standard-form"],
-    form: {submitOnChange: true, closeOnSubmit: false}
+    form: {submitOnChange: true, closeOnSubmit: false},
+    actions: {
+      addDoT: CrucibleActiveEffectSheet.#onAddDoT,
+      deleteDoT: CrucibleActiveEffectSheet.#onDeleteDoT
+    }
   };
 
   /** @override */
@@ -21,6 +26,7 @@ export default class CrucibleActiveEffectSheet extends sheets.ActiveEffectConfig
     tabs: sheets.ActiveEffectConfig.PARTS.tabs,
     description: {template: "systems/crucible/templates/sheets/effect/effect-description.hbs"},
     config: {template: "systems/crucible/templates/sheets/effect/effect-config.hbs", scrollable: [""]},
+    damage: {template: "systems/crucible/templates/sheets/effect/effect-damage.hbs", scrollable: [""]},
     duration: sheets.ActiveEffectConfig.PARTS.duration,
     changes: sheets.ActiveEffectConfig.PARTS.changes
   };
@@ -31,6 +37,7 @@ export default class CrucibleActiveEffectSheet extends sheets.ActiveEffectConfig
       tabs: [
         {id: "description", icon: "fa-solid fa-book", label: "ITEM.TABS.description"},
         {id: "config", icon: "fa-solid fa-cogs", label: "ITEM.TABS.config"},
+        {id: "damage", icon: "fa-solid fa-burst"},
         {id: "duration", icon: "fa-solid fa-clock"},
         {id: "changes", icon: "fa-solid fa-gears"}
       ],
@@ -45,10 +52,22 @@ export default class CrucibleActiveEffectSheet extends sheets.ActiveEffectConfig
   /* -------------------------------------------- */
 
   /** @inheritDoc */
+  _initializeApplicationOptions(options) {
+    options = super._initializeApplicationOptions(options);
+    options.window.contentClasses.findSplice(c => c === "standard-form"); // Added by ActiveEffectConfig
+    return options;
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
   async _preparePartContext(partId, context) {
     const partContext = await super._preparePartContext(partId, context);
     const effect = this.document;
     switch ( partId ) {
+      case "tabs":
+        partContext.tabClasses = ""; // Don't add core .top-tabs
+        break;
       case "header":
         partContext.tags = effect.system.getTags?.() ?? {};
         break;
@@ -63,13 +82,20 @@ export default class CrucibleActiveEffectSheet extends sheets.ActiveEffectConfig
       case "config":
         partContext.systemFields = effect.system.schema.fields;
         partContext.fieldDisabled = this.isEditable ? "" : "disabled";
-        partContext.propertiesWidget = this.#propertiesWidget.bind(this);
         partContext.isActorEffect = effect.parent?.documentName === "Actor";
         partContext.isItemEffect = effect.parent?.documentName === "Item";
+        partContext.isMaintained = effect.system.properties?.has("maintained");
+        partContext.isRemovable = effect.system.properties?.has("removable");
+        partContext.propertyOptions = Object.values(SYSTEM.EFFECTS.PROPERTIES).map(p => ({
+          value: p.id, label: _loc(p.label), disabled: p.id === "deployed"
+        }));
         partContext.statuses = Object.values(CONFIG.statusEffects).map(s => ({value: s.id, label: _loc(s.name)}));
         partContext.showIconOptions = Object.entries(CONST.ACTIVE_EFFECT_SHOW_ICON).map(([k, value]) => ({
           value, label: _loc(`EFFECT.SHOW_ICON.${k.toLowerCase()}`)
         })).reverse();
+        break;
+      case "damage":
+        partContext.systemFields = effect.system.schema.fields;
         break;
     }
     return partContext;
@@ -86,16 +112,56 @@ export default class CrucibleActiveEffectSheet extends sheets.ActiveEffectConfig
   /* -------------------------------------------- */
 
   /**
-   * Render the properties field as a multi-checkboxes element.
-   * @param {foundry.data.fields.DataField} field
-   * @param {object} _groupConfig
-   * @param {object} inputConfig
-   * @returns {HTMLElement}
+   * Add a new instance of Damage Over Time to this Active Effect.
+   * @this {CrucibleActiveEffectSheet}
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   * @returns {Promise<void>}
    */
-  #propertiesWidget(field, _groupConfig, inputConfig) {
-    inputConfig.name = field.fieldPath;
-    inputConfig.options = Object.entries(SYSTEM.EFFECTS.PROPERTIES).map(([value, p]) => ({value, label: p.label}));
-    inputConfig.type = "checkboxes";
-    return foundry.applications.fields.createMultiSelectInput(inputConfig);
+  static async #onAddDoT(_event, _target) {
+    const submitData = this._processFormData(null, this.form, new FormDataExtended(this.form));
+    const dot = Object.values(submitData.system?.dot ?? {});
+    dot.push({amount: 1, damageType: "slashing", resource: "health"});
+    return this.submit({updateData: {system: {dot}}});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Delete an instance of Damage Over Time from this Active Effect.
+   * @this {CrucibleActiveEffectSheet}
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} target
+   * @returns {Promise<void>}
+   */
+  static async #onDeleteDoT(_event, target) {
+    const submitData = this._processFormData(null, this.form, new FormDataExtended(this.form));
+    const dot = Object.values(submitData.system?.dot ?? {});
+    const index = Number(target.closest("fieldset.dot").dataset.index) || 0;
+    dot.splice(index, 1);
+    return this.submit({updateData: {system: {dot}}});
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  _processFormData(event, form, formData) {
+    const data = super._processFormData(event, form, formData);
+    data.system.dot = Object.values(data.system.dot || {});
+    return data;
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  _prepareSubmitData(event, form, formData, updateData) {
+    const submitData = super._prepareSubmitData(event, form, formData, updateData);
+    for ( const dot of submitData.system.dot ) {
+      if ( !dot.damageType ) {
+        dot.damageType = _del;
+        dot.restoration = true;
+      }
+    }
+    return submitData;
   }
 }

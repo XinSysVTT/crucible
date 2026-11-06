@@ -11,14 +11,15 @@ system:
       name: Distract
       condition: ''
       description: >-
-        <p>You make a <strong>Deception</strong> based <strong>Skill
-        Attack</strong> against the <strong>Willpower </strong>defense of a
-        target within 30 feet which can see or hear you. On a success, the
-        target loses <strong>1 Focus</strong>.</p>
+        <p>You make a @Rule[skill.deception] based <strong>Skill Attack</strong>
+        against the @Rule[defense.willpower] defense of a target within
+        <strong>30 feet</strong> which can see or hear you. On a success, the
+        target loses @Rule[resource.focus]{1 Focus}.</p>
       tags:
         - void
         - skill
         - deception
+        - willpower
       cost:
         action: 1
         focus: 1
@@ -28,7 +29,7 @@ system:
       target:
         type: single
         number: 1
-        scope: 0
+        scope: 3
         self: false
       effects: []
       img: icons/skills/social/peace-luck-insult.webp
@@ -36,20 +37,17 @@ system:
         minimum: null
         maximum: 30
         weapon: false
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
+  keywords:
+    - playstyle.utility
+    - target.willpower
+    - skill.deception
   nodes:
-    - int2a
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - int0b
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: deception
 effects: []
-folder: 2MFixpDJ379KOogE
+folder: fldDeception0000
 sort: 900000
 ownership:
   default: 0
@@ -57,11 +55,11 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160131
-  modifiedTime: 1773514792571
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789495947878
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

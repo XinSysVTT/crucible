@@ -1,0 +1,63 @@
+name: Arcing Bolt
+type: talent
+img: icons/magic/light/beam-deflect-path-yellow.webp
+system:
+  description: >-
+    <p>Your bolt does not stop where it lands. Loosed with a practiced flick, it
+    springs onward to a second foe standing close by.</p>
+  actions:
+    - id: arcingBolt
+      name: Arcing Bolt
+      img: icons/magic/light/beam-deflect-path-yellow.webp
+      condition: ''
+      description: >-
+        <p>You perform a <strong>Talisman</strong> attack against a single
+        target. The bolt then arcs to the nearest other enemy within <strong>10
+        feet</strong> of your target which has line of sight to it, striking
+        that foe for reduced damage. The second target is chosen
+        automatically.</p>
+      cost:
+        action: 1
+        focus: 0
+        heroism: 0
+        hands: 0
+        weapon: true
+      range:
+        minimum: null
+        maximum: null
+        weapon: true
+      target:
+        type: single
+        number: 1
+        scope: 3
+        self: false
+      effects: []
+      tags:
+        - talisman
+        - ranged
+      summon: null
+  keywords:
+    - playstyle.ranged
+    - weapon.talisman
+  nodes:
+    - pre1a
+  iconicSpells: 0
+  training: talisman
+effects: []
+folder: zQ7pKvR3mNxL8sTa
+ownership:
+  default: 0
+flags: {}
+_stats:
+  systemId: crucible
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
+  createdTime: 1788278400000
+  modifiedTime: 1789490933856
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+_id: arcingBolt000000
+sort: 400000
+_key: '!items!arcingBolt000000'

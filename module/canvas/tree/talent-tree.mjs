@@ -1,8 +1,11 @@
 import CrucibleTalentNode from "../../const/talent-node.mjs";
 import CrucibleTalentTreeControls from "./talent-tree-controls.mjs";
+import CrucibleTalentTreeEdges from "./talent-tree-edges.mjs";
+import CrucibleTalentTreeFilter from "./talent-tree-filter.mjs";
 import CrucibleTalentTreeNode from "./talent-tree-node.mjs";
 import CrucibleTalentChoiceWheel from "./talent-choice-wheel.mjs";
 import CrucibleTalentHUD from "./talent-hud.mjs";
+import CrucibleTalentIcon from "./talent-icon.mjs";
 
 /**
  * The Crucible Talent Tree, constructed as a subclass of PIXI.Container.
@@ -62,6 +65,12 @@ export default class CrucibleTalentTree extends PIXI.Container {
   state = new CrucibleTalentNodeStates();
 
   /**
+   * Ids of Talents matching the active filter, grouped by node, or null when no filter is active.
+   * @type {Map<CrucibleTalentNode, Set<string>>|null}
+   */
+  highlights = null;
+
+  /**
    * Spritesheet textures loaded for use in the tree.
    * @type {Record<string, PIXI.Texture>}
    */
@@ -72,6 +81,12 @@ export default class CrucibleTalentTree extends PIXI.Container {
    * @type {CrucibleHeroCreationSheet|ApplicationV2|null}
    */
   #parentApp = null;
+
+  /**
+   * Was the Actor sheet open when the tree opened, and so should be reopened when the tree closes?
+   * @type {boolean}
+   */
+  #restoreSheet = false;
 
   /**
    * The dimensions of the talent tree
@@ -132,6 +147,7 @@ export default class CrucibleTalentTree extends PIXI.Container {
 
     // Create the controls app
     Object.defineProperty(this, "controls", {value: new CrucibleTalentTreeControls(), writable: false});
+    Object.defineProperty(this, "filter", {value: new CrucibleTalentTreeFilter(), writable: false});
 
     // Add this class to the canvas stage
     this.stage.addChild(this);
@@ -156,20 +172,18 @@ export default class CrucibleTalentTree extends PIXI.Container {
     // Draw Background
     await this.#drawBackground();
 
-    // Background connections
-    this.edges = this.background.addChild(new PIXI.Graphics());
-
-    // Active connections
-    this.connections = this.background.addChild(new PIXI.Graphics());
+    // Draw Edges
+    this.edges = this.background.addChild(new CrucibleTalentTreeEdges());
 
     // Draw Ability Scores
     this.abilities = await this.#drawAbilityScores();
 
-    // Draw Nodes and Edges
+    // Draw Nodes
     this.nodes = this.background.addChild(new PIXI.Container());
-    const origin = CrucibleTalentNode.nodes.get("origin");
-    const seen = new Set();
-    await this.#drawNodes(new Set([origin]), seen);
+    for ( const node of CrucibleTalentNode.traverse() ) {
+      node.icon = this.nodes.addChild(new CrucibleTalentTreeNode(node));
+    }
+    this.app.ticker.add(this.#pulseUnderglows, this);
 
     // Background fade and filter
     this.background.darken = this.background.addChild(new PIXI.Graphics());
@@ -224,6 +238,8 @@ export default class CrucibleTalentTree extends PIXI.Container {
       const angle = 30 + (i * 60);
       const r = foundry.canvas.geometry.Ray.fromAngle(0, 0, Math.toRadians(angle), 220);
       text.position.set(r.B.x, r.B.y);
+      text.abilityId = abilityId;
+      text.hitArea = new PIXI.Circle(0, 0, 24);
       this.background.addChild(text);
       scores[abilityId] = text;
     }
@@ -312,51 +328,6 @@ export default class CrucibleTalentTree extends PIXI.Container {
   }
 
   /* -------------------------------------------- */
-
-  #drawConnections(node, seen) {
-    if ( node.id === "origin" ) return; // No connection lines from the origin
-    for ( const c of node.connected ) {
-      if ( seen.has(c) || (c.tier < 0) || !this.state.get(c).purchased ) continue;
-      this.connections.moveTo(node.point.x, node.point.y);
-      this.connections.lineStyle({color: "#0e0906", width: 12, alpha: 1.0}).lineTo(c.point.x, c.point.y);
-      this.connections.lineStyle({color: c.color, width: 6, alpha: 1.0}).lineTo(node.point.x, node.point.y);
-    }
-  }
-
-  /* -------------------------------------------- */
-
-  async #drawNodes(nodes, seen=new Set()) {
-    const next = [];
-    this.edges.lineStyle({color: 0x000000, alpha: 0.25, width: 4, alignment: 0.5});
-    for ( const node of nodes ) {
-      if ( seen.has(node) ) continue;
-      await this.#drawNode(node);
-      this.#drawEdges(node, seen);
-      seen.add(node);
-      next.push(...node.connected);
-    }
-    if ( next.length ) await this.#drawNodes(next, seen);
-  }
-
-  /* -------------------------------------------- */
-
-  async #drawNode(node) {
-    const icon = node.icon = new CrucibleTalentTreeNode(node);
-    this.nodes.addChild(icon);
-  }
-
-  /* -------------------------------------------- */
-
-  #drawEdges(node, seen) {
-    if ( node.id === "origin" ) return;
-    for ( const c of node.connected ) {
-      if ( seen.has(c) ) continue;
-      this.edges.moveTo(node.point.x, node.point.y);
-      this.edges.lineTo(c.point.x, c.point.y);
-    }
-  }
-
-  /* -------------------------------------------- */
   /*  Tree Management                             */
   /* -------------------------------------------- */
 
@@ -378,15 +349,14 @@ export default class CrucibleTalentTree extends PIXI.Container {
     for ( const layer of canvas.layers ) layer.hud?.close();
     this.darkenBackground(false);
 
-    // Show Actor sheet
-    await actor.sheet.render({force: false, left: 20, top: 20});
-    if ( actor.sheet.rendered ) {
-      actor.sheet.setPosition({left: 20, top: 20});
-      actor.sheet.minimize();
-    }
+    // Close an open Actor sheet
+    this.#restoreSheet = actor.sheet.rendered;
+    if ( this.#restoreSheet ) await actor.sheet.close();
 
     // Refresh tree state
     this.pan(resetView ? {x: 0, y: 0, scale: 1.0} : {});
+    this.setHighlights(null);
+    if ( parentApp ) await this.filter.render({force: true}); // No controls bar to toggle it when embedded
     this.refresh();
 
     // Start rendering and enable the talent tree canvas
@@ -404,12 +374,10 @@ export default class CrucibleTalentTree extends PIXI.Container {
   /** @override */
   async close() {
     this.#parentApp = null;
-
-    // Disassociate Actor
-    const actor = this.actor;
+    const sheet = this.actor?.sheet;
     this.actor = null;
-    await actor?.sheet.render(false);
-    actor.sheet.maximize();
+    if ( this.#restoreSheet && !sheet?.rendered ) sheet?.render({force: true});
+    this.#restoreSheet = false;
 
     // Deactivate UI, clearing any active node so the background blur filter is never left enabled
     this.active = null;
@@ -417,6 +385,7 @@ export default class CrucibleTalentTree extends PIXI.Container {
     this.darkenBackground(false);
     this.hud.close({animate: false});
     this.controls.close({animate: false});
+    this.filter.close({animate: false});
 
     // Stop rendering the talent tree canvas
     this.app.stop();
@@ -441,8 +410,6 @@ export default class CrucibleTalentTree extends PIXI.Container {
 
     // Draw node changes
     this.getActiveNodes();
-    this.connections.clear();
-    const seen = new Set();
     for ( const node of CrucibleTalentNode.nodes.values() ) {
       if ( node.tier < 0 ) continue;
       const state = this.state.get(node);
@@ -450,9 +417,8 @@ export default class CrucibleTalentTree extends PIXI.Container {
       let text = nPurchased > 1 ? nPurchased : "";
       if ( this.developmentMode ) text = node.talents.size;
       node.icon?.draw({state, text});
-      if ( state.purchased ) this.#drawConnections(node, seen);
-      seen.add(node);
     }
+    this.edges.refresh(this.state);
 
     // Refresh ability scores
     this.#refreshAbilityScores();
@@ -465,6 +431,52 @@ export default class CrucibleTalentTree extends PIXI.Container {
 
     // Refresh parent app
     if ( this.#parentApp?._onRefreshTalentTree instanceof Function ) this.#parentApp._onRefreshTalentTree();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Apply filter matches, highlighting matched nodes and Talents and dimming the rest.
+   * @param {Map<CrucibleTalentNode, Set<string>>|null} matches   Matching Talent ids by node, or null to clear
+   */
+  setHighlights(matches) {
+    this.highlights = matches;
+    this.edges.fadeAnimation(matches ? CrucibleTalentTreeEdges.STYLE.filterAnimation : 1);
+    for ( const node of CrucibleTalentNode.nodes.values() ) node.icon?.refreshHighlight();
+    for ( const talent of this.wheel.talents.children ) talent.refreshHighlight();
+    this.app.ticker.remove(this.#pulseHighlights, this);
+    if ( matches ) this.app.ticker.add(this.#pulseHighlights, this);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Pulse the alpha of every visible filter halo in unison.
+   */
+  #pulseHighlights() {
+    const {pulseMin, pulsePeriod} = CrucibleTalentIcon.HIGHLIGHT;
+    const t = (Math.sin((2 * Math.PI * performance.now()) / pulsePeriod) + 1) / 2;
+    const alpha = pulseMin + ((1 - pulseMin) * t);
+    for ( const node of CrucibleTalentNode.nodes.values() ) {
+      if ( node.icon?.highlight.visible ) node.icon.highlight.alpha = alpha;
+    }
+    for ( const talent of this.wheel.talents.children ) {
+      if ( talent.highlight?.visible ) talent.highlight.alpha = alpha;
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Breathe the underglow of purchased nodes in unison with the edges, at the same intensity.
+   */
+  #pulseUnderglows() {
+    const {min, max} = CrucibleTalentTreeNode.UNDERGLOW_ALPHA;
+    const pulse = 0.5 + ((CrucibleTalentTreeEdges.getPulse() - 0.5) * this.edges.animation);
+    const alpha = min + ((max - min) * pulse);
+    for ( const node of CrucibleTalentNode.nodes.values() ) {
+      if ( node.icon && this.state.get(node).purchased ) node.icon.underglow.alpha = alpha;
+    }
   }
 
   /* -------------------------------------------- */
@@ -590,6 +602,7 @@ export default class CrucibleTalentTree extends PIXI.Container {
     this.nodes.eventMode = "passive";       // Capture hover/click events on nodes
     this.background.backdrop.eventMode = "static"; // Capture drag events on the backdrop
     this.foreground.eventMode = "passive";  // Capture hover/click events on the wheel
+    this.#activateAbilityScoreTooltips();
 
     // Mouse Interaction Manager
     this.interactionManager = new foundry.canvas.interaction.MouseInteractionManager(this, this, {}, {
@@ -607,6 +620,44 @@ export default class CrucibleTalentTree extends PIXI.Container {
     window.addEventListener("resize", this.#onResize.bind(this));
     window.addEventListener("wheel", this.#onWheel.bind(this), {passive: false});
     this.#onResize();  // Set initial dimensions
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Activate pointer events on talent-tree ability score numbers.
+   */
+  #activateAbilityScoreTooltips() {
+    for ( const abilityId of CrucibleTalentTree.#SEXTANT_ABILITIES ) {
+      const text = this.abilities[abilityId];
+      text.removeAllListeners();
+      text.eventMode = "static";
+      text.cursor = "pointer";
+      text.on("pointerover", this.#onAbilityPointerOver.bind(this));
+      text.on("pointerout", this.#onAbilityPointerOut.bind(this));
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle pointer-over events on an ability score.
+   * @param {PIXI.FederatedEvent} event
+   */
+  #onAbilityPointerOver(event) {
+    if ( !this.rendering || (event.nativeEvent.target !== this.canvas) || this.hud.target?.isLocked ) return;
+    this.hud.activate(event.currentTarget);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle pointer-out events on an ability score.
+   * @param {PIXI.FederatedEvent} event
+   */
+  #onAbilityPointerOut(event) {
+    if ( !this.rendering || (event.nativeEvent.target !== this.canvas) || this.hud.target?.isLocked ) return;
+    this.hud.clear();
   }
 
   /* -------------------------------------------- */

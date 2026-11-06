@@ -1,0 +1,38 @@
+name: Eldritch Bargain
+type: talent
+img: icons/magic/unholy/hand-marked-pink.webp
+system:
+  description: >-
+    <p>There are older things than Runes, and they can lend power. When you have
+    no @Rule[resource.focus] remaining, you may spend @Rule[resource.morale] in
+    its place. Each point of insufficient @Rule[resource.focus] costs
+    @Rule[resource.morale]{10 Morale} in exchange. You may still make this
+    exchange while otherwise prevented from spending @Rule[resource.focus], for
+    example by the @Condition[broken] condition, although such a trade may incur
+    @Rule[resource.madness].</p>
+  actions: []
+  keywords:
+    - playstyle.spellcraft
+    - resource.focus
+  nodes:
+    - int2b
+  iconicSpells: 0
+  training: arcana
+effects: []
+folder: 4Ll3b4Q4us2mp4Fu
+ownership:
+  default: 0
+flags: {}
+_stats:
+  systemId: crucible
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
+  createdTime: 1788364800000
+  modifiedTime: 1789492297330
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+_id: eldritchBargain0
+sort: 900000
+_key: '!items!eldritchBargain0'

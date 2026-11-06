@@ -5,10 +5,10 @@ system:
   description: >-
     <p>You thrive on physical contest, using your extraordinary brawn and grit
     to overpower creatures whose bulk outstrips even your own. When you
-    @Action[Compendium.crucible.talent.Item.unarmedCombatTra grapple] a
+    @Action[Compendium.crucible.talent.Item.grapple000000000 grapple] a
     creature, you are not @Condition[restrained] yourself. The
-    <strong>Size</strong> of creature that you can Grapple and be Grappled by
-    increases by +1.</p>
+    @Rule[movement.size] of creature that you can <strong>Grapple</strong> and
+    be <strong>Grappled</strong> by increases by +1.</p>
   actions:
     - id: throw
       name: Throw
@@ -16,17 +16,17 @@ system:
       condition: You have a creature Grappled.
       description: >-
         <p>You heave the target of your
-        @Action[Compendium.crucible.talent.Item.unarmedCombatTra grapple]
+        @Action[Compendium.crucible.talent.Item.grapple000000000 grapple]
         through the air towards a target point up to a distance of two times
-        your <strong>Strength</strong> score.</p><p>You make an
-        <strong>Athletics</strong> skill attack against the
-        <strong>Reflex</strong> defense of your grappled target. On a success
-        the target is thrown, leaving it @Condition[prone]. If its movement is
-        stopped short by a wall or another creature, it slams into the obstacle
-        and suffers <strong>Bludgeoning</strong> damage from the attack. A
-        creature hurled into open space takes no damage from the throw itself,
-        although it may @Action[default fall].</p><p>Regardless of the outcome,
-        your Grapple is released as part of this action.</p>
+        your @Rule[ability.strength] score.</p><p>You make an
+        @Rule[skill.athletics] skill attack against the @Rule[defense.reflex]
+        defense of your grappled target. On a success the target is thrown,
+        leaving it @Condition[prone]. If its movement is stopped short by a wall
+        or another creature, it slams into the obstacle and suffers
+        <strong>Bludgeoning</strong> damage from the attack. A creature hurled
+        into open space takes no damage from the throw itself, although it may
+        @Action[default fall].</p><p>Regardless of the outcome, your
+        <strong>Grapple</strong> is released as part of this action.</p>
       tags:
         - reflex
         - bludgeoning
@@ -59,17 +59,18 @@ system:
           system:
             changes: []
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
+            properties: []
           duration:
             value: null
             units: ''
             expiry: null
             expired: false
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
     - id: overrun
       name: Overrun
       img: icons/magic/sonic/explosion-impact-shock-wave.webp
@@ -77,14 +78,15 @@ system:
       description: >-
         <p>You lower your shoulder and charge in a straight line, bowling over
         those who stand in your way.</p><p>Move up to twice your
-        <strong>Stride</strong> in a straight line, passing through the space of
+        @Rule[movement.stride] in a straight line, passing through the space of
         any creature that you could
-        @Action[Compendium.crucible.talent.Item.unarmedCombatTra grapple]. You
-        make an <strong>Athletics</strong> skill attack against the
-        <strong>Reflex</strong> defense of each target, on a success dealing
+        @Action[Compendium.crucible.talent.Item.grapple000000000 grapple]. You
+        make an @Rule[skill.athletics] skill attack against the
+        @Rule[defense.reflex] defense of each target, on a success dealing
         <strong>Bludgeoning</strong> damage and knocking the creature
         @Condition[prone].</p><p>Your charge is halted by any creature too
-        massive for you to Grapple, which is unaffected by the attack.</p>
+        massive for you to <strong>Grapple</strong>, which is unaffected by the
+        attack.</p>
       tags:
         - reflex
         - bludgeoning
@@ -117,26 +119,27 @@ system:
           system:
             changes: []
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
+            properties: []
           duration:
             value: null
             units: ''
             expiry: null
             expired: false
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
+  keywords:
+    - playstyle.melee
+    - target.reflex
+    - damageType.bludgeoning
+    - action.movement
+    - skill.athletics
   nodes:
     - sig3.toughness.strength
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 ownership:
   default: 0
@@ -145,11 +148,11 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.5
-  coreVersion: '14.364'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1781200000000
-  modifiedTime: 1781181932998
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1789494042037
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

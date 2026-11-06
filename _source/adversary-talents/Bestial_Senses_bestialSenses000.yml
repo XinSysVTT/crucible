@@ -2,19 +2,17 @@ name: Bestial Senses
 type: talent
 img: icons/magic/nature/stealth-hide-beast-eyes-green.webp
 system:
+  keywords:
+    - playstyle.utility
+    - skill.awareness
+    - senses
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} has finely honed senses and is
-    particularly perceptive of their environment, all <strong>Awareness</strong>
-    checks gain <strong>+2 Boons</strong>.</p>
+    particularly perceptive of their environment, all @Rule[skill.awareness]
+    checks gain @Rule[dice.boon]{+2 Boons}.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: S1hY0LkzEUHzLoFX
 ownership:

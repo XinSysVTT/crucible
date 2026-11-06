@@ -10,9 +10,11 @@
     <fieldset {{fieldDisabled}}>
         <legend>{{localize "ANCESTRY.SHEET.Physiology"}}</legend>
         {{formGroup fields.movement.fields.size value=system.movement.size classes="slim"}}
+        {{formGroup fields.movement.fields.heightRatio value=system.movement.heightRatio classes="slim"}}
         {{formGroup fields.movement.fields.stride value=system.movement.stride classes="slim"}}
         {{formGroup fields.characteristics.fields.temperature value=system.characteristics.temperature
                     blank=temperatureBlank}}
+        {{formGroup fields.characteristics.fields.blooded value=system.characteristics.blooded}}
     </fieldset>
 
     <fieldset {{fieldDisabled}}>
@@ -24,7 +26,7 @@
     <fieldset {{fieldDisabled}}>
         <legend>{{fields.resistances.label}}</legend>
         <p class="hint">{{localize fields.resistances.hint}}</p>
-        {{formGroup fields.resistances.fields.resistance value=system.resistances.resistance}}
-        {{formGroup fields.resistances.fields.vulnerability value=system.resistances.vulnerability}}
+        {{formGroup fields.resistances.fields.resistance value=system.resistances.resistance sort=true}}
+        {{formGroup fields.resistances.fields.vulnerability value=system.resistances.vulnerability sort=true}}
     </fieldset>
 </section>

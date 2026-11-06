@@ -45,7 +45,7 @@
     padding: 0;
   }
 
-  .tab {
+  .sheet-body > .tab {
     flex: 1;
     position: relative;
     gap: var(--sheet-body-gap);
@@ -54,12 +54,6 @@
     &.scrollable {
       padding-right: calc(1rem - var(--scroll-margin));
     }
-  }
-
-  // Icon buttons
-  a.button.icon {
-    flex: none;
-    font-size: var(--font-size-12);
   }
 
   /* ----------------------------------------- */
@@ -255,7 +249,7 @@
   /*  Sheet Tabs                               */
   /* ----------------------------------------- */
 
-  .sheet-tabs {
+  .sheet-tabs.side-tabs {
     --tab-size: 32px;
     --icon-size: 28px;
 
@@ -409,28 +403,21 @@
           transition: background-position 1s;
         }
 
+        // Sizing, centering, and hex art all come from .hex
         .threshold {
+          --hex-size: 28px;
           position: absolute;
-          bottom: -8px;
-          flex: none;
-          width: 32px;
-          height: 40px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background: url("../ui/elements/hex-plain.svg") no-repeat center;
-          background-size: auto 32px;
+          bottom: -5px;
           .value {
             font-size: var(--font-size-12);
             font-family: var(--font-h1);
             color: var(--color-secondary);
           }
           &.wounds {
-            right: -12px;
+            right: -10px;
           }
           &.madness {
-            left: -12px;
+            left: -10px;
           }
         }
       }
@@ -447,8 +434,9 @@
       .economy {
         height: 100%;
         align-items: center;
-        gap: 0.5rem;
-        padding: 1.25rem 0 0;
+        justify-content: center;
+        padding: 0.5rem 0 0;
+        gap: 0.25rem;
         .currency {
           width: 100%;
           align-items: center;
@@ -478,7 +466,7 @@
           .crucible-rank-pips {
             flex: 0 0 100px;
             justify-content: center;
-            gap: 4px 2px;
+            gap: 1px 2px;
           }
         }
         .action {
@@ -510,9 +498,8 @@
         justify-content: center;
         align-items: center;
         gap: 0;
-        background: url("../ui/abilities/frame.svg") no-repeat center;
-        background-size: cover;
-
+        background: url("../ui/abilities/frame.webp") no-repeat bottom center;
+        background-size: 100% auto;
         .label {
           position: absolute;
           top: -8px;
@@ -533,29 +520,28 @@
         }
       }
       .strength {
-        --ability-icon: url("../ui/abilities/strength.svg");
+        --ability-icon: url("../ui/abilities/strength.webp");
       }
       .toughness {
-        --ability-icon: url("../ui/abilities/toughness.svg");
+        --ability-icon: url("../ui/abilities/toughness.webp");
       }
       .dexterity {
-        --ability-icon: url("../ui/abilities/dexterity.svg");
+        --ability-icon: url("../ui/abilities/dexterity.webp");
       }
       .wisdom {
-        --ability-icon: url("../ui/abilities/wisdom.svg");
+        --ability-icon: url("../ui/abilities/wisdom.webp");
       }
       .presence {
-        --ability-icon: url("../ui/abilities/presence.svg");
+        --ability-icon: url("../ui/abilities/presence.webp");
       }
       .intellect {
-        --ability-icon: url("../ui/abilities/intellect.svg");
+        --ability-icon: url("../ui/abilities/intellect.webp");
       }
 
       // Control Buttons
-      a.button {
+      button {
+        --button-size: 20px;
         position: absolute;
-        height: 20px;
-        width: 20px;
         top: -10px;
         opacity: 1.0;
         &.decrease { left: -10px; }
@@ -620,7 +606,7 @@
         .total {
           width: 60px;
           height: 100px;
-          background: url("../ui/elements/hex-willpower.svg") no-repeat center;
+          background: url("../ui/elements/hex-willpower.webp") no-repeat center;
           background-size: 60px;
         }
         .sep {
@@ -630,7 +616,7 @@
         .component {
           width: 40px;
           height: 80px;
-          background: url("../ui/elements/hex-plain.svg") no-repeat center;
+          background: url("../ui/elements/hex-plain.webp") no-repeat center;
           background-size: 40px;
           .value {
             font-size: var(--font-size-18);
@@ -658,26 +644,26 @@
           height: 80px;
           padding: 16px 0 0;
           background: var(--defense-icon) no-repeat bottom center;
-          background-size: auto 64px;
+          background-size: 56px auto;
           &.fortitude {
-            --defense-icon: url("../ui/elements/hex-fortitude.svg");
+            --defense-icon: url("../ui/elements/hex-fortitude.webp");
           }
           &.willpower {
-            --defense-icon: url("../ui/elements/hex-willpower.svg");
+            --defense-icon: url("../ui/elements/hex-willpower.webp");
           }
           &.reflex {
-            --defense-icon: url("../ui/elements/hex-reflex.svg");
+            --defense-icon: url("../ui/elements/hex-reflex.webp");
           }
         }
 
         // Stride and Engagement
         .extra {
-          --defense-icon: url("../ui/elements/hex-plain.svg");
+          --defense-icon: url("../ui/elements/hex-plain-64.webp");
           width: 32px;
           height: 64px;
           align-self: flex-end;
           padding: 16px 0;
-          background-size: auto 32px;
+          background-size: 28px auto;
           background-position: center;
           .value {
             font-size: var(--font-size-12);
@@ -723,8 +709,8 @@
           .value {
             flex: 0 0 24px;
             height: 24px;
-            background: url("../ui/elements/hex-plain-filled.svg") no-repeat center;
-            background-size: auto 24px;
+            background: url("../ui/elements/hex-plain-filled-48.webp") no-repeat center;
+            background-size: 20px auto;
             line-height: 24px;
             text-align: center;
             font-size: var(--font-size-12);
@@ -747,8 +733,8 @@
         }
         &.immunity {
           .value {
-            background: url("../ui/elements/hex-immunity.svg") no-repeat center;
-            background-size: auto 24px;
+            background: url("../ui/elements/hex-immunity.webp") no-repeat center;
+            background-size: 20px auto;
           }
           .bar {
             left: 0;
@@ -759,8 +745,8 @@
         }
         &.res {
           .value {
-            background: url("../ui/elements/hex-resistance.svg") no-repeat center;
-            background-size: auto 24px;
+            background: url("../ui/elements/hex-resistance.webp") no-repeat center;
+            background-size: 20px auto;
           }
           .bar {
             left: 50%;
@@ -772,8 +758,8 @@
         }
         &.vuln {
           .value {
-            background: url("../ui/elements/hex-vulnerability.svg") no-repeat center;
-            background-size: auto 24px;
+            background: url("../ui/elements/hex-vulnerability.webp") no-repeat center;
+            background-size: 20px auto;
           }
           .bar {
             right: 50%;
@@ -816,10 +802,9 @@
   .tab.secondary {
     .header-section {
       justify-content: space-between;
-      a.button {
+      button {
+        --button-size: 24px;
         flex: none;
-      }
-      a.framed {
         font-size: var(--font-size-12);
       }
     }
@@ -840,7 +825,7 @@
       .value {
         flex: 0 0 24px;
         height: 24px;
-        background: url("../ui/elements/hex-plain.svg") no-repeat center;
+        background: url("../ui/elements/hex-plain-48.webp") no-repeat center;
         background-size: auto 24px;
         line-height: 24px;
         text-align: center;
@@ -881,6 +866,16 @@
     .inventory-footer {
       flex: 0 0 80px;
       padding-right: var(--sheet-body-gap);
+      .currency-section .flexrow {
+        align-items: center;
+        gap: 0.5rem;
+        button.icon {
+          flex: none;
+        }
+        button.split-currency:disabled {
+          visibility: hidden; // Reserve the space to avoid a layout shift when currency is gained or spent
+        }
+      }
       .carrying-capacity {
         --capacity-pct: 0;
         flex: 0 0 130px;
@@ -924,26 +919,88 @@
     }
   }
 
+  .tab.proficiency {
+    padding-top: 0; // Sticky offsets measure from the scrollport, so the scroller cannot pad its top
+    .header-section {
+      justify-content: flex-end; // No left-hand button here, so the point pools carry the row
+      position: sticky;
+      top: 0;
+      right: 0;
+      z-index: 1;
+      margin: -1rem 0;
+    }
+  }
+
   /* ----------------------------------------- */
-  /*  Skills Tab                               */
+  /*  Proficiency Tab                          */
   /* ----------------------------------------- */
 
-  .tab.skills {
-    .skill {
-      display: grid;
-      grid-template-columns: auto 140px 60px 60px 72px 1fr; // .icon .title .abilities .bonus .ranks .training
-      gap: 1rem;
+  .proficiencies-footer {
+    h3 {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      button {
+        --button-size: 24px;
+        flex: none;
+        font-size: var(--font-size-12);
+      }
+    }
+    .tags.knowledge-areas,
+    .tags.languages {
+      justify-content: flex-start;
+    }
+    .sheet-section {
+      height: 100%;
+      justify-content: center;
+      .hint {
+        font-size: var(--font-size-12);
+        text-align: center;
+      }
+      .tag.background-granted {
+        border-color: var(--color-border-highlight);
+      }
+    }
+  }
+
+  .proficiency-list .line-item {
+    // Columns: .icon .title .bonus .bar-container .buttons
+    display: grid;
+    grid-template-columns: auto minmax(140px, 1fr) 68px minmax(120px, 2fr) 24px;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  // Actors whose training is granted rather than allocated show no controls, so the column is dropped entirely
+  .proficiency-list.no-allocation .line-item {
+    grid-template-columns: auto minmax(140px, 1fr) 68px minmax(120px, 2fr);
+  }
+
+  .proficiency-list .line-item {
+
+    .title {
+      min-width: 0;
+      h4 {
+        margin: 0;
+        font-size: var(--title-font-size);
+      }
+      .tags { margin-top: 0.125rem; }
     }
 
-    // Score and passive bonus
+    // Score and passive, sized to keep rows compact rather than as tall as a full hex. Right-aligned so the
+    // hex holds one column whether or not this training carries a passive score.
     .bonus {
-      justify-content: center;
+      justify-content: flex-end;
+      gap: 0.25rem;
       span.value {
+        --hex-size: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 32px;
-        flex: 0 0 40px;
+        flex: 0 0 32px;
+        height: 40px;
+        font-family: var(--font-h1);
+        font-size: var(--font-size-14);
       }
       span.passive {
         flex: 0 0 20px;
@@ -954,30 +1011,42 @@
       }
     }
 
-    .tags.abilities {
-      justify-content: center;
-      span:first-child {
-        color: var(--color-text-emphatic);
+    // Stacked carets, following the ability allocation controls in character creation
+    .buttons {
+      align-content: center;
+      button {
+        --button-size: 20px;
+      }
+      button:disabled {
+        opacity: 0.25;
       }
     }
 
-    .tags.training,
-    .tags.knowledge-areas,
-    .tags.languages {
-      justify-content: flex-start;
-    }
-  }
-
-  .skills-footer {
-    .sheet-section {
-      height: 100%;
-      justify-content: center;
-      .hint {
-        font-size: var(--font-size-12);
-        text-align: center;
+    .bar-container {
+      position: relative;
+      height: 16px;
+      background: var(--color-frame-bg);
+      border: 1px solid var(--color-frame);
+      border-radius: 4px;
+      overflow: hidden;
+      .bar {
+        display: block;
+        height: 100%;
+        background: var(--bar-color);
+        opacity: 0.85;
       }
-      .tag.background-granted {
-        border-color: var(--color-border-highlight);
+
+      // Rank thresholds, and the point beyond which this Actor's level does not yet permit progress
+      .tick {
+        position: absolute;
+        top: 0;
+        width: 1px;
+        height: 100%;
+        background: var(--color-frame);
+        &.cap {
+          width: 2px;
+          background: var(--color-text-emphatic);
+        }
       }
     }
   }
@@ -1008,14 +1077,20 @@
 
   /** Movement Speeds */
   .sheet-section.movement {
-    flex: 2;
+    flex: 3;
     height: 100%;
     align-items: flex-start;
+    > button.icon {
+      align-self: center;
+    }
     .movement-speed {
       --hex-size: 64px;
-      &.land {--hex-bg: url("../ui/elements/hex-willpower.svg");}
-      &.water {--hex-bg: url("../ui/elements/hex-fortitude.svg");}
-      &.air {--hex-bg: url("../ui/elements/hex-reflex.svg");}
+      &.land {--hex-bg: url("../ui/elements/hex-willpower.webp");}
+      &.water {--hex-bg: url("../ui/elements/hex-fortitude.webp");}
+      &.air {--hex-bg: url("../ui/elements/hex-reflex.webp");}
+      .value {
+        font-size: var(--font-size-20);
+      }
     }
     button.value {
       --button-text-color: var(--color-text-emphatic);
@@ -1052,17 +1127,39 @@
     }
   }
 
-  /** Members List */
-  .members {
+  /** Tab Navigation */
+  .group-header,
+  nav.sheet-tabs {
+    flex: none;
+  }
+  .group-header {
+    gap: var(--sheet-body-gap); // Room for the section titles which overhang the top of each section
+  }
+
+  /** Body Tabs */
+  .tab {
     flex: 1;
     height: 0;
-    padding: 1.5rem 0.5rem 0.5rem;
+    padding: 0.5rem;
+  }
+
+  /** Members List */
+  .tab.members {
+    &:has(> h3) {
+      padding-top: 1.5rem; // When there is no tab navigation
+      margin-top: 0.5rem;
+    }
     .items-list {
       flex: 1;
       height: 0;
     }
     .line-item {
       --icon-size: 48px;
+    }
+    .member-quantity {
+      flex: 0 0 40px;
+      height: 24px;
+      text-align: center;
     }
     .resources {
       flex: 1;
@@ -1087,6 +1184,62 @@
           border-radius: 3px;
         }
       }
+    }
+  }
+
+  /** Milestones Table */
+  .tab.milestones {
+    padding: 0;
+    .milestones-list {
+      flex: 1;
+      height: 0;
+      width: 100%;
+      padding: 0;
+      overflow-y: auto; // Also clips the flush table to the section's rounded corners
+    }
+    table {
+      margin: 0;
+      border: none;
+      border-radius: 0;
+    }
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--color-frame-bg);
+    }
+    .number,
+    .total,
+    .controls {
+      white-space: nowrap;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+    }
+    .total {
+      width: 120px;
+    }
+    .controls {
+      width: 40px;
+    }
+    tbody tr {
+      height: 32px; // Uniform rows whether or not they hold a control button
+    }
+    .controls button.icon {
+      --button-size: 24px;
+    }
+    tr.level-up td {
+      border-bottom: 3px solid var(--color-accent);
+    }
+    .empty {
+      text-align: center;
+      color: var(--color-text-subtle);
+    }
+    .form-footer {
+      flex: none;
+      width: 100%;
+      margin-top: 1rem;
     }
   }
 }

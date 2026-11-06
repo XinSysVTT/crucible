@@ -6,12 +6,12 @@
         {{formGroup fields.category value=source.system.category}}
         {{formGroup fields.quality value=source.system.quality}}
         {{formGroup fields.enchantment value=enchantment.value disabled=enchantment.disabled hint=enchantment.hint}}
-        {{formGroup fields.damageType value=source.system.damageType hint=false}}
+        {{formGroup fields.damageType value=source.system.damageType hint=false sort=true}}
     </fieldset>
 
     <fieldset class="item-properties" {{fieldDisabled}}>
         <legend>{{fields.properties.label}}</legend>
-        {{formGroup fields.properties value=item.system.properties widget=propertiesWidget}}
+        {{formInput fields.properties value=item.system.properties type="checkboxes"}}
     </fieldset>
 
     <fieldset class="item-equipment" {{fieldDisabled}}>

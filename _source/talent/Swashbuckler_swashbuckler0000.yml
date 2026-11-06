@@ -3,21 +3,23 @@ type: talent
 img: icons/skills/melee/weapons-crossed-swords-yellow-teal.webp
 system:
   description: >-
-    <p>Your bravado inspires your allies and cowes your enemies. When you Dodge
-    or Parry a Strike, the attacker loses Morale equal to your Presence
-    attribute. When you achieve a Critical Hit, all nearby allies who can see
-    you gain Morale equal to your Presence attribute.</p>
+    <p>Your bravado inspires your allies and cows your enemies. When you
+    @Rule[defense.dodge] or @Rule[defense.parry] a <strong>Strike</strong>, the
+    attacker loses @Rule[resource.morale] equal to your @Rule[ability.presence]
+    attribute. When you achieve a @Rule[dice.criticalSuccess]{Critical Hit}, all
+    allies within <strong>30 feet</strong> who can see you gain
+    @Rule[resource.morale] equal to your @Rule[ability.presence] attribute.</p>
   actions: []
+  keywords:
+    - playstyle.melee
+    - defense.dodge
+    - defense.parry
+    - target.morale
+    - target.rallying
   nodes:
-    - sig3.presence
     - sig3.dexterity
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - sig3.presence
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 ownership:
   default: 0
@@ -26,11 +28,11 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160150
-  modifiedTime: 1773514792620
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789494955621
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: Item.swashbuckler0000
   duplicateSource: null
   exportSource: null

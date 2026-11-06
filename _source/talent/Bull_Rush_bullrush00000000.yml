@@ -9,26 +9,30 @@ system:
   actions:
     - id: bullrush
       description: >-
-        <p>Make an <strong>Athletics </strong>skill Attack against an adjacent
-        enemy contested by your target's Fortitude defense. On a success you may
-        move up to your <strong>Stride</strong> directly through the enemy's
-        space. Your enemy is knocked @Condition[prone] and may not make any
-        attack of opportunity against you. On a failure your movement is blocked
-        and your remain in your current position.</p>
+        <p>You move up to your @Rule[movement.stride] with forceful momentum,
+        passing through the space of one other creature along your path. An ally
+        lets you pass freely.</p><p>An enemy contests your passage: make an
+        @Rule[skill.athletics] @Rule[action.skill] attack against its
+        @Rule[defense.fortitude] defense. On a @Rule[dice.success] you drive
+        through its space, knocking it @Condition[prone], and it may not make
+        any @Action[default reactiveStrike] against you. On a
+        @Rule[dice.failure] your movement is blocked and you remain in your
+        current position.</p>
       tags:
         - harmless
         - fortitude
+        - skill
         - athletics
       cost:
-        action: 3
-        focus: 0
+        action: 0
+        focus: 1
         weapon: false
         heroism: 0
         hands: 0
       target:
-        type: single
+        type: movement
         number: 1
-        scope: 3
+        scope: 4
         self: false
       effects:
         - name: Bull Rush
@@ -41,30 +45,35 @@ system:
           system:
             changes: []
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
+            properties: []
+          duration:
+            value: null
+            units: ''
+            expiry: null
+            expired: false
       name: Bull Rush
       img: icons/creatures/mammals/bull-horns-eyes-glowin-orange.webp
       condition: ''
       range:
-        maximum: 10
+        maximum: null
         weapon: false
         minimum: null
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
+  keywords:
+    - playstyle.utility
+    - action.movement
+    - skill.athletics
   nodes:
     - toustr1
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: athletics
 effects: []
-folder: MqZKCMx5KrZQffGU
+folder: fldAthletics0000
 sort: 200000
 ownership:
   default: 0
@@ -72,11 +81,11 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160128
-  modifiedTime: 1773514792562
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789495586869
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

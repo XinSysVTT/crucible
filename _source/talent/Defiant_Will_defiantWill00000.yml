@@ -5,29 +5,26 @@ img: icons/magic/control/control-influence-rally-purple.webp
 system:
   description: >-
     <p>As your body weakens, your mind hardens. You gain bonus
-    <strong>Willpower</strong> defense equal to your <strong>Toughness</strong>
-    score scaled by the proportion of <strong>Health</strong> you have lost.</p>
+    @Rule[defense.willpower] defense equal to your @Rule[ability.toughness]
+    score scaled by the proportion of @Rule[resource.health] you have lost.</p>
   actions: []
+  keywords:
+    - playstyle.defensive
+    - defense.willpower
   nodes:
-    - tou4d
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - tou4b
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 flags: {}
 _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.360'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.10.2
   createdTime: 1776126363151
-  modifiedTime: 1776126363151
+  modifiedTime: 1788970751799
   lastModifiedBy: WRGzDgYAt3ZuX6TU
 ownership:
   default: 0

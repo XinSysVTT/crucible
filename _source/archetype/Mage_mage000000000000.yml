@@ -12,24 +12,30 @@ system:
     dexterity: 0
   talents:
     - item: Compendium.crucible.talent.Item.gesturefan000000
-      level: null
+      level: 1
     - item: Compendium.crucible.talent.Item.gesturearrow0000
-      level: null
+      level: 1
     - item: Compendium.crucible.talent.Item.counterspell0000
-      level: null
+      level: 2
     - item: Compendium.crucible.talent.Item.recognizespellcr
       level: null
     - item: Compendium.crucible.talent.Item.runeFlame0000000
       level: null
     - item: Compendium.crucible.talent.Item.runeStorm0000000
-      level: null
-    - item: Compendium.crucible.talent.Item.talismanWeaponTr
+      level: 1
+    - item: Compendium.crucible.talent.Item.refocus000000000
       level: null
   identifier: mage
-  skills:
-    - awareness
-    - arcana
-    - science
+  training:
+    elemental: 4
+    talisman: 3
+    physical: 2
+    arcana: 3
+    science: 2
+    awareness: 1
+    society: 1
+    diplomacy: 0
+    glyphweaving: 0
   spells: []
   equipment: []
 effects: []
@@ -41,14 +47,14 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.368'
   createdTime: 1772307157484
-  modifiedTime: 1773514792219
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1791130481801
+  lastModifiedBy: 2g4T1RcAPz2LBKZ1
   compendiumSource: null
   duplicateSource: null
   exportSource: null
 _id: mage000000000000
-sort: 1200000
+sort: 2000000
 _key: '!items!mage000000000000'

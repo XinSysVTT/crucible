@@ -1,0 +1,88 @@
+name: Rake
+type: talent
+_id: rake000000000000
+img: icons/skills/wounds/injury-triple-slash-bleed.webp
+system:
+  keywords:
+    - playstyle.melee
+    - weapon.natural
+    - damageType.slashing
+  nodes: []
+  description: >-
+    <p>The @ref[actor.name]{creature} attacks rapidly with its talons, dealing
+    multiple raking blows against a single target.</p>
+  actions:
+    - id: rake
+      name: Rake
+      img: icons/skills/wounds/injury-triple-slash-bleed.webp
+      condition: ''
+      description: >-
+        <p>The @ref[actor.name]{creature} attacks swiftly with claws or
+        talons.</p><p>If at least one attack results in a
+        @Rule[dice.criticalSuccess], it inflicts the @Condition[bleeding]
+        condition for <strong>2 Rounds</strong>.</p>
+      cost:
+        action: 1
+        focus: 0
+        heroism: 0
+        weapon: true
+        hands: 0
+      range:
+        minimum: null
+        maximum: null
+        weapon: true
+      target:
+        type: single
+        number: 1
+        scope: 3
+        self: false
+        multiple: 2
+      effects:
+        - name: Rake
+          scope: 3
+          result:
+            type: successCritical
+            all: false
+          statuses:
+            - bleeding
+          duration:
+            value: 2
+            units: rounds
+            expiry: turnEnd
+            expired: false
+          system:
+            changes: []
+            dot: []
+            lights: []
+            maintenance:
+              cost: null
+              hands: 0
+            properties: []
+            regions: []
+            summons: []
+      tags:
+        - melee
+        - natural
+        - slashing
+      summon: null
+      persistRegion: false
+      regionBehavior: null
+  iconicSpells: 0
+effects: []
+folder: AfkhP7IZ2CIrRhnB
+ownership:
+  default: 0
+  QvBFYpRRXHRBcOfP: 3
+flags: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.368'
+  systemId: crucible
+  systemVersion: 0.11.0
+  createdTime: 1772307157336
+  modifiedTime: 1790271439058
+  lastModifiedBy: LN1mJpYcJI40HRfK
+sort: -100000
+_key: '!items!rake000000000000'

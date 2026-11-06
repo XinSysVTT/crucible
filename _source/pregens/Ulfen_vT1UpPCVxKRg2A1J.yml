@@ -61,7 +61,7 @@ system:
         drive a stubborn will to survive.</p>
       identifier: human
       talents:
-        - item: Compendium.crucible.talent.Item.intercept0000000
+        - item: Compendium.crucible.ancestry.Item.humanLineage0000
           level: null
       ui:
         color: '#a985d6'
@@ -71,26 +71,34 @@ system:
       movement:
         size: 4
         stride: 10
+        heightRatio: 1.5
       resistances:
         resistance: ''
         vulnerability: ''
+      characteristics:
+        blooded: true
+        temperature: ''
       name: Human
       img: icons/skills/social/diplomacy-handshake.webp
-      characteristics:
-        temperature: ''
     background:
       description: >-
         <p>You were part of a law enforcement organization. You learned how to
         remain vigilant to your surroundings, work within complex social
         structures, and affect an imposing presence.</p>
-      skills:
+      training:
+        - athletics
         - awareness
         - intimidation
+        - light
+        - unarmed
+        - science
       talents:
-        - item: Compendium.crucible.talent.Item.unarmedCombatTra
+        - item: Compendium.crucible.talent.Item.grapple000000000
           level: null
-        - item: Compendium.crucible.talent.Item.intercept0000000
-          level: null
+        - item: Compendium.crucible.talent.Item.mnemonicrealizat
+          level: 0
+        - item: Compendium.crucible.talent.Item.hamstring0000000
+          level: 0
       identifier: constable
       ui:
         color: '#1d2196'
@@ -179,6 +187,7 @@ system:
     - defend
     - intimidate
   currency: 0
+  training: {}
 prototypeToken:
   name: Ulfen
   displayName: 20
@@ -285,17 +294,17 @@ items:
       armor:
         base: 13
       broken: false
-      actions: []
       identifier: scaleMail
       invested: false
+      actions: []
     _stats:
       systemId: crucible
-      systemVersion: 0.10.1
-      coreVersion: '14.364'
-      createdTime: 1783344224730
-      modifiedTime: 1783344224730
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845344220
+      modifiedTime: 1793845344220
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.equipment.Item.scaleMail0000000
       duplicateSource: null
       exportSource: null
     folder: gQTZ7J9hqDpVTtPb
@@ -327,155 +336,363 @@ items:
         private: ''
       damageType: slashing
       broken: false
-      actions: []
-      slot: 3
       identifier: greataxe
       invested: false
+      actions: []
       dropped: false
+      slot: 3
     _stats:
       systemId: crucible
-      systemVersion: 0.10.1
-      coreVersion: '14.364'
-      createdTime: 1783344224731
-      modifiedTime: 1783344224731
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845344220
+      modifiedTime: 1793845344220
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.equipment.Item.greataxe00000000
       duplicateSource: null
       exportSource: null
     sort: 900000
     ownership:
       default: 0
     _key: '!actors.items!vT1UpPCVxKRg2A1J.ciTtaw2LB6hN6fMx'
-  - name: Intimidator
+  - name: Grapple
     type: talent
-    _id: intimidator00000
-    img: icons/magic/death/skull-humanoid-crown-white-blue.webp
+    img: icons/magic/control/buff-strength-muscle-damage.webp
     system:
       description: >-
-        You specialize in exerting your intimidating presence to break the
-        morale of your foes.
+        <p>You are familiar with basic martial arts and hand-to-hand combat. You
+        know how to subdue or restrain opponents using your physical
+        strength.</p>
       actions:
-        - id: intimidate
-          name: Intimidate
-          description: >-
-            <p>You physically intimidate an enemy that is within your engagement
-            range, performing an Intimidation skill attack against your target.
-            On a success they sustain Void damage to Morale.</p>
-          tags:
-            - void
-            - morale
-            - skill
-            - intimidation
+        - id: grapple
+          img: icons/magic/control/buff-strength-muscle-damage.webp
           cost:
-            action: 1
-            focus: 1
+            action: 3
+            focus: 0
             heroism: 0
+            hands: 1
             weapon: false
-            hands: 0
+          range:
+            minimum: null
+            maximum: 1
+            weapon: false
           target:
             type: single
             number: 1
-            scope: 0
+            scope: 3
             self: false
-          effects: []
-          img: icons/magic/death/skull-humanoid-crown-white-blue.webp
-          condition: ''
-          range:
-            minimum: null
-            maximum: null
-            weapon: false
-          summon: null
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-      nodes:
-        - pre2c
-      rune: ''
-      gesture: ''
-      inflection: ''
-    effects: []
-    folder: 2MFixpDJ379KOogE
-    sort: -100000
-    flags: {}
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344224731
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344224731
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    ownership:
-      default: 0
-    _key: '!actors.items!vT1UpPCVxKRg2A1J.intimidator00000'
-  - name: Uppercut
-    type: talent
-    img: icons/skills/melee/strike-sword-gray.webp
-    effects: []
-    flags:
-      core: {}
-    system:
-      description: >-
-        A two-handed weapon technique where you swing your weapon upwards,
-        making a second Strike with the backswing of your weapon.
-      actions:
-        - id: uppercut
-          name: Uppercut
-          img: icons/skills/melee/strike-sword-gray.webp
+          effects:
+            - name: Grappled
+              scope: 4
+              result:
+                type: success
+                all: false
+              statuses:
+                - restrained
+              duration:
+                value: 1
+                units: rounds
+                expiry: turnStart
+                expired: false
+              system:
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                regions: []
+                summons: []
+                changes: []
+                properties: []
+                lights: []
+                suppression: {}
+            - name: Grappling
+              scope: 1
+              result:
+                type: success
+                all: false
+              statuses:
+                - restrained
+              duration:
+                value: 1
+                units: rounds
+                expiry: turnStart
+                expired: false
+              system:
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                regions: []
+                summons: []
+                changes: []
+                properties: []
+                lights: []
+                suppression: {}
+          tags:
+            - difficult
+            - harmless
+            - skill
+            - athletics
+          name: Grapple
           condition: ''
           description: >-
-            <p>Following a basic Strike attack which did not critically miss,
-            you <strong>Strike</strong> the same target again with the backswing
-            of your weapon at reduced <strong>Action</strong> cost.</p>
+            <p>You attempt to physically restrain or subdue an opponent. Perform
+            an @Rule[skill.athletics] skill attack against an adjacent target
+            contested by their passive @Rule[skill.athletics] skill.  If
+            successful, both you and your target are @Condition[restrained] for
+            <strong>1 Round</strong>.</p>
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      iconicSpells: 0
+      training: unarmed
+      keywords:
+        - playstyle.utility
+        - skill.athletics
+      nodes:
+        - str0b
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845344220
+      modifiedTime: 1793845344220
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.grapple000000000
+      duplicateSource: null
+      exportSource: null
+    _id: grapple000000000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!vT1UpPCVxKRg2A1J.grapple000000000'
+  - name: Mnemonic Realization
+    type: talent
+    _id: mnemonicrealizat
+    img: icons/magic/perception/eye-ringed-green.webp
+    system:
+      description: >-
+        <p>Your sharpened mind is full of secrets and techniques to remember
+        them. Once per day you may focus your thoughts and attempt to recall a
+        word that sparks your memory.</p><p>The <strong>Gamemaster</strong> must
+        provide you with a one-word clue that is appropriate for your direction
+        of inquiry. It is left to <strong>Gamemaster's</strong> discretion how
+        direct or vague to be with the clue they provide.</p>
+      actions:
+        - id: mnemonicRealization
+          description: >-
+            <p>You survey your memories attempting to recall a clue for your
+            current situation.</p>
           tags:
-            - afterStrike
-            - melee
-            - twohand
+            - subtle
           cost:
-            action: -1
-            focus: 0
-            weapon: true
+            action: 3
+            focus: 1
+            weapon: false
             heroism: 0
+            hands: 0
+          target:
+            type: self
+            number: 0
+            scope: 1
+            self: false
+          effects: []
+          name: Mnemonic Realization
+          img: icons/magic/perception/eye-ringed-green.webp
+          condition: ''
+          range:
+            maximum: 1
+            weapon: false
+            minimum: null
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.utility
+      nodes:
+        - int0b
+      iconicSpells: 0
+      training: science
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      systemId: crucible
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845344220
+      modifiedTime: 1793845344220
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.mnemonicrealizat
+      duplicateSource: null
+      exportSource: null
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!vT1UpPCVxKRg2A1J.mnemonicrealizat'
+  - name: Hamstring
+    type: talent
+    img: icons/skills/melee/strike-blade-blood-red.webp
+    system:
+      description: >-
+        <p>You use a slashing weapon to target the legs of an enemy and cripple
+        their movement.</p>
+      actions:
+        - id: hamstring
+          condition: ''
+          description: >-
+            <p>You make <strong>Strike</strong> attack which is
+            @Rule[action.difficult], but if successful, inflicts the
+            @Condition[slowed] condition for <strong>3 Rounds</strong>.</p>
+          tags:
+            - melee
+            - difficult
+          cost:
+            action: 0
+            focus: 0
+            heroism: 0
+            weapon: true
             hands: 0
           target:
             type: single
             number: 1
             scope: 3
             self: false
+          effects:
+            - name: Hamstring
+              scope: 3
+              result:
+                type: success
+                all: false
+              statuses:
+                - slowed
+              duration:
+                value: 3
+                units: rounds
+                expiry: turnEnd
+                expired: false
+              system:
+                changes: []
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                regions: []
+                summons: []
+                properties: []
+                lights: []
+                suppression: {}
+          name: Hamstring
+          img: icons/skills/melee/strike-axe-blood-red.webp
+          range:
+            minimum: null
+            maximum: null
+            weapon: true
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      iconicSpells: 0
+      keywords:
+        - playstyle.melee
+      nodes:
+        - dex0b
+      training: light
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845344220
+      modifiedTime: 1793845344220
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.hamstring0000000
+      duplicateSource: null
+      exportSource: null
+    _id: hamstring0000000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!vT1UpPCVxKRg2A1J.hamstring0000000'
+  - name: Swipe
+    type: talent
+    _id: swipe00000000000
+    img: icons/skills/melee/strike-axe-red.webp
+    system:
+      description: >-
+        You perform a broad swipe with your weapon, hitting two adjacent targets
+        within your weapon range.
+      actions:
+        - id: swipe
+          description: >-
+            <p>You perform a <strong>Strike</strong> against two adjacent
+            enemies, attacking both of them using a single swing of your great
+            weapon.</p>
+          tags:
+            - melee
+            - twohand
+          cost:
+            action: 1
+            focus: 0
+            weapon: true
+            heroism: 0
+            hands: 0
+          target:
+            type: single
+            number: 2
+            scope: 3
+            self: false
           effects: []
+          name: Swipe
+          img: icons/skills/melee/strike-axe-red.webp
+          condition: ''
           range:
             maximum: null
             weapon: true
             minimum: null
           summon: null
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.melee
+        - weapons.twohand
       nodes:
-        - str1a
-      rune: ''
-      gesture: ''
-      inflection: ''
+        - str0a
+      iconicSpells: 0
+      training: heavy
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
     _stats:
-      coreVersion: '14.364'
       systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344224731
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845344220
+      modifiedTime: 1793845344220
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344224731
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.talent.Item.swipe00000000000
       duplicateSource: null
       exportSource: null
-    folder: yQPNpmhq761VzMZe
-    _id: uppercut00000000
+    folder: null
     sort: 0
     ownership:
       default: 0
-    _key: '!actors.items!vT1UpPCVxKRg2A1J.uppercut00000000'
+    _key: '!actors.items!vT1UpPCVxKRg2A1J.swipe00000000000'
   - _id: cleave0000000000
     name: Cleave
     type: talent
@@ -516,55 +733,58 @@ items:
             weapon: true
             minimum: null
           summon: null
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.melee
+        - weapons.twohand
       nodes:
         - str1a
-      rune: ''
-      gesture: ''
-      inflection: ''
+      iconicSpells: 0
+      training: heavy
+      spellcraft: ''
+      requirements:
+        training: {}
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344224731
+      systemVersion: 0.11.2
+      modifiedTime: 1793845344220
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344224731
-      compendiumSource: null
+      createdTime: 1793845344220
+      compendiumSource: Compendium.crucible.talent.Item.cleave0000000000
       duplicateSource: null
       exportSource: null
-    folder: yQPNpmhq761VzMZe
-    sort: 100000
+    folder: null
+    sort: 0
     ownership:
       default: 0
     _key: '!actors.items!vT1UpPCVxKRg2A1J.cleave0000000000'
-  - name: Intercept
+  - name: Bull Rush
     type: talent
-    img: icons/skills/melee/shield-block-gray-orange.webp
-    effects: []
-    flags:
-      core: {}
+    _id: bullrush00000000
+    img: icons/creatures/mammals/bull-horns-eyes-glowin-orange.webp
     system:
       description: >-
-        <p>You protect your allies, intercepting blows that might otherwise be
-        directed towards your companions.</p>
+        <p>You can use your physical prowess to push past opponents who block
+        your path.</p>
       actions:
-        - id: intercept
-          condition: An enemy moves into or through your Engagement radius.
+        - id: bullrush
           description: >-
-            <p>You intercept the path of an enemy which enters your
-            <strong>Engagement</strong> radius, immediately moving up to your
-            <strong>Stride</strong> to interpose yourself and block their
-            path.</p><p>If the enemy moves out of your Engagement radius or
-            attacks any other creature during their turn, you may make a
-            @Action[default reactiveStrike] against them.</p><h3
-            class="divider">Playtest Notes</h3><p>The interruption of enemy
-            movement is not yet automated.</p>
+            <p>You move up to your @Rule[movement.stride] with forceful
+            momentum, passing through the space of one other creature along your
+            path. An ally lets you pass freely.</p><p>An enemy contests your
+            passage: make an @Rule[skill.athletics] @Rule[action.skill] attack
+            against its @Rule[defense.fortitude] defense. On a
+            @Rule[dice.success] you drive through its space, knocking it
+            @Condition[prone], and it may not make any @Action[default
+            reactiveStrike] against you. On a @Rule[dice.failure] your movement
+            is blocked and you remain in your current position.</p>
           tags:
-            - reaction
-            - movement
+            - harmless
+            - fortitude
+            - skill
+            - athletics
           cost:
             action: 0
             focus: 1
@@ -572,165 +792,170 @@ items:
             heroism: 0
             hands: 0
           target:
-            type: single
+            type: movement
             number: 1
-            scope: 3
-            self: false
-          effects: []
-          name: Intercept
-          img: icons/skills/melee/shield-block-gray-orange.webp
-          range:
-            maximum: 4
-            weapon: false
-            minimum: null
-          summon: null
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-      nodes:
-        - dextou1
-      rune: ''
-      gesture: ''
-      inflection: ''
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      modifiedTime: 1783344224732
-      createdTime: 1783344224732
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    _id: intercept0000000
-    folder: MqZKCMx5KrZQffGU
-    sort: -100000
-    ownership:
-      default: 0
-    _key: '!actors.items!vT1UpPCVxKRg2A1J.intercept0000000'
-  - folder: i7WposibCJ94XpuD
-    name: Unarmed Combat Training
-    type: talent
-    img: icons/skills/melee/unarmed-punch-fist-white.webp
-    system:
-      description: >-
-        <p>You are familiar with basic martial arts and hand-to-hand combat. You
-        know how to subdue or restrain opponents using your physical Strength.
-        You are <strong>Trained</strong> with weapons in the
-        <strong>Unarmed</strong> category.</p>
-      actions:
-        - id: grapple
-          img: icons/magic/control/buff-strength-muscle-damage.webp
-          cost:
-            action: 3
-            focus: 0
-            heroism: 0
-            hands: 1
-            weapon: false
-          range:
-            minimum: null
-            maximum: 1
-            weapon: false
-          target:
-            type: single
-            number: 1
-            scope: 3
+            scope: 4
             self: false
           effects:
-            - name: Grappled
-              scope: 4
+            - name: Bull Rush
+              scope: 3
+              statuses:
+                - prone
               result:
                 type: success
                 all: false
-              statuses:
-                - restrained
-              duration:
-                value: 1
-                units: rounds
-                expiry: turnStart
-                expired: false
               system:
+                changes: []
                 dot: []
                 maintenance:
                   cost: null
                   hands: 0
                 regions: []
                 summons: []
-                changes: []
-                dc: null
                 properties: []
-            - name: Grappling
-              scope: 1
-              result:
-                type: success
-                all: false
-              statuses:
-                - restrained
+                lights: []
+                suppression: {}
               duration:
-                value: 1
-                units: rounds
-                expiry: turnStart
+                value: null
+                units: ''
+                expiry: null
                 expired: false
-              system:
-                dot: []
-                maintenance:
-                  cost: null
-                  hands: 0
-                regions: []
-                summons: []
-                changes: []
-                dc: null
-                properties: []
-          tags:
-            - difficult
-            - harmless
-            - skill
-            - athletics
-          name: Grapple
+          name: Bull Rush
+          img: icons/creatures/mammals/bull-horns-eyes-glowin-orange.webp
           condition: ''
-          description: >-
-            <p>You attempt to physically restrain or subdue an opponent. Perform
-            a <strong>Athletics</strong> skill attack against an adjacent
-            target. If successful, both you and your target are
-            @Condition[restrained] for 1 Round.</p>
+          range:
+            maximum: null
+            weapon: false
+            minimum: null
           summon: null
-      iconicSpells: 0
-      training:
-        type: unarmed
-        rank: 1
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.utility
+        - action.movement
+        - skill.athletics
       nodes:
-        - str0b
-      rune: ''
-      gesture: ''
-      inflection: ''
+        - toustr1
+      iconicSpells: 0
+      training: athletics
+      spellcraft: ''
+      requirements:
+        training: {}
     effects: []
-    sort: 0
     flags: {}
     _stats:
-      coreVersion: '14.364'
       systemId: crucible
-      systemVersion: 0.10.1
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845344220
+      modifiedTime: 1793845344220
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      modifiedTime: 1783344224732
-      createdTime: 1783344224732
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.talent.Item.bullrush00000000
       duplicateSource: null
       exportSource: null
-    _id: unarmedCombatTra
+    folder: null
+    sort: 0
     ownership:
       default: 0
-    _key: '!actors.items!vT1UpPCVxKRg2A1J.unarmedCombatTra'
+    _key: '!actors.items!vT1UpPCVxKRg2A1J.bullrush00000000'
+  - name: Human Lineage
+    type: talent
+    img: icons/skills/social/diplomacy-handshake.webp
+    system:
+      nodes:
+        - origin
+      description: >-
+        <p>Humans are known for a stubborn will to survive, pressing onward
+        through hardship that would halt anyone
+        else.</p><p><strong>Adaptable.</strong> Your people are quick to learn
+        whatever the moment demands. You gain <strong>+2</strong> Proficiency
+        Points.</p>
+      actions:
+        - id: pushThrough
+          name: Push Through
+          img: icons/skills/social/diplomacy-handshake.webp
+          condition: ''
+          description: >-
+            <p>You expend @Rule[resource.heroism] to push through adversity.
+            Until the end of your turn, your attacks and skill checks ignore any
+            @Rule[dice.bane]{Banes} imposed upon them. Banes you choose to take
+            upon yourself are not ignored.</p>
+          cost:
+            action: 0
+            focus: 0
+            heroism: 1
+            hands: 0
+            weapon: false
+          range:
+            minimum: null
+            maximum: null
+            weapon: false
+          target:
+            type: self
+            number: 1
+            scope: 1
+            self: false
+          effects:
+            - name: Push Through
+              scope: 1
+              result:
+                type: any
+                all: false
+              statuses: []
+              duration:
+                value: null
+                units: ''
+                expiry: turnEnd
+                expired: false
+              system:
+                changes: []
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                regions: []
+                summons: []
+                properties: []
+                lights: []
+                suppression: {}
+          tags: []
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      iconicSpells: 0
+      training: society
+      spellcraft: ''
+      requirements:
+        training: {}
+      keywords: []
+    effects: []
+    flags: {}
+    _id: humanLineage0000
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845344220
+      modifiedTime: 1793845344220
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.ancestry.Item.humanLineage0000
+      duplicateSource: null
+      exportSource: null
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!vT1UpPCVxKRg2A1J.humanLineage0000'
 effects: []
 flags:
   core: {}
   crucible: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.10.1
-  coreVersion: '14.364'
-  createdTime: 1783344224729
-  modifiedTime: 1783344224729
+  systemVersion: 0.11.2
+  coreVersion: '14.370'
+  createdTime: 1793845344220
+  modifiedTime: 1793845344220
   lastModifiedBy: WRGzDgYAt3ZuX6TU
   exportSource: null
   compendiumSource: null

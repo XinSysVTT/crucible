@@ -4,19 +4,16 @@ _id: focusedanticipat
 img: icons/magic/light/circle-window-clock-blue.webp
 system:
   description: >-
-    Anticipation leads to decisive action. When you have the highest
-    <strong>Initiative</strong> score for a Round of combat, you gain <strong>+1
-    Focus</strong>.<p></p>
+    <p>Anticipation leads to decisive action. When you have the highest
+    <strong>Initiative</strong> score for a round of combat, you gain
+    @Rule[resource.focus]{+1 Focus}.</p><p></p>
+  keywords:
+    - initiative
+    - resource.focus
   nodes:
     - int4d
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: qHUCrqkzuPHtBkbG
 sort: 300000
@@ -26,11 +23,11 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160132
-  modifiedTime: 1773514792577
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789491879929
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

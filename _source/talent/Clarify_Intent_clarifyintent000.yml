@@ -8,10 +8,11 @@ system:
   actions:
     - id: clarifyIntent
       description: >-
-        <p>You explain your intentions to an ally within 12 feet. Make an
-        <strong>Diplomacy</strong> skill attack against your ally's Madness
-        Threshold. If successful they gain +1 <strong>Focus</strong> and +1
-        <strong>Boon</strong> to actions made during their next turn.</p>
+        <p>You explain your intentions to an ally within <strong>12
+        feet</strong>. Make an @Rule[skill.diplomacy] <strong>Skill</strong>
+        attack against your ally's @Rule[defense.madness]. If successful they
+        gain @Rule[resource.focus]{+1 Focus} and @Rule[dice.boon]{+1 Boon} to
+        actions made during their next turn.</p>
       tags:
         - rallying
         - skill
@@ -38,12 +39,16 @@ system:
             value: 1
             units: rounds
             expiry: turnEnd
+            expired: false
           system:
             changes: []
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
+            properties: []
       name: Clarify Intent
       img: icons/skills/targeting/crosshair-arrowhead-blue.webp
       condition: ''
@@ -51,18 +56,15 @@ system:
         minimum: null
         maximum: 12
         weapon: false
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
+  keywords:
+    - playstyle.utility
+    - resource.focus
+    - skill.diplomacy
   nodes:
     - wispre1
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: diplomacy
 effects: []
 ownership:
   default: 0
@@ -71,15 +73,15 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160128
-  modifiedTime: 1773514792563
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789495984005
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: Item.clarifyintent000
   duplicateSource: null
   exportSource: null
 _id: clarifyintent000
-folder: 2MFixpDJ379KOogE
+folder: fldDiplomacy0000
 sort: 1000000
 _key: '!items!clarifyintent000'

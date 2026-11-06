@@ -10,6 +10,9 @@ export default class CrucibleArchetypeItemSheet extends CrucibleBackgroundItemSh
     item: {
       type: "archetype",
       includesEquipment: true
+    },
+    actions: {
+      trainingRemove: CrucibleArchetypeItemSheet.#onTrainingRemove
     }
   };
 
@@ -44,9 +47,45 @@ export default class CrucibleArchetypeItemSheet extends CrucibleBackgroundItemSh
         value: context.source.system.abilities[ability.id]
       })),
 
+      training: this.#prepareTraining(context),
+
       // TODO: Make use of each spell's `level` in UI
       spells: await this._prepareSpells()
     });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Split the proficiencies into those already carrying a weight and those still available to add.
+   * Only assigned weights are rendered, keeping the list sparse against the full set of 32 proficiencies.
+   * @param {object} context   The prepared sheet context
+   * @returns {{rows: object[], options: object[], groups: string[], field: StringField}}
+   */
+  #prepareTraining(context) {
+    const {PROFICIENCIES, GROUPS} = SYSTEM.PROFICIENCY;
+    const weights = context.source.system.training ?? {};
+    const element = context.fields.training.element;
+    const rows = [];
+    const options = [];
+    for ( const [id, config] of Object.entries(PROFICIENCIES) ) {
+      // TODO: once https://github.com/foundryvtt/foundryvtt/issues/13564 addressed, can ignore null check
+      if ( (id in weights) && (weights[id] !== null) ) rows.push({
+        field: element,
+        id,
+        label: config.label,
+        name: `system.training.${id}`,
+        spare: weights[id] === 0, // Advanced only from whatever the weighted proficiencies leave behind
+        value: weights[id]
+      });
+      else options.push({value: id, label: config.label, group: GROUPS[config.group].label});
+    }
+    return {
+      rows,
+      options,
+      groups: Object.values(GROUPS).map(g => g.label),
+      field: new foundry.data.fields.StringField({required: false, blank: true})
+    };
   }
 
   /* -------------------------------------------- */
@@ -112,6 +151,25 @@ export default class CrucibleArchetypeItemSheet extends CrucibleBackgroundItemSh
   /* -------------------------------------------- */
 
   /**
+   * Remove an assigned training weight, which the numeric input alone cannot express.
+   * @this {CrucibleArchetypeItemSheet}
+   * @param {PointerEvent} event
+   * @param {HTMLElement} target
+   * @returns {Promise<void>}
+   */
+  static async #onTrainingRemove(event, target) {
+    const {proficiency} = target.closest(".training-weight").dataset;
+    const training = {...this.document._source.system.training};
+
+    // TODO: once https://github.com/foundryvtt/foundryvtt/issues/13564 addressed, simply delete
+    if ( this.document.parent?.isToken ) training[proficiency] = null;
+    else delete training[proficiency];
+    return this._processSubmitData(event, this.form, {system: {training: _replace(training)}});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Handle drop events for a spell item added to this sheet
    * @param {DragEvent} event
    * @returns {Promise<*>}
@@ -171,6 +229,26 @@ export default class CrucibleArchetypeItemSheet extends CrucibleBackgroundItemSh
     } else {
       delete submitData.system.abilities;
     }
+
+    // Weights replace rather than merge, so a removed proficiency is actually dropped
+    const added = submitData.trainingAdd;
+    delete submitData.trainingAdd;
+    const training = {};
+
+    // TODO: once https://github.com/foundryvtt/foundryvtt/issues/13564 addressed, no need to preserve nulls
+    if ( this.document.parent?.isToken ) {
+      for ( const [id, weight] of Object.entries(this.document._source.system.training) ) {
+        if ( weight === null ) training[id] = null;
+      }
+    }
+    for ( const [id, weight] of Object.entries(submitData.system.training ?? {}) ) {
+      // A typed value can exceed the max attribute, so clamp rather than fail validation
+      if ( Number.isFinite(weight) && (weight >= 0) ) {
+        training[id] = Math.clamp(weight, 0, SYSTEM.PROFICIENCY.WEIGHT_MAX);
+      }
+    }
+    if ( added ) training[added] ??= 1;
+    submitData.system.training = _replace(training);
     return submitData;
   }
 }

@@ -15,24 +15,29 @@ export default class StandardCheckDialog extends DialogV2 {
    * @param {string} [options.messageMode]                 The message mode to use
    * @param {Record<string, GroupCheckSkillConfig>} [options.skills]  Multi-skill choices (player mode)
    * @param {boolean} [options.configurable=true]  Whether the dialog allows GM configuration (skills, DC, request)
+   * @param {string} [options.checkName]          A name for the check, used as the title and chat flavor
    */
-  constructor({request=false, requestedActors=[], roll, messageMode, skills, configurable=true, ...options}={}) {
+  constructor({request=false, requestedActors=[], roll, messageMode, skills, configurable=true, checkName,
+    ...options}={}) {
     super(options);
     this.request = request && game.user.isGM;
     this.configurable = configurable && game.user.isGM;
     this.isGroupCheck = roll instanceof crucible.api.dice.GroupCheck;
     this.roll = roll;
     this.messageMode = messageMode;
+    this.checkName = checkName;
     if ( this.roll.actor ) this.#requestActors.add(this.roll.actor);
     for ( const actor of requestedActors ) this.#requestActors.add(actor);
 
-    // Multi-skill: player receives allowed skills from GM with explicit DCs
+    // Multi-skill: allowed skills with explicit DCs, from the GM or a preconfigured enricher
     if ( skills ) {
       for ( const [id, config] of Object.entries(skills) ) this.#selectedSkills.set(id, config.dc);
     }
 
-    // Default the skills panel to open for configurable group checks with no skill pre-configured
-    this.customizeSkills = this.configurable && this.isGroupCheck && !SYSTEM.SKILLS[this.roll.data.type];
+    // Open the skills panel for configurable group checks with no skill or several skills pre-configured
+    const multiSkill = (this.isGroupCheck || this.request) && (this.#selectedSkills.size > 1);
+    this.customizeSkills = this.configurable
+      && ((this.isGroupCheck && !SYSTEM.SKILLS[this.roll.data.type]) || multiSkill);
   }
 
   /** @inheritDoc */
@@ -71,6 +76,12 @@ export default class StandardCheckDialog extends DialogV2 {
    * @type {boolean}
    */
   configurable;
+
+  /**
+   * A name for the check, used as the title and chat flavor.
+   * @type {string|undefined}
+   */
+  checkName;
 
   /**
    * Display the dialog in request mode.
@@ -125,7 +136,8 @@ export default class StandardCheckDialog extends DialogV2 {
   get title() {
     if ( this.options.window.title ) return this.options.window.title;
     let label;
-    if ( this.#selectedSkills.size > 1 ) label = _loc("ACTION.SkillCheckGeneric");
+    if ( this.checkName ) label = this.checkName;
+    else if ( this.#selectedSkills.size > 1 ) label = _loc("ACTION.SkillCheckGeneric");
     else {
       const type = this.roll.data.type;
       const skill = SYSTEM.SKILLS[type];
@@ -233,12 +245,12 @@ export default class StandardCheckDialog extends DialogV2 {
     const actors = [];
     const skillId = this.roll.data.type;
     const skill = SYSTEM.SKILLS[skillId];
-    const resourceColor = skill ? SYSTEM.SKILL.CATEGORIES[skill.category]?.color?.css : null;
+    const resourceColor = skill ? SYSTEM.PROFICIENCY.GROUPS[skill.group]?.color?.css : null;
     for ( const actor of this.#requestActors ) {
       const rank = actor.system.skills[skillId]?.rank ?? 0;
-      const pips = Array.fromRange(4).map(i => i < rank ? "full" : "");
-      const rankTooltip = SYSTEM.TALENT.TRAINING_RANK_VALUES[rank]?.label
-        ?? SYSTEM.TALENT.TRAINING_RANKS.untrained.label;
+      const pips = Array.fromRange(SYSTEM.PROFICIENCY.RANK_MAX).map(i => i < rank ? "full" : "");
+      const rankTooltip = SYSTEM.PROFICIENCY.RANK_VALUES[rank]?.label
+        ?? SYSTEM.PROFICIENCY.RANKS.untrained.label;
       actors.push({id: actor.id, name: actor.name, img: actor.img, tags: actor.getTags("short"), pips, rank, rankTooltip});
     }
     return {actors, resourceColor};
@@ -395,7 +407,8 @@ export default class StandardCheckDialog extends DialogV2 {
     const skills = {};
     for ( const [id, customDc] of this.#selectedSkills ) skills[id] = {dc: customDc ?? defaultDc};
     const aggregate = this.isGroupCheck && this.#requestActors.size > 1;
-    const options = {requestedActors: this.#requestActors, local: true, messageMode: this.messageMode, aggregate};
+    const options = {requestedActors: this.#requestActors, local: true, messageMode: this.messageMode, aggregate,
+      name: this.checkName};
     if ( Object.keys(skills).length ) options.skills = skills;
     const groupCheckInstance = new crucible.api.dice.GroupCheck(foundry.utils.deepClone(this.roll.data));
     await groupCheckInstance.requestSubmit(options);
@@ -565,18 +578,15 @@ export default class StandardCheckDialog extends DialogV2 {
   /* -------------------------------------------- */
 
   /**
-   * Handle clicks to add party to requested actors
+   * Toggle the request tray between online party members and the full party.
    * @this StandardCheckDialog
    * @param {PointerEvent} _event
    * @returns {Promise<void>}
    */
   static async #onRequestParty(_event) {
-    const members = crucible.party?.system.actors;
-    if ( !members?.size ) {
-      ui.notifications.warn(_loc("WARNING.NoParty"));
-      return;
-    }
-    for ( const m of members ) this.#requestActors.add(m);
+    const party = crucible.api.models.CrucibleGroupActor.getParty();
+    if ( !party ) return;
+    party.toggleOnlineActors(this.#requestActors);
     await this.render({window: {title: this.title}});
   }
 
@@ -609,7 +619,8 @@ export default class StandardCheckDialog extends DialogV2 {
     const skills = {};
     for ( const [id, customDc] of this.#selectedSkills ) skills[id] = {dc: customDc ?? defaultDc};
     const aggregate = this.isGroupCheck && this.#requestActors.size > 1;
-    const options = {requestedActors: this.#requestActors, messageMode: this.messageMode, aggregate};
+    const options = {requestedActors: this.#requestActors, messageMode: this.messageMode, aggregate,
+      name: this.checkName};
     if ( Object.keys(skills).length ) options.skills = skills;
     await this.roll.requestGroupCheck(options);
     await this.close();

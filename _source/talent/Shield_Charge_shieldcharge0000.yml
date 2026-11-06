@@ -7,17 +7,18 @@ flags: {}
 system:
   description: >-
     <p>A defensive technique in which you drive forward, slamming and pushing
-    foes out of your path. You charge up to 20 feet in a straight line and
-    perform an offhand shield <strong>Strike</strong> against each successive
-    foe along your path.</p>
+    foes out of your path. You charge up to <strong>20 feet</strong> in a
+    straight line and perform an offhand shield <strong>Strike</strong> against
+    each successive foe along your path.</p>
   actions:
     - id: shieldCharge
       description: >-
         <p>You charge forward in a straight line, passing through the space of
-        any creatures you encounter and making a <strong>Strike </strong>against
-        each successive foe. Any creature <strong>Critically Hit</strong> by the
-        attack may be pushed into an adjacent space of your choosing. You may
-        not end your charge in the same space as another creature.</p>
+        any creatures you encounter and making a <strong>Strike</strong> against
+        each successive foe. Any creature @Rule[dice.criticalSuccess]{Critically
+        Hit} by the attack may be pushed into an adjacent space of your
+        choosing. You may not end your charge in the same space as another
+        creature.</p>
       tags:
         - shield
         - melee
@@ -46,22 +47,21 @@ system:
         actorUuid: null
         permanent: true
       autoFavorite: false
+  keywords:
+    - playstyle.melee
+    - weapon.shield
+    - action.movement
   nodes:
-    - toustr2
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - toustr1
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: shield
 _stats:
   systemId: crucible
-  systemVersion: 0.9.4
-  coreVersion: '14.363'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1779831851033
-  modifiedTime: 1779831851033
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1789489257139
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

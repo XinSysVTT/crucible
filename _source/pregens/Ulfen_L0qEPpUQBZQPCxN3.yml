@@ -6,7 +6,7 @@ system:
   abilities:
     wisdom:
       base: 1
-      increases: 1
+      increases: 0
       bonus: 0
     presence:
       base: 0
@@ -18,19 +18,19 @@ system:
       bonus: 0
     strength:
       base: 3
-      increases: 3
+      increases: 2
       bonus: 0
     toughness:
       base: 3
-      increases: 0
+      increases: 1
       bonus: 0
     dexterity:
       base: 1
-      increases: 1
+      increases: 2
       bonus: 0
   advancement:
     level: 6
-    milestones: 0
+    milestones: 18
     talentNodes: []
   defenses:
     armor:
@@ -61,7 +61,7 @@ system:
         drive a stubborn will to survive.</p>
       identifier: human
       talents:
-        - item: Compendium.crucible.talent.Item.intercept0000000
+        - item: Compendium.crucible.ancestry.Item.humanLineage0000
           level: null
       ui:
         color: '#a985d6'
@@ -71,26 +71,34 @@ system:
       movement:
         size: 4
         stride: 10
+        heightRatio: 1.5
       resistances:
         resistance: ''
         vulnerability: ''
+      characteristics:
+        blooded: true
+        temperature: ''
       name: Human
       img: icons/skills/social/diplomacy-handshake.webp
-      characteristics:
-        temperature: ''
     background:
       description: >-
         <p>You were part of a law enforcement organization. You learned how to
         remain vigilant to your surroundings, work within complex social
         structures, and affect an imposing presence.</p>
-      skills:
+      training:
+        - athletics
         - awareness
         - intimidation
+        - light
+        - unarmed
+        - science
       talents:
-        - item: Compendium.crucible.talent.Item.unarmedCombatTra
+        - item: Compendium.crucible.talent.Item.grapple000000000
           level: null
-        - item: Compendium.crucible.talent.Item.intercept0000000
-          level: null
+        - item: Compendium.crucible.talent.Item.mnemonicrealizat
+          level: 0
+        - item: Compendium.crucible.talent.Item.hamstring0000000
+          level: 0
       identifier: constable
       ui:
         color: '#1d2196'
@@ -154,11 +162,11 @@ system:
       immune: false
   resources:
     health:
-      value: 70
+      value: 72
     wounds:
       value: 0
     morale:
-      value: 54
+      value: 52
     madness:
       value: 0
     action:
@@ -171,23 +179,37 @@ system:
     sizeBonus: 0
     strideBonus: 0
     engagementBonus: 0
-  status:
-    lastAction: ferociousLeap
-    hasAttacked: true
-    freeMovementId: null
-    hasMoved: false
+  status: null
   favorites:
-    - cleave
-    - strike
-    - uppercut
-    - reactiveStrike
     - defend
-    - intimidate
+    - reactiveStrike
+    - strike
+    - cleave
+    - hamstring
+    - swipe
+    - ferociousLeap
+    - lastStand
+    - berserkerRage
+    - sunderingStrike
     - executionersStrike
-    - grapple
-    - counterRiposte
-    - ruthlessMomentum
+    - headbutt
   currency: 0
+  training:
+    athletics:
+      increases: 3
+      bonus: 0
+    heavy:
+      increases: 4
+      bonus: 0
+    armor:
+      increases: 1
+      bonus: 0
+    awareness:
+      increases: 1
+      bonus: 0
+    medicine:
+      increases: 1
+      bonus: 0
 prototypeToken:
   name: Ulfen
   displayName: 20
@@ -280,7 +302,7 @@ items:
       quantity: 1
       weight: 30
       price: 2400
-      quality: standard
+      quality: fine
       enchantment: mundane
       equipped: true
       properties:
@@ -294,17 +316,17 @@ items:
       armor:
         base: 13
       broken: false
-      actions: []
       identifier: scaleMail
       invested: false
+      actions: []
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      createdTime: 1783344233376
-      modifiedTime: 1783344233376
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.equipment.Item.scaleMail0000000
       duplicateSource: null
       exportSource: null
     folder: gQTZ7J9hqDpVTtPb
@@ -324,7 +346,7 @@ items:
       quantity: 1
       weight: 8
       price: 640
-      quality: standard
+      quality: fine
       enchantment: mundane
       equipped: true
       properties: []
@@ -336,155 +358,363 @@ items:
         private: ''
       damageType: slashing
       broken: false
-      actions: []
-      slot: 3
-      dropped: false
       identifier: greataxe
       invested: false
+      actions: []
+      dropped: false
+      slot: 3
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      createdTime: 1783344233376
-      modifiedTime: 1783344233376
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.equipment.Item.greataxe00000000
       duplicateSource: null
       exportSource: null
     sort: 900000
     ownership:
       default: 0
     _key: '!actors.items!L0qEPpUQBZQPCxN3.ciTtaw2LB6hN6fMx'
-  - name: Intimidator
+  - name: Grapple
     type: talent
-    _id: intimidator00000
-    img: icons/magic/death/skull-humanoid-crown-white-blue.webp
+    img: icons/magic/control/buff-strength-muscle-damage.webp
     system:
       description: >-
-        You specialize in exerting your intimidating presence to break the
-        morale of your foes.
+        <p>You are familiar with basic martial arts and hand-to-hand combat. You
+        know how to subdue or restrain opponents using your physical
+        strength.</p>
       actions:
-        - id: intimidate
-          name: Intimidate
-          description: >-
-            <p>You physically intimidate an enemy that is within your engagement
-            range, performing an Intimidation skill attack against your target.
-            On a success they sustain Void damage to Morale.</p>
-          tags:
-            - void
-            - morale
-            - skill
-            - intimidation
+        - id: grapple
+          img: icons/magic/control/buff-strength-muscle-damage.webp
           cost:
-            action: 1
-            focus: 1
+            action: 3
+            focus: 0
             heroism: 0
+            hands: 1
             weapon: false
-            hands: 0
+          range:
+            minimum: null
+            maximum: 1
+            weapon: false
           target:
             type: single
             number: 1
-            scope: 0
+            scope: 3
             self: false
-          effects: []
-          img: icons/magic/death/skull-humanoid-crown-white-blue.webp
-          condition: ''
-          range:
-            minimum: null
-            maximum: null
-            weapon: false
-          summon: null
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-      nodes:
-        - pre2c
-      rune: ''
-      gesture: ''
-      inflection: ''
-    effects: []
-    folder: 2MFixpDJ379KOogE
-    sort: -100000
-    flags: {}
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344233376
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344233376
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    ownership:
-      default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.intimidator00000'
-  - name: Uppercut
-    type: talent
-    img: icons/skills/melee/strike-sword-gray.webp
-    effects: []
-    flags:
-      core: {}
-    system:
-      description: >-
-        A two-handed weapon technique where you swing your weapon upwards,
-        making a second Strike with the backswing of your weapon.
-      actions:
-        - id: uppercut
-          name: Uppercut
-          img: icons/skills/melee/strike-sword-gray.webp
+          effects:
+            - name: Grappled
+              scope: 4
+              result:
+                type: success
+                all: false
+              statuses:
+                - restrained
+              duration:
+                value: 1
+                units: rounds
+                expiry: turnStart
+                expired: false
+              system:
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                regions: []
+                summons: []
+                changes: []
+                properties: []
+                lights: []
+                suppression: {}
+            - name: Grappling
+              scope: 1
+              result:
+                type: success
+                all: false
+              statuses:
+                - restrained
+              duration:
+                value: 1
+                units: rounds
+                expiry: turnStart
+                expired: false
+              system:
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                regions: []
+                summons: []
+                changes: []
+                properties: []
+                lights: []
+                suppression: {}
+          tags:
+            - difficult
+            - harmless
+            - skill
+            - athletics
+          name: Grapple
           condition: ''
           description: >-
-            <p>Following a basic Strike attack which did not critically miss,
-            you <strong>Strike</strong> the same target again with the backswing
-            of your weapon at reduced <strong>Action</strong> cost.</p>
+            <p>You attempt to physically restrain or subdue an opponent. Perform
+            an @Rule[skill.athletics] skill attack against an adjacent target
+            contested by their passive @Rule[skill.athletics] skill.  If
+            successful, both you and your target are @Condition[restrained] for
+            <strong>1 Round</strong>.</p>
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      iconicSpells: 0
+      training: unarmed
+      keywords:
+        - playstyle.utility
+        - skill.athletics
+      nodes:
+        - str0b
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.grapple000000000
+      duplicateSource: null
+      exportSource: null
+    _id: grapple000000000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.grapple000000000'
+  - name: Mnemonic Realization
+    type: talent
+    _id: mnemonicrealizat
+    img: icons/magic/perception/eye-ringed-green.webp
+    system:
+      description: >-
+        <p>Your sharpened mind is full of secrets and techniques to remember
+        them. Once per day you may focus your thoughts and attempt to recall a
+        word that sparks your memory.</p><p>The <strong>Gamemaster</strong> must
+        provide you with a one-word clue that is appropriate for your direction
+        of inquiry. It is left to <strong>Gamemaster's</strong> discretion how
+        direct or vague to be with the clue they provide.</p>
+      actions:
+        - id: mnemonicRealization
+          description: >-
+            <p>You survey your memories attempting to recall a clue for your
+            current situation.</p>
           tags:
-            - afterStrike
-            - melee
-            - twohand
+            - subtle
           cost:
-            action: -1
-            focus: 0
-            weapon: true
+            action: 3
+            focus: 1
+            weapon: false
             heroism: 0
+            hands: 0
+          target:
+            type: self
+            number: 0
+            scope: 1
+            self: false
+          effects: []
+          name: Mnemonic Realization
+          img: icons/magic/perception/eye-ringed-green.webp
+          condition: ''
+          range:
+            maximum: 1
+            weapon: false
+            minimum: null
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.utility
+      nodes:
+        - int0b
+      iconicSpells: 0
+      training: science
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      systemId: crucible
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.mnemonicrealizat
+      duplicateSource: null
+      exportSource: null
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.mnemonicrealizat'
+  - name: Hamstring
+    type: talent
+    img: icons/skills/melee/strike-blade-blood-red.webp
+    system:
+      description: >-
+        <p>You use a slashing weapon to target the legs of an enemy and cripple
+        their movement.</p>
+      actions:
+        - id: hamstring
+          condition: ''
+          description: >-
+            <p>You make <strong>Strike</strong> attack which is
+            @Rule[action.difficult], but if successful, inflicts the
+            @Condition[slowed] condition for <strong>3 Rounds</strong>.</p>
+          tags:
+            - melee
+            - difficult
+          cost:
+            action: 0
+            focus: 0
+            heroism: 0
+            weapon: true
             hands: 0
           target:
             type: single
             number: 1
             scope: 3
             self: false
+          effects:
+            - name: Hamstring
+              scope: 3
+              result:
+                type: success
+                all: false
+              statuses:
+                - slowed
+              duration:
+                value: 3
+                units: rounds
+                expiry: turnEnd
+                expired: false
+              system:
+                changes: []
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                regions: []
+                summons: []
+                properties: []
+                lights: []
+                suppression: {}
+          name: Hamstring
+          img: icons/skills/melee/strike-axe-blood-red.webp
+          range:
+            minimum: null
+            maximum: null
+            weapon: true
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      iconicSpells: 0
+      keywords:
+        - playstyle.melee
+      nodes:
+        - dex0b
+      training: light
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.hamstring0000000
+      duplicateSource: null
+      exportSource: null
+    _id: hamstring0000000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.hamstring0000000'
+  - name: Swipe
+    type: talent
+    _id: swipe00000000000
+    img: icons/skills/melee/strike-axe-red.webp
+    system:
+      description: >-
+        You perform a broad swipe with your weapon, hitting two adjacent targets
+        within your weapon range.
+      actions:
+        - id: swipe
+          description: >-
+            <p>You perform a <strong>Strike</strong> against two adjacent
+            enemies, attacking both of them using a single swing of your great
+            weapon.</p>
+          tags:
+            - melee
+            - twohand
+          cost:
+            action: 1
+            focus: 0
+            weapon: true
+            heroism: 0
+            hands: 0
+          target:
+            type: single
+            number: 2
+            scope: 3
+            self: false
           effects: []
+          name: Swipe
+          img: icons/skills/melee/strike-axe-red.webp
+          condition: ''
           range:
             maximum: null
             weapon: true
             minimum: null
           summon: null
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.melee
+        - weapons.twohand
       nodes:
-        - str1a
-      rune: ''
-      gesture: ''
-      inflection: ''
+        - str0a
+      iconicSpells: 0
+      training: heavy
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
     _stats:
-      coreVersion: '14.364'
       systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344233377
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344233377
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.talent.Item.swipe00000000000
       duplicateSource: null
       exportSource: null
-    folder: yQPNpmhq761VzMZe
-    _id: uppercut00000000
+    folder: null
     sort: 0
     ownership:
       default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.uppercut00000000'
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.swipe00000000000'
   - _id: cleave0000000000
     name: Cleave
     type: talent
@@ -525,73 +755,453 @@ items:
             weapon: true
             minimum: null
           summon: null
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.melee
+        - weapons.twohand
       nodes:
         - str1a
-      rune: ''
-      gesture: ''
-      inflection: ''
+      iconicSpells: 0
+      training: heavy
+      spellcraft: ''
+      requirements:
+        training: {}
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344233377
+      systemVersion: 0.11.2
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344233377
-      compendiumSource: null
+      createdTime: 1793845838202
+      compendiumSource: Compendium.crucible.talent.Item.cleave0000000000
       duplicateSource: null
       exportSource: null
-    folder: yQPNpmhq761VzMZe
-    sort: 100000
+    folder: null
+    sort: 0
     ownership:
       default: 0
     _key: '!actors.items!L0qEPpUQBZQPCxN3.cleave0000000000'
+  - name: Bull Rush
+    type: talent
+    _id: bullrush00000000
+    img: icons/creatures/mammals/bull-horns-eyes-glowin-orange.webp
+    system:
+      description: >-
+        <p>You can use your physical prowess to push past opponents who block
+        your path.</p>
+      actions:
+        - id: bullrush
+          description: >-
+            <p>You move up to your @Rule[movement.stride] with forceful
+            momentum, passing through the space of one other creature along your
+            path. An ally lets you pass freely.</p><p>An enemy contests your
+            passage: make an @Rule[skill.athletics] @Rule[action.skill] attack
+            against its @Rule[defense.fortitude] defense. On a
+            @Rule[dice.success] you drive through its space, knocking it
+            @Condition[prone], and it may not make any @Action[default
+            reactiveStrike] against you. On a @Rule[dice.failure] your movement
+            is blocked and you remain in your current position.</p>
+          tags:
+            - harmless
+            - fortitude
+            - skill
+            - athletics
+          cost:
+            action: 0
+            focus: 1
+            weapon: false
+            heroism: 0
+            hands: 0
+          target:
+            type: movement
+            number: 1
+            scope: 4
+            self: false
+          effects:
+            - name: Bull Rush
+              scope: 3
+              statuses:
+                - prone
+              result:
+                type: success
+                all: false
+              system:
+                changes: []
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                regions: []
+                summons: []
+                properties: []
+                lights: []
+                suppression: {}
+              duration:
+                value: null
+                units: ''
+                expiry: null
+                expired: false
+          name: Bull Rush
+          img: icons/creatures/mammals/bull-horns-eyes-glowin-orange.webp
+          condition: ''
+          range:
+            maximum: null
+            weapon: false
+            minimum: null
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.utility
+        - action.movement
+        - skill.athletics
+      nodes:
+        - toustr1
+      iconicSpells: 0
+      training: athletics
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      systemId: crucible
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.bullrush00000000
+      duplicateSource: null
+      exportSource: null
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.bullrush00000000'
   - name: Powerful Physique
     type: talent
     img: icons/skills/social/intimidation-impressing.webp
     system:
       description: >-
-        You can wield weapons with the Slow trait and wear Armor with the Bulky
-        trait without suffering Banes to your Initiative rolls.
+        <p>You can wield weapons with the <strong>Slow</strong> trait and wear
+        @Rule[defense.armor] with the <strong>Bulky</strong> trait without
+        suffering @Rule[dice.bane]{Banes} to your <strong>Initiative</strong>
+        rolls.</p>
       actions: []
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
+      keywords:
+        - initiative
+        - armor.heavy
+        - weapon.heavy
       nodes:
-        - str2c
-      rune: ''
-      gesture: ''
-      inflection: ''
+        - str1b
+      iconicSpells: 0
+      training: armor
+      spellcraft: ''
+      requirements:
+        training: {}
     effects: []
     flags:
       core: {}
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344233378
+      systemVersion: 0.11.2
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344233378
-      compendiumSource: null
+      createdTime: 1793845838202
+      compendiumSource: Compendium.crucible.talent.Item.powerfulphysique
       duplicateSource: null
       exportSource: null
     _id: powerfulphysique
-    folder: p4F0SmUoKJr0riBd
+    folder: null
     sort: 0
     ownership:
       default: 0
     _key: '!actors.items!L0qEPpUQBZQPCxN3.powerfulphysique'
+  - name: Ferocious Leap
+    type: talent
+    _id: ferociousleap000
+    img: icons/magic/movement/portal-vortex-orange.webp
+    system:
+      description: >-
+        <p>You leap powerfully into battle to deliver a punishing blow to a
+        nearby enemy with your mainhand weapon.</p>
+      actions:
+        - id: ferociousLeap
+          description: >-
+            <p>You <strong>Jump</strong> up to <strong>10 feet</strong>,
+            delivering a <strong>Strike</strong> against an enemy within melee
+            range of where you land. Your movement ignores difficult terrain and
+            is not blocked by enemy creatures.</p>
+          tags:
+            - melee
+            - mainhand
+            - movement
+            - jump
+          cost:
+            action: -1
+            focus: 1
+            weapon: true
+            heroism: 0
+            hands: 0
+          target:
+            type: movement
+            number: 1
+            scope: 3
+            self: false
+            limit: 1
+          effects: []
+          name: Ferocious Leap
+          img: icons/magic/movement/portal-vortex-orange.webp
+          condition: ''
+          range:
+            maximum: 10
+            weapon: true
+            minimum: 4
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.melee
+        - action.movement
+      nodes:
+        - str2c
+      iconicSpells: 0
+      training: athletics
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      systemId: crucible
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.ferociousleap000
+      duplicateSource: null
+      exportSource: null
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.ferociousleap000'
+  - name: Brutal Display
+    type: talent
+    img: icons/skills/wounds/injury-pain-body-orange.webp
+    system:
+      description: >-
+        <p>You go beyond simply defeating your enemies, you make an example of
+        them. When you slay a foe, every enemy within <strong>20 feet</strong>
+        who can see their @Condition[dead] ally suffers damage to their
+        @Rule[resource.morale] equal to your @Rule[ability.strength] score.</p>
+      actions: []
+      keywords:
+        - target.morale
+      nodes:
+        - str3b
+      iconicSpells: 0
+      training: intimidation
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      systemId: crucible
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.brutalDisplay000
+      duplicateSource: null
+      exportSource: null
+    _id: brutalDisplay000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.brutalDisplay000'
+  - name: Battle-Worn
+    type: talent
+    img: icons/skills/wounds/injury-stapled-flesh-tan.webp
+    system:
+      description: >-
+        <p>Your body has endured so many injuries that it has learned how to
+        mend itself with remarkable efficiency. When you perform the
+        @Action[default rest] action, you recover additional
+        @Rule[resource.wounds] equal to half your @Rule[ability.toughness] score
+        (rounded down).</p>
+      actions: []
+      keywords:
+        - action.rest
+      nodes:
+        - tou1b
+      iconicSpells: 0
+      training: medicine
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.battleWorn000000
+      duplicateSource: null
+      exportSource: null
+    _id: battleWorn000000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.battleWorn000000'
+  - name: Last Stand
+    type: talent
+    img: icons/skills/wounds/injury-face-impact-orange.webp
+    system:
+      keywords:
+        - playstyle.defensive
+        - target.healing
+        - resource.heroism
+        - defense.wounds
+      nodes:
+        - tou2c
+      description: >-
+        <p>You can muster the toughness and courage to fight on and stand your
+        ground against improbable odds.</p>
+      actions:
+        - id: lastStand
+          name: Last Stand
+          img: icons/skills/wounds/injury-face-impact-orange.webp
+          condition: ''
+          description: >-
+            <p>You expend @Rule[resource.heroism] to instantly recover two times
+            your @Rule[ability.toughness] in @Rule[resource.health]. Your
+            @Rule[defense.wounds] is reduced by 2 for the next <strong>3
+            Rounds</strong>.</p>
+          cost:
+            action: 1
+            focus: 0
+            heroism: 1
+            hands: 0
+            weapon: false
+          range:
+            minimum: null
+            maximum: null
+            weapon: false
+          target:
+            type: self
+            number: 1
+            scope: 1
+            self: false
+          effects:
+            - name: Last Stand
+              scope: 1
+              result:
+                type: success
+                all: false
+              statuses: []
+              duration:
+                value: 3
+                units: rounds
+                expiry: turnStart
+                expired: false
+              system:
+                changes: []
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                regions: []
+                summons: []
+                properties: []
+                lights: []
+                suppression: {}
+          tags:
+            - subtle
+            - healing
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      iconicSpells: 0
+      spellcraft: ''
+      requirements:
+        training: {}
+      training: ''
+    effects: []
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.lastStand0000000
+      duplicateSource: null
+      exportSource: null
+    _id: lastStand0000000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.lastStand0000000'
+  - name: Thick Skin
+    type: talent
+    img: icons/magic/defensive/armor-stone-skin.webp
+    system:
+      description: >-
+        <p>Your physical toughness makes you more resistant to harm. You gain
+        <strong>+2 Resistance</strong> to <strong>Bludgeoning</strong>,
+        <strong>Slashing</strong>, and <strong>Piercing</strong> damage.</p>
+      actions: []
+      keywords:
+        - playstyle.defensive
+        - defense.resistance
+      nodes:
+        - tou3b
+      iconicSpells: 0
+      spellcraft: ''
+      requirements:
+        training: {}
+      training: ''
+    effects: []
+    flags:
+      core: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.thickskin0000000
+      duplicateSource: null
+      exportSource: null
+    _id: thickskin0000000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.thickskin0000000'
   - name: Berserker
     type: talent
     img: icons/magic/unholy/silhouette-evil-horned-giant.webp
     system:
       description: >-
         <p>You revel in the thrill of combat, hurling yourself into the fray
-        with reckless abandon.</p>
+        with reckless abandon.</p><p>While @Condition[enraged] you may still
+        spend @Rule[resource.focus] on any action which is not a spell.</p>
       actions:
         - id: berserkerRage
           name: Berserker Rage
@@ -599,10 +1209,15 @@ items:
             You have suffered damage to your Health pool since your last turn in
             Combat.
           description: >-
-            You become @Condition[enraged]. While Enraged you deal 4 additional
-            damage on all melee attacks. You may attempt to end the effect on
-            your own turn by succeeding on a Willpower test against a DC of 20.
-            The effect ends automatically when Combat is concluded.
+            <p>You become @Condition[enraged]. While <strong>Enraged</strong>
+            you deal 4 additional damage on all melee attacks. You may attempt
+            to end the effect on your own turn by succeeding on a
+            @Rule[defense.willpower] test against a <strong>DC</strong> of 20.
+            The effect ends automatically when <strong>Combat</strong> is
+            concluded.</p><h3 class="divider">Playtest Notes</h3><p>The
+            aforementioned "Willpower test" is legacy terminology. The mechanism
+            for ending <strong>Berserker Rage</strong> on yourself is not
+            currently determined or automated.</p>
           tags: []
           cost:
             action: 1
@@ -616,104 +1231,199 @@ items:
             number: 1
             self: false
           effects:
-            - scope: 1
+            - name: ''
+              scope: 1
+              result:
+                type: success
+                all: false
               statuses:
                 - enraged
+              duration:
+                value: null
+                units: ''
+                expiry: combatEnd
+                expired: false
               system:
-                changes:
-                  - key: rollBonuses.damage.melee
-                    value: 4
-                    type: add
-                    phase: initial
+                changes: []
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                properties: []
+                regions: []
+                summons: []
+                lights: []
+                suppression: {}
+          img: icons/magic/unholy/silhouette-evil-horned-giant.webp
+          range:
+            minimum: null
+            maximum: null
+            weapon: false
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.melee
+        - resource.focus
+      nodes:
+        - sig3.toughness.strength
+      iconicSpells: 0
+      spellcraft: ''
+      requirements:
+        training: {}
+      training: ''
+    effects: []
+    flags:
+      core: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      createdTime: 1793845838202
+      compendiumSource: Compendium.crucible.talent.Item.berserker0000000
+      duplicateSource: null
+      exportSource: null
+    _id: berserker0000000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.berserker0000000'
+  - name: Sundering Strike
+    type: talent
+    img: icons/skills/melee/shield-damaged-broken-gold.webp
+    effects: []
+    flags:
+      core: {}
+    system:
+      description: >-
+        <p>You know a martial technique to exploit the weakest points of an
+        enemy's defenses, exposing them to further harm.</p>
+      actions:
+        - id: sunderingStrike
+          name: Sundering Strike
+          img: icons/skills/melee/shield-damaged-broken-gold.webp
+          condition: ''
+          description: >-
+            <p>You make a <strong>Strike</strong> with a
+            @Rule[ability.strength]-scaling weapon which, if successful, applies
+            the @Condition[exposed] condition to your target for <strong>3
+            Rounds</strong>. This attack is @Rule[action.difficult] to perform
+            and deals @Rule[action.weakened] damage.</p>
+          tags:
+            - brute
+            - melee
+            - difficult
+            - weakened
+          cost:
+            action: 0
+            focus: 1
+            weapon: true
+            heroism: 0
+            hands: 0
+          target:
+            type: single
+            number: 1
+            scope: 3
+            self: false
+          effects:
+            - name: Sundered Armor
+              scope: 3
+              statuses:
+                - exposed
+              duration:
+                value: 3
+                units: rounds
+                expiry: turnEnd
+                expired: false
+              result:
+                type: success
+                all: false
+              system:
+                changes: []
                 dot: []
                 maintenance:
                   cost: null
                   hands: 0
                 regions: []
                 summons: []
-                dc: null
                 properties: []
-              name: ''
-              result:
-                type: success
-                all: false
-              duration:
-                value: null
-                units: ''
-                expiry: null
-                expired: false
-          img: null
+                lights: []
+                suppression: {}
           range:
-            minimum: null
             maximum: null
-            weapon: false
+            weapon: true
+            minimum: null
           summon: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.melee
+        - weapon.heavy
       nodes:
-        - sig3.toughness.strength
-      rune: ''
-      gesture: ''
-      inflection: ''
+        - str3a
       iconicSpells: 0
-      training:
-        type: ''
-        rank: null
+      training: heavy
+      spellcraft: ''
+      requirements:
+        training: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.sunderingstrike0
+      duplicateSource: null
+      exportSource: null
+    _id: sunderingstrike0
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.sunderingstrike0'
+  - name: Blood Frenzy
+    type: talent
+    img: icons/skills/wounds/injury-eyes-blood-red-pink.webp
+    system:
+      description: >-
+        <p>Your battle lust spurs you to feats of heightened action. When you
+        achieve a @Rule[dice.criticalSuccess]{Critical Hit} that deals damage to
+        @Rule[resource.health] you immediately gain @Rule[resource.action]{+1
+        Action}. This benefit may only happen once per
+        <strong>Round</strong>.</p>
+      actions: []
+      keywords:
+        - resource.action
+      nodes:
+        - str4a
+      iconicSpells: 0
+      spellcraft: ''
+      requirements:
+        training: {}
+      training: ''
     effects: []
     flags:
       core: {}
     _stats:
-      coreVersion: '14.364'
       systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344233378
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344233378
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.talent.Item.bloodfrenzy00000
       duplicateSource: null
       exportSource: null
-    _id: berserker0000000
-    folder: fOYHlZJEWUukD7yr
-    sort: 400000
+    _id: bloodfrenzy00000
+    folder: null
+    sort: 0
     ownership:
       default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.berserker0000000'
-  - name: Strong Grip
-    type: talent
-    _id: stronggrip000000
-    img: icons/skills/melee/hand-grip-sword-orange.webp
-    system:
-      description: >-
-        <p>Your grasp of your weaponry is firm and unyielding. While wielding a
-        two-handed weapon that scales with Strength you may cast spells which
-        require two hands, and attempts to Disarm you are made with +2 Banes.
-        </p><p>Additionally, you may wield a one-handed Heavy weapon in your
-        off-hand.</p>
-      actions: []
-      nodes:
-        - str2c
-      rune: ''
-      gesture: ''
-      inflection: ''
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-    effects: []
-    flags: {}
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344233378
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344233378
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    folder: yQPNpmhq761VzMZe
-    sort: -100000
-    ownership:
-      default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.stronggrip000000'
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.bloodfrenzy00000'
   - name: Executioner's Strike
     type: talent
     _id: executionersstri
@@ -724,12 +1434,12 @@ items:
         - id: executionersStrike
           condition: ''
           description: >-
-            <p>You deliver a Strike with a two-handed weapon. If your attack is
-            successful and your opponent is under half their maximum
-            <strong>Health</strong>, the Strike is <strong>Deadly</strong>, and
-            the opponent suffers the @Condition[bleeding] condition for 3
-            Rounds, taking additional damage each Round equal to your Strength
-            score.</p>
+            <p>You deliver a <strong>Strike</strong> with a two-handed weapon.
+            If your attack is successful and your opponent is under half their
+            maximum @Rule[resource.health], the strike is @Rule[action.deadly],
+            and the opponent suffers the @Condition[bleeding] condition for
+            <strong>3 Rounds</strong>, taking additional damage each round equal
+            to your @Rule[ability.strength] score.</p>
           tags:
             - melee
             - twohand
@@ -765,8 +1475,9 @@ items:
                   hands: 0
                 regions: []
                 summons: []
-                dc: null
                 properties: []
+                lights: []
+                suppression: {}
           name: Executioner's Strike
           img: icons/skills/melee/strike-axe-blood-red.webp
           range:
@@ -774,284 +1485,99 @@ items:
             weapon: true
             minimum: null
           summon: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.melee
+        - weapons.twohand
       nodes:
         - str4b
-      rune: ''
-      gesture: ''
-      inflection: ''
       iconicSpells: 0
-      training:
-        type: ''
-        rank: null
+      training: heavy
+      spellcraft: ''
+      requirements:
+        training: {}
     effects: []
     flags: {}
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344233379
+      systemVersion: 0.11.2
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344233379
-      compendiumSource: null
+      createdTime: 1793845838202
+      compendiumSource: Compendium.crucible.talent.Item.executionersstri
       duplicateSource: null
       exportSource: null
-    folder: yQPNpmhq761VzMZe
+    folder: null
     sort: 0
     ownership:
       default: 0
     _key: '!actors.items!L0qEPpUQBZQPCxN3.executionersstri'
-  - name: Unshakeable Stance
+  - name: Spellmute
     type: talent
-    img: icons/magic/earth/construct-stone.webp
+    img: icons/magic/air/air-pressure-shield-blue.webp
     system:
+      keywords:
+        - playstyle.defensive
+      nodes:
+        - tou2b
       description: >-
-        <p>You cannot be unvoluntarily Moved or knocked @Condition[prone] by any
-        action that is not a Critical Success rolled by an enemy or a Critical
-        Failure rolled by yourself.</p><h3 class="divider">Playtest
-        Notes</h3><p>This talent is not yet automated.</p>
+        <p>Currents of magic flow strangely around you, as if unaware of your
+        presence.</p><p>You cannot perform any action with the
+        <strong>Spell</strong> tag. <strong>Spells</strong> which target you
+        suffer @Rule[dice.bane]{+2 Banes} regardless of whether they impose
+        harmful or beneficial effects.</p>
       actions: []
       iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-      nodes:
-        - tou3b
-      rune: ''
-      gesture: ''
-      inflection: ''
+      spellcraft: ''
+      requirements:
+        training: {}
+      training: ''
     effects: []
-    flags:
-      core: {}
+    flags: {}
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344233379
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344233379
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.talent.Item.spellmute0000000
       duplicateSource: null
       exportSource: null
-    _id: unshakeablestanc
-    folder: SMe30RkoLutLr4ef
+    _id: spellmute0000000
+    folder: null
     sort: 0
     ownership:
       default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.unshakeablestanc'
-  - _id: ruthlessmomentum
-    name: Ruthless Momentum
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.spellmute0000000'
+  - name: Headbutt
     type: talent
-    img: icons/skills/melee/strikes-sword-scimitar.webp
-    effects: []
-    flags:
-      core: {}
+    img: icons/magic/fire/flame-burning-skull-orange.webp
     system:
       description: >-
-        <p>You relish the carnage you can cause in combat and continue to press
-        the fray as each enemy falls.</p>
+        <p>You can deliver a brutal close-range strike with your head that
+        catches opponents off-guard.</p>
       actions:
-        - id: ruthlessMomentum
-          name: Ruthless Momentum
-          img: icons/skills/melee/strikes-sword-scimitar.webp
-          condition: You incapacitate an enemy with a melee attack.
+        - id: headbutt
+          name: Headbutt
+          img: icons/creatures/mammals/bull-horns-eyes-glowin-orange.webp
           description: >-
-            <p>After defeating an enemy, you immediately move up to your
-            <strong>Stride </strong>and <strong>Strike</strong> another foe that
-            you pass next to or end your movement adjacent to.</p>
-          cost:
-            action: -2
-            focus: 1
-            weapon: true
-            heroism: 0
-            hands: 0
-          range:
-            maximum: null
-            weapon: true
-            minimum: null
-          target:
-            type: movement
-            number: 1
-            limit: 1
-            scope: 3
-            self: false
-          effects: []
-          tags:
-            - melee
-            - movement
-          summon: null
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-      nodes:
-        - toustr1
-      rune: ''
-      gesture: ''
-      inflection: ''
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344233379
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344233379
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    folder: MqZKCMx5KrZQffGU
-    sort: -300000
-    ownership:
-      default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.ruthlessmomentum'
-  - name: Second Wind
-    type: talent
-    img: icons/magic/life/cross-area-circle-green-white.webp
-    effects: []
-    flags:
-      core: {}
-    system:
-      description: >-
-        Your physical hardiness allows you to push yourself beyond conventional
-        limits.
-      actions:
-        - id: secondWind
-          name: Second Wind
-          condition: ''
-          description: >-
-            <p>You focus your energy and recover your <strong>Toughness</strong>
-            score in <strong>Health</strong>.</p>
-          tags:
-            - healing
+            <p>Make an unarmed <strong>Strike</strong> against the
+            @Rule[defense.fortitude] defense of an adjacent enemy. If your
+            <strong>Initiative</strong> is superior to that of your target, you
+            gain @Rule[dice.boon]{+1 Boon} to this attack.</p><p>The attack is
+            @Rule[action.difficult] and only deals @Rule[action.weakened]
+            damage, but if successful it inflicts the @Condition[staggered] for
+            <strong>1 Round</strong>.</p><p>This action always uses an
+            <strong>Unarmed</strong> weapon, even if your weapon slots are
+            otherwise occupied.</p>
           cost:
             action: 2
-            focus: 1
-            weapon: false
-            heroism: 0
-            hands: 0
-          target:
-            type: self
-            number: 0
-            scope: 1
-            self: false
-          effects: []
-          img: icons/magic/life/cross-area-circle-green-white.webp
-          range:
-            maximum: null
-            weapon: false
-            minimum: null
-          summon: null
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-      nodes:
-        - tou2c
-      rune: ''
-      gesture: ''
-      inflection: ''
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      modifiedTime: 1783344233379
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      createdTime: 1783344233379
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    folder: qrB8E2SHs322zTil
-    _id: secondwind000000
-    sort: -100000
-    ownership:
-      default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.secondwind000000'
-  - name: Intercept
-    type: talent
-    img: icons/skills/melee/shield-block-gray-orange.webp
-    effects: []
-    flags:
-      core: {}
-    system:
-      description: >-
-        <p>You protect your allies, intercepting blows that might otherwise be
-        directed towards your companions.</p>
-      actions:
-        - id: intercept
-          condition: An enemy moves into or through your Engagement radius.
-          description: >-
-            <p>You intercept the path of an enemy which enters your
-            <strong>Engagement</strong> radius, immediately moving up to your
-            <strong>Stride</strong> to interpose yourself and block their
-            path.</p><p>If the enemy moves out of your Engagement radius or
-            attacks any other creature during their turn, you may make a
-            @Action[default reactiveStrike] against them.</p><h3
-            class="divider">Playtest Notes</h3><p>The interruption of enemy
-            movement is not yet automated.</p>
-          tags:
-            - reaction
-            - movement
-          cost:
-            action: 0
-            focus: 1
-            weapon: false
-            heroism: 0
-            hands: 0
-          target:
-            type: single
-            number: 1
-            scope: 3
-            self: false
-          effects: []
-          name: Intercept
-          img: icons/skills/melee/shield-block-gray-orange.webp
-          range:
-            maximum: 4
-            weapon: false
-            minimum: null
-          summon: null
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-      nodes:
-        - dextou1
-      rune: ''
-      gesture: ''
-      inflection: ''
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      modifiedTime: 1783344233379
-      createdTime: 1783344233379
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    _id: intercept0000000
-    folder: MqZKCMx5KrZQffGU
-    sort: -100000
-    ownership:
-      default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.intercept0000000'
-  - folder: i7WposibCJ94XpuD
-    name: Unarmed Combat Training
-    type: talent
-    img: icons/skills/melee/unarmed-punch-fist-white.webp
-    system:
-      description: >-
-        <p>You are familiar with basic martial arts and hand-to-hand combat. You
-        know how to subdue or restrain opponents using your physical Strength.
-        You are <strong>Trained</strong> with weapons in the
-        <strong>Unarmed</strong> category.</p>
-      actions:
-        - id: grapple
-          img: icons/magic/control/buff-strength-muscle-damage.webp
-          cost:
-            action: 3
             focus: 0
             heroism: 0
-            hands: 1
+            hands: 0
             weapon: false
           range:
             minimum: null
@@ -1063,417 +1589,675 @@ items:
             scope: 3
             self: false
           effects:
-            - name: Grappled
+            - name: ''
+              scope: 3
+              result:
+                type: success
+                all: false
+              statuses:
+                - staggered
+              duration:
+                value: 1
+                units: rounds
+                expiry: turnEnd
+                expired: false
+              system:
+                changes: []
+                dot: []
+                maintenance:
+                  cost: null
+                  hands: 0
+                regions: []
+                summons: []
+                properties: []
+                lights: []
+                suppression: {}
+          tags:
+            - melee
+            - difficult
+            - weakened
+            - fortitude
+          condition: ''
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      keywords:
+        - playstyle.melee
+        - weapon.unarmed
+        - target.fortitude
+      nodes:
+        - tou2a
+      iconicSpells: 0
+      training: natural
+      spellcraft: ''
+      requirements:
+        training: {}
+    effects: []
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.headbutt00000000
+      duplicateSource: null
+      exportSource: null
+    _id: headbutt00000000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.headbutt00000000'
+  - name: Iron Resolve
+    type: talent
+    img: icons/magic/control/silhouette-aura-energy.webp
+    system:
+      description: >-
+        <p>Your physical resilience makes you too tough to be deeply affected by
+        a powerful blow. The @Rule[dice.criticalSuccessThreshold] for
+        <strong>Strikes</strong> against you is increased by +1, making you
+        harder to critically hit.</p>
+      actions: []
+      keywords:
+        - playstyle.defensive
+      nodes:
+        - tou3a
+      iconicSpells: 0
+      spellcraft: ''
+      requirements:
+        training: {}
+      training: ''
+    effects: []
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.ironResolve00000
+      duplicateSource: null
+      exportSource: null
+    _id: ironResolve00000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.ironResolve00000'
+  - name: Adrenaline
+    type: talent
+    img: icons/magic/lightning/projectile-tendrils-teal.webp
+    system:
+      description: >-
+        <p>Pain sharpens your concentration. Once per round, when you sustain
+        @Rule[resource.health] damage from an attack, you gain
+        @Rule[resource.focus]{+1 Focus}.</p>
+      actions: []
+      keywords:
+        - resource.focus
+      nodes:
+        - tou4a
+      iconicSpells: 0
+      spellcraft: ''
+      requirements:
+        training: {}
+      training: ''
+    effects: []
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.adrenaline000000
+      duplicateSource: null
+      exportSource: null
+    _id: adrenaline000000
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.adrenaline000000'
+  - name: Sentinel
+    type: talent
+    _id: sentinel00000000
+    img: icons/skills/melee/strike-chain-whip-blue.webp
+    system:
+      description: >-
+        <p>You punish those who try to slip past your guard. When you damage an
+        enemy with a @Action[default reactiveStrike], that creature becomes
+        @Condition[slowed] until the end of its next turn.</p>
+      actions: []
+      keywords:
+        - playstyle.melee
+        - movement.engagement
+        - action.reaction
+      nodes:
+        - toustr4
+      iconicSpells: 0
+      spellcraft: ''
+      requirements:
+        training: {}
+      training: ''
+    effects: []
+    flags: {}
+    _stats:
+      systemId: crucible
+      systemVersion: 0.11.2
+      coreVersion: '14.370'
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.talent.Item.sentinel00000000
+      duplicateSource: null
+      exportSource: null
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.sentinel00000000'
+  - name: Caustic Phial
+    type: consumable
+    img: icons/consumables/potions/bottle-conical-fumes-green.webp
+    system:
+      identifier: causticPhial
+      category: bomb
+      quantity: 1
+      weight: 1
+      price: 250
+      quality: standard
+      broken: false
+      equipped: true
+      invested: false
+      properties:
+        - stackable
+        - thrown
+      description:
+        public: >-
+          <p>Corrosive liquid swirls within this vial of intentionally thin
+          glass, designed to shatter on impact and spill the caustic substance
+          upon a target.</p>
+        private: ''
+      actions:
+        - id: causticPhial
+          name: Caustic Phial
+          img: icons/consumables/potions/bottle-conical-fumes-green.webp
+          condition: ''
+          description: >-
+            <p>You fling the @ref[item.name], dealing @Rule[action.weakened]
+            immediate <strong>Acid</strong> damage but causing the
+            @Condition[corroding] condition to all enemies in a 4 foot radius
+            <strong>Blast</strong> who fail to avoid the attack.</p><p>The
+            amount of corroding damage and its duration is dependent on the
+            quality of the
+            @ref[item.name]:</p><ul><li><p><strong>Shoddy</strong> - 2 damage
+            for 2 rounds</p></li><li><p><strong>Standard</strong> - 3 damage for
+            3 rounds</p></li><li><p><strong>Fine</strong> - 4 damage for 4
+            rounds</p></li><li><p><strong>Superior</strong> - 6 damage for 5
+            rounds</p></li><li><p><strong>Masterwork</strong> - 8 damage for 6
+            rounds</p></li></ul>
+          cost:
+            action: 2
+            focus: 0
+            heroism: 0
+            weapon: false
+            hands: 1
+          range:
+            minimum: null
+            maximum: 20
+            weapon: false
+          target:
+            type: blast
+            number: 1
+            scope: 4
+            self: true
+            size: 4
+          effects:
+            - name: Caustic Phial
               scope: 4
               result:
                 type: success
                 all: false
               statuses:
-                - restrained
-              duration:
-                value: 1
-                units: rounds
-                expiry: turnStart
-                expired: false
-              system:
-                dot: []
-                maintenance:
-                  cost: null
-                  hands: 0
-                regions: []
-                summons: []
-                changes: []
-                dc: null
-                properties: []
-            - name: Grappling
-              scope: 1
-              result:
-                type: success
-                all: false
-              statuses:
-                - restrained
-              duration:
-                value: 1
-                units: rounds
-                expiry: turnStart
-                expired: false
-              system:
-                dot: []
-                maintenance:
-                  cost: null
-                  hands: 0
-                regions: []
-                summons: []
-                changes: []
-                dc: null
-                properties: []
-          tags:
-            - difficult
-            - harmless
-            - skill
-            - athletics
-          name: Grapple
-          condition: ''
-          description: >-
-            <p>You attempt to physically restrain or subdue an opponent. Perform
-            a <strong>Athletics</strong> skill attack against an adjacent
-            target. If successful, both you and your target are
-            @Condition[restrained] for 1 Round.</p>
-          summon: null
-      iconicSpells: 0
-      training:
-        type: unarmed
-        rank: 1
-      nodes:
-        - str0b
-      rune: ''
-      gesture: ''
-      inflection: ''
-    effects: []
-    sort: 0
-    flags: {}
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      modifiedTime: 1783344233380
-      createdTime: 1783344233380
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    _id: unarmedCombatTra
-    ownership:
-      default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.unarmedCombatTra'
-  - name: Sundering Strike
-    type: talent
-    img: icons/skills/melee/shield-damaged-broken-gold.webp
-    effects: []
-    flags:
-      core: {}
-    system:
-      description: >-
-        <p>You know a martial technique to exploit the weakest points of an
-        enemy's defenses, exposing them to further harm.</p>
-      actions:
-        - id: sunderingStrike
-          name: Sundering Strike
-          img: icons/skills/melee/shield-damaged-broken-gold.webp
-          condition: ''
-          description: >-
-            <p>You make a <strong>Strike</strong> with a Strength-scaling weapon
-            which, if successful, applies the @Condition[exposed] condition to
-            your target for 3 rounds. This attack is <strong>Difficult</strong>
-            to perform and deals reduced damage.</p>
-          tags:
-            - brute
-            - melee
-            - difficult
-          cost:
-            action: 0
-            focus: 1
-            weapon: true
-            heroism: 0
-            hands: 0
-          target:
-            type: single
-            number: 1
-            scope: 0
-            self: false
-          effects:
-            - name: Sundered Armor
-              scope: 3
-              statuses:
-                - exposed
+                - corroding
               duration:
                 value: 3
                 units: rounds
                 expiry: turnEnd
                 expired: false
-              result:
-                type: success
-                all: false
               system:
                 changes: []
                 dot: []
                 maintenance:
                   cost: null
                   hands: 0
+                properties: []
                 regions: []
                 summons: []
-                dc: null
-                properties: []
-          range:
-            maximum: null
-            weapon: true
-            minimum: null
+                lights: []
+                suppression: {}
+          tags:
+            - consume
+            - weakened
+            - reflex
+            - acid
+            - skill
+            - athletics
           summon: null
-      nodes:
-        - str3a
-      rune: ''
-      gesture: ''
-      inflection: ''
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
+          persistRegion: false
+          regionBehavior: null
+      uses:
+        value: 1
+        max: 1
+      scroll:
+        runes: []
+        gestures: []
+        inflections: []
+    effects: []
+    flags: {}
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      createdTime: 1783344233380
-      modifiedTime: 1783344233380
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.equipment.Item.causticPhial0000
       duplicateSource: null
       exportSource: null
-    _id: sunderingstrike0
+    _id: sYO0w4y2ndLXr3MT
     folder: null
     sort: 0
     ownership:
       default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.sunderingstrike0'
-  - name: Heavy Weapon Training
-    type: talent
-    img: icons/skills/melee/weapons-crossed-poleaxes-white.webp
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.sYO0w4y2ndLXr3MT'
+  - name: Healing Elixir
+    type: consumable
+    img: icons/consumables/potions/bottle-bulb-corked-glowing-red.webp
     system:
-      description: >-
-        <p>You know how to use a heavy weapon to deliver punishing blows,
-        putting your entire strength behind every swing. You are
-        <strong>Trained</strong> with all weapons in the <strong>Heavy</strong>
-        and <strong>Balanced</strong> categories.</p>
+      identifier: healingElixir
+      category: flask
+      quantity: 1
+      weight: 1
+      price: 400
+      quality: standard
+      broken: false
+      equipped: true
+      invested: false
+      properties:
+        - stackable
+      description:
+        public: >-
+          <p>This potion contains a specialized alchemical formula to rapidly
+          close wounds and improve bodily health.</p>
+        private: ''
       actions:
-        - id: heavyStrike
-          img: icons/skills/melee/strike-hammer-destructive-blue.webp
+        - id: healingElixir
+          name: Healing Elixir
+          img: icons/consumables/potions/bottle-bulb-corked-glowing-red.webp
+          condition: ''
+          description: >-
+            <p>Immediately recover an amount of @Rule[resource.health] dependant
+            on the quality of the elixir.</p><ul><li><p><strong>Shoddy</strong>
+            - Immediately heals 6
+            <strong>Health</strong>.</p></li><li><p><strong>Standard</strong> -
+            Immediately heals 12
+            <strong>Health</strong>.</p></li><li><p><strong>Fine</strong> -
+            Immediately heals 24
+            <strong>Health</strong>.</p></li><li><p><strong>Superior</strong> -
+            Immediately heals 48
+            <strong>Health</strong>.</p></li><li><p><strong>Masterwork</strong>
+            - Immediately heals 96 <strong>Health</strong>.</p></li></ul>
           cost:
-            action: 1
+            action: 2
             focus: 0
             heroism: 0
+            weapon: false
             hands: 0
-            weapon: true
           range:
             minimum: null
-            maximum: null
-            weapon: true
+            maximum: 1
+            weapon: false
           target:
             type: single
             number: 1
             scope: 4
-            self: false
+            self: true
           effects: []
           tags:
-            - melee
-            - mainhand
-            - empowered
-          name: Heavy Strike
-          condition: ''
-          description: >-
-            <p>You unleash a powerful <strong>Strike</strong> with your mainhand
-            weapon. The attack is slower to execute, but is
-            <strong>Empowered</strong> to deliver additional damage.</p>
+            - consume
+            - healing
           summon: null
-      iconicSpells: 0
-      training:
-        type: heavy
-        rank: 1
-      nodes:
-        - str0a
-      rune: ''
-      gesture: ''
-      inflection: ''
+          persistRegion: false
+          regionBehavior: null
+      uses:
+        value: 1
+        max: 1
+      scroll:
+        runes: []
+        gestures: []
+        inflections: []
     effects: []
     flags: {}
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      createdTime: 1783344233380
-      modifiedTime: 1783344233380
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.equipment.Item.healingElixir000
       duplicateSource: null
       exportSource: null
-    _id: heavyWeaponTrain
+    _id: YArVffkLiY7iwiLz
     folder: null
     sort: 0
     ownership:
       default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.heavyWeaponTrain'
-  - name: Heavy Weapon Proficiency
-    type: talent
-    img: icons/skills/melee/weapons-crossed-poleaxes-white.webp
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.YArVffkLiY7iwiLz'
+  - name: Antitoxin
+    type: consumable
+    img: icons/consumables/potions/potion-vial-tube-yellow.webp
     system:
-      description: >-
-        <p>You have a fluent education in the use of martial weaponry. You gain
-        the <strong>Journeyman</strong> training rank and a <strong>+1 Skill
-        Bonus</strong> with weapons in the <strong>Simple</strong>,
-        <strong>Heavy</strong>, and <strong>Balanced</strong> categories.</p>
-      actions: []
-      iconicSpells: 0
-      training:
-        type: heavy
-        rank: 2
-      nodes:
-        - str4c
-      rune: ''
-      gesture: ''
-      inflection: ''
-    effects: []
-    flags: {}
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      createdTime: 1783344233381
-      modifiedTime: 1783344233381
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    _id: heavyWeaponProfi
-    folder: null
-    sort: 0
-    ownership:
-      default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.heavyWeaponProfi'
-  - name: Thick Skin
-    type: talent
-    img: icons/magic/defensive/armor-stone-skin.webp
-    system:
-      description: >-
-        Your physical toughness makes you more resistant to harm. You gain +2
-        Resistance to Bludgeoning, Slashing, and Piercing damage.
-      actions: []
-      nodes:
-        - tou3b
-      rune: ''
-      gesture: ''
-      inflection: ''
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-    effects: []
-    flags:
-      core: {}
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      createdTime: 1783344233381
-      modifiedTime: 1783344233381
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    _id: thickskin0000000
-    folder: null
-    sort: 0
-    ownership:
-      default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.thickskin0000000'
-  - name: Armored Efficiency
-    type: talent
-    img: icons/equipment/chest/breastplate-helmet-metal.webp
-    system:
-      description: >-
-        <p>You are trained in wearing the heaviest types of armor while still
-        retaining mobility. You are able to use a free Movement action once per
-        Turn while wearing Heavy armor.</p>
-      actions: []
-      nodes:
-        - str0b
-      rune: ''
-      gesture: ''
-      inflection: ''
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-    effects: []
-    flags:
-      core: {}
-    _stats:
-      coreVersion: '14.364'
-      systemId: crucible
-      systemVersion: 0.10.1
-      createdTime: 1783344233381
-      modifiedTime: 1783344233381
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    _id: armoredefficienc
-    folder: null
-    sort: 0
-    ownership:
-      default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.armoredefficienc'
-  - name: Stiletto
-    type: weapon
-    img: icons/weapons/daggers/dagger-straight-thin-black.webp
-    system:
-      category: light1
+      identifier: antitoxin
+      category: flask
       quantity: 1
       weight: 1
-      price: 80
+      price: 250
       quality: standard
       broken: false
-      enchantment: mundane
-      equipped: false
-      properties:
-        - ambush
-        - intuitive
-      damageType: piercing
-      identifier: stiletto
+      equipped: true
       invested: false
+      properties:
+        - stackable
       description:
         public: >-
-          <p>Thin, tapered, and made for piercing, the stiletto is a killer’s
-          weapon — designed to slide between ribs or gaps in armor and leave
-          barely a trace.</p>
+          <p>A slender phial that contains a slightly golden-colored liquid. It
+          smells foul, but contains the alchemical agents necessary to
+          neutralize a wide variety of toxins.</p>
         private: ''
-      actions: []
-      dropped: false
-      slot: 0
+      actions:
+        - id: antitoxin
+          name: Antitoxin
+          img: icons/consumables/potions/potion-vial-tube-yellow.webp
+          condition: ''
+          description: >-
+            <p>Consuming this @ref[item.name] is able to neutralize any
+            @Condition[poisoned] conditions affecting the target. Stronger
+            poisons require a stronger antitoxin to neutralize.</p><p>The
+            category of poison negated by this @ref[item.name] depends on its
+            quality:</p><ul><li><p><strong>Shoddy</strong> - Poisons dealing 3
+            damage or less per round</p></li><li><p><strong>Standard</strong> -
+            Poisons dealing 5 damage or less per
+            round</p></li><li><p><strong>Fine</strong> - Poisons dealing 7
+            damage or less per round</p></li><li><p><strong>Superior</strong> -
+            Poisons dealing 9 damage or less per
+            round</p></li><li><p><strong>Masterwork</strong> - Poisons dealing
+            11 damage or less per round</p></li></ul>
+          cost:
+            action: 2
+            focus: 0
+            heroism: 0
+            weapon: false
+            hands: 0
+          range:
+            minimum: null
+            maximum: 1
+            weapon: false
+          target:
+            type: single
+            number: 1
+            scope: 4
+            self: true
+          effects: []
+          tags:
+            - consume
+            - healing
+          summon: null
+          persistRegion: false
+          regionBehavior: null
+      uses:
+        value: 1
+        max: 1
+      scroll:
+        runes: []
+        gestures: []
+        inflections: []
     effects: []
     flags: {}
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      createdTime: 1783344233381
-      modifiedTime: 1783344233381
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.equipment.Item.antitoxin0000000
       duplicateSource: null
       exportSource: null
-    _id: WTzwacTfNem5ilp9
-    folder: 3BDkyJ5nPk8nVa81
-    sort: 100000
+    _id: AIVigh29bfyXxrzx
+    folder: null
+    sort: 0
     ownership:
       default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.WTzwacTfNem5ilp9'
-  - name: Adrenaline Surge
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.AIVigh29bfyXxrzx'
+  - name: Ring of Reinforcement
+    type: accessory
+    img: icons/equipment/finger/ring-shield-silver.webp
+    system:
+      identifier: ringReinforcement
+      category: jewelry
+      quantity: 1
+      weight: 0
+      price: 90
+      quality: fine
+      broken: false
+      enchantment: minor
+      equipped: true
+      invested: true
+      properties:
+        - investment
+      description:
+        public: >-
+          <blockquote><p>This steel ring feels permanently cool to the touch and
+          gives the sensation of weighing more than expected given its narrow
+          band.</p></blockquote><p>This enchanted ring provides a bonus to
+          @Rule[defense.armor] defense.</p>
+        private: >-
+          <p>This item is presented as an example of a Fine Ring with the
+          @UUID[Compendium.crucible.affixes.ActiveEffect.reinforcement000]{Reinforcement}
+          suffix.</p><p>This affix can be applied to any armor or accessory and
+          this ring could be further enchanted with a Tier 1 prefix.</p>
+      actions: []
+    effects:
+      - name: Reinforcement
+        type: affix
+        duration:
+          value: null
+          units: seconds
+          expiry: null
+          expired: false
+        system:
+          adjective: Reinforcement
+          identifier: reinforcement
+          changes: []
+          affixType: suffix
+          tier:
+            min: 1
+            max: 3
+            value: 1
+          itemTypes:
+            - accessory
+            - armor
+          actions: []
+          properties: []
+        _id: reinforcement000
+        img: icons/magic/defensive/shield-barrier-blue.webp
+        disabled: false
+        start: null
+        description: >-
+          <p>Increase <strong>Armor</strong> defense by 1 for each
+          <strong>Tier</strong> of this suffix.</p>
+        origin: null
+        tint: '#ffffff'
+        transfer: false
+        statuses: []
+        showIcon: 1
+        folder: Lw2f7XpDAHZxckl7
+        sort: 0
+        flags: {}
+        _stats:
+          coreVersion: '14.370'
+          systemId: crucible
+          systemVersion: 0.11.2
+          createdTime: 1793845838202
+          modifiedTime: 1793845838202
+          lastModifiedBy: WRGzDgYAt3ZuX6TU
+          compendiumSource: Compendium.crucible.affixes.ActiveEffect.reinforcement000
+          duplicateSource: null
+          exportSource: null
+        _key: >-
+          !actors.items.effects!L0qEPpUQBZQPCxN3.qHDWmYq1YgsHsOIH.reinforcement000
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.equipment.Item.ringOfReinforcem
+      duplicateSource: null
+      exportSource: null
+    _id: qHDWmYq1YgsHsOIH
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.qHDWmYq1YgsHsOIH'
+  - name: Ring of Evasion
+    type: accessory
+    img: icons/equipment/finger/ring-ball-silver.webp
+    system:
+      identifier: ringEvasion
+      category: jewelry
+      quantity: 1
+      weight: 0
+      price: 90
+      quality: fine
+      broken: false
+      enchantment: minor
+      equipped: true
+      invested: true
+      properties:
+        - investment
+      description:
+        public: >-
+          <blockquote><p>This elegant ornamented ring feels slightly slick and
+          difficult to grasp. While held it vibrates almost
+          imperceptibly.</p></blockquote><p>This enchanted ring provides a bonus
+          to @Rule[defense.dodge] defense.</p>
+        private: >-
+          <p>This item is presented as an example of <strong>Fine</strong>
+          jewelry with the
+          @UUID[Compendium.crucible.affixes.ActiveEffect.evasion000000000]{Evasion}
+          suffix.</p><p>This affix can be applied to any armor or accessory and
+          this ring could be further enchanted with a <strong>Tier 1
+          Prefix</strong>.</p>
+      actions: []
+    effects:
+      - name: Evasion
+        type: affix
+        duration:
+          value: null
+          units: seconds
+          expiry: null
+          expired: false
+        system:
+          adjective: Evasion
+          identifier: evasion
+          changes: []
+          affixType: suffix
+          tier:
+            min: 1
+            max: 3
+            value: 1
+          itemTypes:
+            - accessory
+            - armor
+          actions: []
+          properties: []
+        _id: evasion000000000
+        img: icons/magic/movement/trail-streak-pink.webp
+        disabled: false
+        start: null
+        description: >-
+          <p>Increase <strong>Dodge</strong> defense by 1 for each
+          <strong>Tier</strong> of this suffix.</p>
+        origin: null
+        tint: '#ffffff'
+        transfer: false
+        statuses: []
+        showIcon: 1
+        folder: Lw2f7XpDAHZxckl7
+        sort: -200000
+        flags: {}
+        _stats:
+          coreVersion: '14.370'
+          systemId: crucible
+          systemVersion: 0.11.2
+          createdTime: 1793845838202
+          modifiedTime: 1793845838202
+          lastModifiedBy: WRGzDgYAt3ZuX6TU
+          compendiumSource: Compendium.crucible.affixes.ActiveEffect.evasion000000000
+          duplicateSource: null
+          exportSource: null
+        _key: >-
+          !actors.items.effects!L0qEPpUQBZQPCxN3.bpj662CgfHnluuFD.evasion000000000
+    flags: {}
+    _stats:
+      coreVersion: '14.370'
+      systemId: crucible
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      compendiumSource: Compendium.crucible.equipment.Item.ringOfEvasion000
+      duplicateSource: null
+      exportSource: null
+    _id: bpj662CgfHnluuFD
+    folder: null
+    sort: 0
+    ownership:
+      default: 0
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.bpj662CgfHnluuFD'
+  - name: Human Lineage
     type: talent
-    img: icons/magic/movement/abstract-ribbons-red-orange.webp
+    img: icons/skills/social/diplomacy-handshake.webp
     system:
       nodes:
-        - str2b
+        - origin
       description: >-
-        <p>You can draw upon exceptional reserves of physical strength to meet
-        challenges imposed on your body.</p>
+        <p>Humans are known for a stubborn will to survive, pressing onward
+        through hardship that would halt anyone
+        else.</p><p><strong>Adaptable.</strong> Your people are quick to learn
+        whatever the moment demands. You gain <strong>+2</strong> Proficiency
+        Points.</p>
       actions:
-        - id: adrenalineSurge
-          name: Adrenaline Surge
-          img: icons/magic/movement/abstract-ribbons-red-orange.webp
+        - id: pushThrough
+          name: Push Through
+          img: icons/skills/social/diplomacy-handshake.webp
           condition: ''
           description: >-
-            <p>You expend <strong>Heroism</strong> and benefit from <strong>+2
-            Boons</strong> to any action which scales using Strength for 3
-            Rounds. You may perform this action outside of your turn in Combat
-            before making a <strong>Reaction</strong>.</p>
+            <p>You expend @Rule[resource.heroism] to push through adversity.
+            Until the end of your turn, your attacks and skill checks ignore any
+            @Rule[dice.bane]{Banes} imposed upon them. Banes you choose to take
+            upon yourself are not ignored.</p>
           cost:
             action: 0
             focus: 0
@@ -1490,16 +2274,16 @@ items:
             scope: 1
             self: false
           effects:
-            - name: Adrenaline Surge
+            - name: Push Through
               scope: 1
               result:
                 type: any
                 all: false
               statuses: []
               duration:
-                value: 3
-                units: rounds
-                expiry: turnStart
+                value: null
+                units: ''
+                expiry: turnEnd
                 expired: false
               system:
                 changes: []
@@ -1509,108 +2293,51 @@ items:
                   hands: 0
                 regions: []
                 summons: []
-                dc: null
                 properties: []
+                lights: []
+                suppression: {}
           tags: []
           summon: null
-      rune: ''
-      gesture: ''
-      inflection: ''
+          persistRegion: false
+          regionBehavior: null
       iconicSpells: 0
-      training:
-        type: ''
-        rank: null
+      training: society
+      spellcraft: ''
+      requirements:
+        training: {}
+      keywords: []
     effects: []
     flags: {}
+    _id: humanLineage0000
     _stats:
-      coreVersion: '14.364'
+      coreVersion: '14.370'
       systemId: crucible
-      systemVersion: 0.10.1
-      createdTime: 1783344233382
-      modifiedTime: 1783344233382
+      systemVersion: 0.11.2
+      createdTime: 1793845838202
+      modifiedTime: 1793845838202
       lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-    _id: adrenalineSurge0
-    folder: null
-    sort: 0
-    ownership:
-      default: 0
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.adrenalineSurge0'
-  - name: Ferocious Leap
-    type: talent
-    _id: ferociousleap000
-    img: icons/magic/movement/portal-vortex-orange.webp
-    system:
-      description: >-
-        <p>You leap powerfully into battle to deliver a punishing blow to a
-        nearby enemy with your mainhand weapon.</p>
-      actions:
-        - id: ferociousLeap
-          description: >-
-            <p>You <strong>Jump</strong> up to 10 feet, delivering a
-            <strong>Strike</strong> against an enemy within melee range of where
-            you land. Your movement ignores difficult terrain and is not blocked
-            by enemy creatures.</p>
-          tags:
-            - melee
-            - mainhand
-            - movement
-            - jump
-          cost:
-            action: -1
-            focus: 1
-            weapon: true
-            heroism: 0
-            hands: 0
-          target:
-            type: movement
-            number: 1
-            scope: 3
-            self: false
-            limit: 1
-          effects: []
-          name: Ferocious Leap
-          img: icons/magic/movement/portal-vortex-orange.webp
-          condition: ''
-          range:
-            maximum: 10
-            weapon: true
-            minimum: 4
-          summon: null
-      nodes:
-        - str3b
-      rune: ''
-      gesture: ''
-      inflection: ''
-      iconicSpells: 0
-      training:
-        type: ''
-        rank: null
-    effects: []
-    flags: {}
-    _stats:
-      systemId: crucible
-      systemVersion: 0.10.1
-      coreVersion: '14.364'
-      createdTime: 1783344233375
-      modifiedTime: 1783344233375
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
-      compendiumSource: null
+      compendiumSource: Compendium.crucible.ancestry.Item.humanLineage0000
       duplicateSource: null
       exportSource: null
     folder: null
     sort: 0
     ownership:
       default: 0
-      WRGzDgYAt3ZuX6TU: 3
-    _key: '!actors.items!L0qEPpUQBZQPCxN3.ferociousleap000'
+    _key: '!actors.items!L0qEPpUQBZQPCxN3.humanLineage0000'
 effects: []
 flags:
   core: {}
   crucible:
     actionHistory:
+      - id: cleave
+        messageId: eX39grj6BBfhPDny
+        combat: null
+      - id: cleave
+        messageId: 2dchsh8mhlf9btWq
+        combat: null
+      - id: cleave
+        messageId: OPhCnmUnEldgvaCH
+        combat: null
       - id: ferociousLeap
         messageId: fdcmWUC6WoJ0jzgv
         combat: null
@@ -1623,11 +2350,11 @@ flags:
           combatantId: 9OhW0GfLeDPN6scA
           tokenId: ml1efMTNhGS9kbqS
 _stats:
-  coreVersion: '14.364'
+  coreVersion: '14.370'
   systemId: crucible
-  systemVersion: 0.10.1
-  createdTime: 1783344233375
-  modifiedTime: 1783344233375
+  systemVersion: 0.11.2
+  createdTime: 1793845838202
+  modifiedTime: 1793845838202
   lastModifiedBy: WRGzDgYAt3ZuX6TU
   exportSource: null
   compendiumSource: null

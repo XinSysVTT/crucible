@@ -1,4 +1,5 @@
 const {HandlebarsApplicationMixin, DocumentSheetV2} = foundry.applications.api;
+const {FormDataExtended} = foundry.applications.ux;
 import CrucibleItem from "../../documents/item.mjs";
 import {formatHookContext, HOOK_PARTIAL} from "../../hooks/_module.mjs";
 
@@ -29,6 +30,8 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
     actions: {
       addEffect: CrucibleActionConfig.#onAddEffect,
       deleteEffect: CrucibleActionConfig.#onDeleteEffect,
+      deleteRegionBehavior: CrucibleActionConfig.#onDeleteRegionBehavior,
+      editRegionBehavior: CrucibleActionConfig.#onEditRegionBehavior,
       hookToggleSource: CrucibleActionConfig.#onHookToggleSource
     },
     form: {
@@ -42,6 +45,12 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
    * @type {string}
    */
   static ACTIVE_EFFECT_PARTIAL = "systems/crucible/templates/sheets/action/effect.hbs";
+
+  /**
+   * A form-only field which configures whether an Action effect template is removable.
+   * @type {BooleanField}
+   */
+  static REMOVABLE_FIELD = new foundry.data.fields.BooleanField({label: "BASE_EFFECT.PROPERTIES.Removable"});
 
   /** @override */
   static PARTS = {
@@ -97,6 +106,12 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
   };
 
   /**
+   * A transient Region Behavior config opened to pre-configure the Region this Action persists.
+   * @type {CrucibleActionBehaviorRegionConfig|null}
+   */
+  #behaviorConfig = null;
+
+  /**
    * Track which module hooks have their source expanded.
    * @type {Set<string>}
    */
@@ -115,17 +130,29 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
 
   /** @override */
   async _prepareContext(_options) {
+
+    // Re-resolve the Action, which is replaced by a new instance whenever the parent Document is updated
+    this.action = this.document.system.actions?.find(a => a.id === this.action.id) ?? this.action;
     const action = this.action.toObject();
     action.name ||= this.document.name;
     action.img ||= this.document.img;
+
+    // Prepare render context for the sheet
     return {
       action,
       hookPartial: HOOK_PARTIAL,
       moduleHooks: this.#formatModuleHooks(),
       editable: this.isEditable,
+      effectContext: CrucibleActionConfig.prepareEffectContext(this.action.constructor.schema.fields.effects,
+        action.name),
       effectPartial: this.constructor.ACTIVE_EFFECT_PARTIAL,
       effects: this.#prepareEffects(),
       fields: this.action.constructor.schema.fields,
+      usesRegion: !!SYSTEM.ACTION.TARGET_TYPES[this.action.target.type]?.region,
+      hasRegionBehavior: !!this.action.regionBehavior,
+      disablePersistRegion: this.action.hasForcedPersistence,
+      persistRegion: this.action.persistRegion,
+      editBehaviorTooltip: _loc(`ACTION.ACTIONS.${this.action.regionBehavior ? "Edit" : "Create"}RegionBehavior`),
       headerTags: this.action.tags.reduce((acc, tagId) => {
         const tag = SYSTEM.ACTION.TAGS[tagId];
         if ( !tag.internal ) acc[tagId] = tag;
@@ -135,12 +162,7 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
       tabs: this._prepareTabs("sheet"),
       tags: this.#prepareTags(),
       targetScopes: SYSTEM.ACTION.TARGET_SCOPES.choices,
-      targetTypes: SYSTEM.ACTION.TARGET_TYPES,
-      effectDurations: CONST.ACTIVE_EFFECT_DURATION_UNITS.reduce((acc, v) => {
-        if ( ["months", "turns"].includes(v) ) return acc;
-        return [...acc, {value: v, label: _loc(`EFFECT.DURATION.UNITS.${v}`)}];
-      }, [{value: "", label: ""}]),
-      effectExpiryEvents: Object.entries(ActiveEffect.EXPIRY_EVENTS).map(([k, v]) => ({value: k, label: _loc(v)}))
+      targetTypes: SYSTEM.ACTION.TARGET_TYPES
     };
   }
 
@@ -153,7 +175,9 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
   #prepareEffects() {
     const effects = this.action.toObject().effects;
     for ( const [i, effect] of effects.entries() ) {
+      effect.index = i;
       effect.fieldPath = `effects.${i}`;
+      CrucibleActionConfig.prepareEffectRemoval(effect);
     }
     return effects;
   }
@@ -194,6 +218,37 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
   }
 
   /* -------------------------------------------- */
+
+  /**
+   * Prepare the rendering context shared by every effect template rendered with the Active Effect partial.
+   * @param {ArrayField} effectsField   The Action field which defines its effect templates
+   * @param {string} placeholder        The placeholder for an unnamed effect
+   * @returns {object}
+   */
+  static prepareEffectContext(effectsField, placeholder) {
+    return {
+      fields: effectsField.element.fields,
+      placeholder,
+      removableField: CrucibleActionConfig.REMOVABLE_FIELD,
+      effectDurations: CONST.ACTIVE_EFFECT_DURATION_UNITS.reduce((acc, v) => {
+        if ( ["months", "turns"].includes(v) ) return acc;
+        return [...acc, {value: v, label: _loc(`EFFECT.DURATION.UNITS.${v}`)}];
+      }, [{value: "", label: ""}]),
+      effectExpiryEvents: Object.entries(ActiveEffect.EXPIRY_EVENTS).map(([k, v]) => ({value: k, label: _loc(v)}))
+    };
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Annotate effect template data with whether the effect is removable, which a null removal DC forbids.
+   * @param {object} effect     Effect template data prepared for rendering
+   */
+  static prepareEffectRemoval(effect) {
+    effect.removable = effect.system?.dc !== null;
+  }
+
+  /* -------------------------------------------- */
   /*  Form Submission                             */
   /* -------------------------------------------- */
 
@@ -216,7 +271,11 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
     // Duration units require a numeric duration value
     for ( const effect of submitData.effects ) {
       if ( effect.duration && !Number.isFinite(effect.duration?.value) ) effect.duration.units = "";
+      CrucibleActionConfig.submitEffectRemoval(effect);
     }
+
+    // A forced persistence choice renders disabled and is therefore absent from form data, so record it explicitly
+    if ( this.action.hasForcedPersistence ) submitData.persistRegion = this.action.persistRegion;
 
     // Validate action update
     let actionData;
@@ -255,7 +314,33 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
   }
 
   /* -------------------------------------------- */
+
+  /**
+   * Convert the submitted Removable choice of an effect template into its removal DC.
+   * An unremovable effect stores a null DC, while a blank DC is omitted so that it is derived when the action is used.
+   * @param {object} effect     Submitted effect template data
+   */
+  static submitEffectRemoval(effect) {
+    if ( !("removable" in effect) ) return;
+    const removable = effect.removable;
+    delete effect.removable;
+    effect.system ??= {};
+    if ( !removable ) effect.system.dc = null;
+    else if ( effect.system.dc === null ) delete effect.system.dc;
+  }
+
+  /* -------------------------------------------- */
   /*  Event Listeners and Handlers                */
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  _onClose(options) {
+    super._onClose(options);
+    // noinspection ES6MissingAwait
+    this.#behaviorConfig?.close();
+    this.#behaviorConfig = null;
+  }
+
   /* -------------------------------------------- */
 
   /**
@@ -266,7 +351,8 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
    * @returns {Promise<void>}
    */
   static async #onAddEffect(_event, _target) {
-    const effects = this.action.toObject().effects;
+    const submitData = this._processFormData(null, this.form, new FormDataExtended(this.form));
+    const effects = Object.values(submitData.effects ?? {});
     effects.push({
       scope: SYSTEM.ACTION.TARGET_SCOPES.ENEMIES,
       duration: {
@@ -275,10 +361,7 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
         expiry: "turnEnd"
       }
     });
-    this.action.updateSource({effects});
-    await this.render();
-    const submit = new SubmitEvent("submit", {cancelable: true});
-    this.element.dispatchEvent(submit);
+    return this.submit({updateData: {effects}});
   }
 
   /* -------------------------------------------- */
@@ -291,10 +374,82 @@ export default class CrucibleActionConfig extends HandlebarsApplicationMixin(Doc
    * @returns {Promise<void>}
    */
   static async #onDeleteEffect(_event, target) {
-    const fieldset = target.closest("fieldset.effect");
-    fieldset.remove();
-    const submit = new SubmitEvent("submit", {cancelable: true});
-    this.element.dispatchEvent(submit);
+    const submitData = this._processFormData(null, this.form, new FormDataExtended(this.form));
+    const effects = Object.values(submitData.effects ?? {});
+    const index = Number(target.closest("fieldset.effect").dataset.index) || 0;
+    effects.splice(index, 1);
+    return this.submit({updateData: {effects}});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Reset the configured Region Behavior to null.
+   * @this {CrucibleActionConfig}
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   * @returns {Promise<void>}
+   */
+  static async #onDeleteRegionBehavior(_event, _target) {
+    const confirm = await foundry.applications.api.DialogV2.confirm({
+      window: {title: _loc("ACTION.ACTIONS.DeleteRegionBehavior")},
+      content: `<p>${_loc("ACTION.ACTIONS.DeleteRegionBehaviorConfirm", {action: this.action.name})}</p>`
+    });
+    if ( !confirm ) return;
+    if ( this.#behaviorConfig?.rendered ) {
+      await this.#behaviorConfig.close();
+    }
+    this.#behaviorConfig = null;
+    await this.submit({updateData: {regionBehavior: null}});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Open a Region Behavior Config window to pre-configure a region behavior.
+   * @this {CrucibleActionConfig}
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} _target
+   * @returns {Promise<void>}
+   */
+  static async #onEditRegionBehavior(_event, _target) {
+    if ( this.#behaviorConfig?.rendered ) {
+      this.#behaviorConfig.bringToFront();
+      return;
+    }
+    if ( !this.action.regionBehavior ) {
+      await this.submit({updateData: {
+        regionBehavior: {
+          name: this.action.name,
+          system: {
+            action: {
+              id: `${this.action.id}Region`,
+              name: this.action.name,
+              img: this.action.img,
+              description: this.action.description,
+              effects: [],
+              tags: [],
+              target: {
+                scope: this.action.target.scope
+              }
+            }
+          }
+        }
+      }});
+    }
+    const behaviorData = foundry.utils.deepClone(this.action.regionBehavior);
+    foundry.utils.mergeObject(behaviorData, {
+      type: "crucible.action",
+      system: {
+        actor: this.action.actor?.uuid
+      }
+    });
+
+    // The parent document may be a CrucibleItem or an affix ActiveEffect; both record Actions under system.actions
+    const tempBehavior = new RegionBehavior.implementation(behaviorData);
+    this.#behaviorConfig = tempBehavior.sheet;
+    await this.#behaviorConfig.render({force: true, preconfigure: true, actionId: this.action.id,
+      parent: this.document});
   }
 
   /* -------------------------------------------- */

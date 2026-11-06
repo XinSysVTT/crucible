@@ -178,10 +178,13 @@ export default class CrucibleItem extends foundry.documents.Item {
    * @param {string} [options.quality]              Explicit quality tier, or auto-selected if omitted
    * @param {string} [options.name]                 Display name override, or auto-composed from affixes
    * @param {boolean} [options.broken]              Whether the item should be broken, if relevant
+   * @param {string} [options.description]          Plain text public description override
+   * @param {string} [options.img]                  Item image override
+   * @param {number} [options.quantity]             Stack quantity override, honored only for a stackable item
    * @returns {Promise<CrucibleItem>}               The generated item with enchantments applied
    * @throws {Error}                                An error if the requested affixes are incompatible with the item
    */
-  static async #fromLootDropData(baseUuid, affixes, {quality, name, broken}={}) {
+  static async #fromLootDropData(baseUuid, affixes, {quality, name, broken, description, img, quantity}={}) {
 
     // Resolve the base item
     const baseItem = await fromUuid(baseUuid);
@@ -242,11 +245,16 @@ export default class CrucibleItem extends foundry.documents.Item {
     const itemData = baseItem.toObject();
     if ( selectedQuality ) itemData.system.quality = selectedQuality;
     if ( broken ) itemData.system.broken = true;
+    if ( img ) itemData.img = img;
+    if ( quantity && baseItem.system.properties?.has("stackable") ) itemData.system.quantity = quantity;
+    if ( description ) itemData.system.description.public = `<p>${foundry.utils.escapeHTML(description)}</p>`;
     itemData.effects = [...(itemData.effects || []), ...affixEffects];
 
-    // Compose the item name
+    // Compose the item name, including a possible prefix to denote its quality
+    const {quality: baseQuality, properties} = baseItem.system;
+    const unmarked = properties.has("natural") || (itemData.system.quality === baseQuality);
     itemData.name = name || crucible.api.models.CruciblePhysicalItem.composeItemName(baseItem.name, affixEffects,
-      baseItem.system.properties.has("natural") ? "" : itemData.system.quality) || baseItem.name;
+      unmarked ? "" : itemData.system.quality) || baseItem.name;
 
     // Flag compendium source
     itemData._stats ??= {};
@@ -316,6 +324,12 @@ export default class CrucibleItem extends foundry.documents.Item {
 
     // If physical item without stackable, clamp quantity to [0, 1]
     if ( !(this.system instanceof crucible.api.models.CruciblePhysicalItem) ) return;
+
+    // A cursed item cannot be willingly divested; only a Gamemaster may break the attachment
+    if ( (data.system?.invested === false) && this.system.invested && !user.isGM && this.system.isCursed ) {
+      ui.notifications.warn(_loc("ITEM.WARNINGS.CursedDivestment", {name: this.name}));
+      return false;
+    }
 
     // An equipped item is always a single unit; stacks may only exist while unequipped
     const willBeEquipped = data.system?.equipped ?? this.system.equipped;

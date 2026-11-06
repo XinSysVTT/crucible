@@ -2,6 +2,11 @@ name: Lightning Spray
 type: talent
 img: icons/magic/lightning/bolt-strike-beam-pink.webp
 system:
+  keywords:
+    - playstyle.ranged
+    - weapon.natural
+    - damageType.electricity
+    - target.reflex
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} is able to produce and expel powerful
@@ -13,10 +18,11 @@ system:
       condition: ''
       description: >-
         <p>The @ref[actor.name]{creature} expels a bolt of lighting in a 30 foot
-        ray that is 4 feet wide, attacking the <strong>Reflex</strong> of each
+        ray that is 4 feet wide, attacking the @Rule[defense.reflex] of each
         target along that path and dealing <strong>Electricity</strong>
-        damage.</p><p>On a <strong>Critical Hit</strong> the attack causes the
-        @Condition[shocked] condition for <strong>3 Turns</strong>.</p>
+        damage.</p><p>On a @Rule[dice.criticalSuccess]{Critical Hit} the attack
+        causes the @Condition[shocked] condition for <strong>3
+        Turns</strong>.</p>
       cost:
         action: 1
         focus: 1
@@ -55,17 +61,10 @@ system:
             summons: []
             changes: []
       tags:
-        - melee
         - natural
         - reflex
         - electricity
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: pfqBQPVP2KV9fQFs
 ownership:

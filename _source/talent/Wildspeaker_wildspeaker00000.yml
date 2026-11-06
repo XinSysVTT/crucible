@@ -2,6 +2,9 @@ name: Wildspeaker
 type: talent
 img: icons/skills/social/diplomacy-peace-alliance.webp
 system:
+  keywords:
+    - action.noncombat
+    - skill.wilderness
   nodes:
     - wis1a
   description: >-
@@ -18,11 +21,11 @@ system:
         simple questions to a <strong>Beast</strong> which can perceive you. As
         long as the creature is not hostile it will respond accurately within
         the limits of its own knowledge.</p><ul><li><p>Beasts with an
-        <strong>Intellect</strong> score of zero are incapable of understanding
-        you.</p></li><li><p>Beasts with an <strong>Intellect</strong> score of 1
+        @Rule[ability.intellect] score of zero are incapable of understanding
+        you.</p></li><li><p>Beasts with an @Rule[ability.intellect] score of 1
         can only respond with "yes" or "no" responses.</p></li><li><p>Beasts
-        with an <strong>Intellect</strong> score greater than 1 can provide
-        simple multi-word responses.</p></li></ul>
+        with an @Rule[ability.intellect] score greater than 1 can provide simple
+        multi-word responses.</p></li></ul>
       cost:
         action: 0
         focus: 0
@@ -45,15 +48,10 @@ system:
         actorUuid: null
         permanent: true
       autoFavorite: false
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: wilderness
 effects: []
-folder: F5y85kE9ocaa5R4R
+folder: fldWilderness000
 ownership:
   default: 0
   AnoypGxxNIMOS0XY: 3

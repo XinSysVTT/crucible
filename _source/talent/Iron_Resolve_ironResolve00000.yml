@@ -5,30 +5,27 @@ img: icons/magic/control/silhouette-aura-energy.webp
 system:
   description: >-
     <p>Your physical resilience makes you too tough to be deeply affected by a
-    powerful blow. The critical success threshold for <strong>Strikes</strong>
-    against you is increased by +1, making you harder to critically hit.</p>
+    powerful blow. The @Rule[dice.criticalSuccessThreshold] for
+    <strong>Strikes</strong> against you is increased by +1, making you harder
+    to critically hit.</p>
   actions: []
+  keywords:
+    - playstyle.defensive
   nodes:
-    - tou1b
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - tou3a
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 flags: {}
 _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.360'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.10.2
   createdTime: 1776115207292
-  modifiedTime: 1776122074954
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789487697259
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 ownership:
   default: 0
   AnoypGxxNIMOS0XY: 3

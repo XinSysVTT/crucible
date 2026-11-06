@@ -18,93 +18,98 @@ pages:
         action which targets that defense. Success on a test against a defense
         target requires the roll to exceed the defense value, the defender is
         successful on a tie.</p><p>The defense types in the Crucible system
-        are:</p><h2 class="divider">Physical Defense</h2><p><strong>Physical
-        Defense</strong> describes how difficult the creature is to hit with
-        physical attacks, typically melee or ranged weapon strikes. Physical
-        Defense is composed of four components. Total Physical Defense is equal
-        to:</p><section class="formula"><p class="value">Physical Defense</p><p
+        are:</p><h2 class="divider">Physical Defense</h2><div
+        data-rule="defense.physical"><p><strong>Physical Defense</strong>
+        describes how difficult the creature is to hit with physical attacks,
+        typically melee or ranged weapon strikes. Physical Defense is composed
+        of four components. Total Physical Defense is equal to:</p><section
+        class="formula"><p class="value">Physical Defense</p><p
         class="equals">=</p><p class="equation">Armor + Dodge + Parry +
         Block</p></section><p>When an attack misses because it is less than or
         equal to the Physical Defense total, it is assigned a type of miss based
         on the proportional mixture of Physical Defense
-        components.</p><dl><dt><p>Armor</p></dt><dd><p>Protection offered by
-        worn equipment or organic attributes like scales or chitin. When a
-        strike fails to hit and is not Dodged, Parried, or Blocked, the Armor
-        defense determines the final outcome. If the attack was not a Critical
-        Failure, it results in a <strong>Glance</strong> - a grazing hit that
-        still deals reduced damage based on the Overflow below the Defense
-        target. If the attack was a Critical Failure, it is fully absorbed by
-        the <strong>Armor</strong> and deals no
-        damage.</p></dd><dt><p>Dodge</p></dt><dd><p>Protection offered by
-        physical quickness and agility. Strikes which fail to hit and are
-        defended by the Dodge defense assume the <strong>Dodged</strong>
-        outcome. Dodged attacks deal no damage and provide opportunity for
-        dodge-based reactions.</p></dd><dt><p>Parry</p></dt><dd><p>Protection
-        offered by guarding against an attack using an equipped weapon. Strikes
-        which fail to hit and are defended by the Parry defense assume the
-        <strong>Parried</strong> outcome. Parried attacks deal no damage and
-        provide opportunity for parry-based
-        reactions.</p></dd><dt><p>Block</p></dt><dd><p>Protection offered by
-        guarding against an attack using an equipped shield or blocking weapon.
-        Strikes which fail to hit and are defended by the Block defense assume
-        the <strong>Blocked </strong>outcome. Blocked attacks deal no damage and
-        provide opportunity for block-based reactions.</p></dd></dl><h2
-        class="divider">Non-Physical Defenses</h2><p>The three non-physical
-        defenses are used to protect against actions which do not involve a
-        targeted kinetic strike and instead are withstood or avoided through
-        some other means. Bonuses to these non-physical defenses may be obtained
-        through Talents or magical Equipment.</p><h3
-        class="divider">Fortitude</h3><p><strong>Fortitude Defense</strong>
+        components.</p></div><dl><dt><p>Armor</p></dt><dd
+        data-rule="defense.armor"><p>Protection offered by worn equipment or
+        organic attributes like scales or chitin. When a strike fails to hit and
+        is not Dodged, Parried, or Blocked, the Armor defense determines the
+        final outcome. If the attack was not a Critical Failure, it results in a
+        <strong>Glance</strong> - a grazing hit that still deals reduced damage
+        based on the Overflow below the Defense target. If the attack was a
+        Critical Failure, it is fully absorbed by the <strong>Armor</strong> and
+        deals no damage.</p></dd><dt><p>Dodge</p></dt><dd
+        data-rule="defense.dodge"><p>Protection offered by physical quickness
+        and agility. Strikes which fail to hit and are defended by the Dodge
+        defense assume the <strong>Dodged</strong> outcome. Dodged attacks deal
+        no damage and provide opportunity for dodge-based
+        reactions.</p></dd><dt><p>Parry</p></dt><dd
+        data-rule="defense.parry"><p>Protection offered by guarding against an
+        attack using an equipped weapon. Strikes which fail to hit and are
+        defended by the Parry defense assume the <strong>Parried</strong>
+        outcome. Parried attacks deal no damage and provide opportunity for
+        parry-based reactions.</p></dd><dt><p>Block</p></dt><dd
+        data-rule="defense.block"><p>Protection offered by guarding against an
+        attack using an equipped shield or blocking weapon. Strikes which fail
+        to hit and are defended by the Block defense assume the <strong>Blocked
+        </strong>outcome. Blocked attacks deal no damage and provide opportunity
+        for block-based reactions.</p></dd></dl><h2 class="divider">Non-Physical
+        Defenses</h2><p>The three non-physical defenses are used to protect
+        against actions which do not involve a targeted kinetic strike and
+        instead are withstood or avoided through some other means. Bonuses to
+        these non-physical defenses may be obtained through Talents or magical
+        Equipment.</p><h3 class="divider">Fortitude</h3><div
+        data-rule="defense.fortitude"><p><strong>Fortitude Defense</strong>
         describes a character's ability to withstand bodily harm. Fortitude is
         modified by <strong>Strength</strong> and <strong>Wisdom</strong> which
         represent physical resistance and mental resilience respectively.
         Fortitude defense is calculated as:</p><section class="formula"><p
         class="value">Fortitude Defense</p><p class="equals">=</p><p
         class="equation">12 + ((Strength + Wisdom) / 4) + Fortitude
-        Bonus</p></section><h3
-        class="divider">Willpower</h3><p><strong>Willpower Defense</strong>
+        Bonus</p></section></div><h3 class="divider">Willpower</h3><div
+        data-rule="defense.willpower"><p><strong>Willpower Defense</strong>
         describes a character's ability to withstand mental or emotional
         attacks. Willpower is modified by <strong>Toughness</strong> and
         <strong>Presence</strong> which represent physical grit and mental
         determination respectively. Willpower defense is calculated
         as:</p><section class="formula"><p class="value">Willpower Defense</p><p
         class="equals">=</p><p class="equation">12 + ((Toughness + Presence) /
-        4) + Willpower Bonus</p></section><h3
-        class="divider">Reflex</h3><p><strong>Reflex Defense</strong> describes
+        4) + Willpower Bonus</p></section></div><h3
+        class="divider">Reflex</h3><div
+        data-rule="defense.reflex"><p><strong>Reflex Defense</strong> describes
         a character's ability to avoid harm that would otherwise occur in a
         specific area. Reflex is modified by <strong>Dexterity</strong> and
         <strong>Intellect</strong> which represent quickness of body and
         rapidity of thought respectively. Reflex defense is calculated
         as:</p><section class="formula"><p class="value">Reflex Defense</p><p
         class="equals">=</p><p class="equation">12 + ((Dexterity + Intellect) /
-        4) + Reflex Bonus</p></section><p>Note that Reflex is typically used as
-        the defense type for intangible - but otherwise physical - sources of
-        harm, while Physical Defense is used to defend against tangible
-        attacks.</p><h2 class="divider">Restoration
+        4) + Reflex Bonus</p></section></div><p>Note that Reflex is typically
+        used as the defense type for intangible - but otherwise physical -
+        sources of harm, while Physical Defense is used to defend against
+        tangible attacks.</p><h2 class="divider">Restoration
         Thresholds</h2><p><strong>Restoration Thresholds</strong> describe a
         pair of defenses which dictate how challenging it is to restore a
         creature's resources through healing or rallying actions. Bonuses to
         these Restoration Threshold defenses may be obtained through Talents or
         magical Equipment. Since higher thresholds make a character more
         difficult to heal, bonuses to these defenses lower the threshold instead
-        of increasing it.</p><h3 class="divider">Healing
-        Threshold</h3><p><strong>Healing Threshold</strong> describes how
-        difficult it is to restore the Health of a creature. As creatures become
-        more severely wounded, they grow more difficult to heal. This provides a
-        measure of attrition which requires adventurers to carefully manage
-        their accumulation of <strong>Wounds </strong>over time. Healing
-        threshold is calculated as:</p><section class="formula"><p
+        of increasing it.</p><h3 class="divider">Healing Threshold</h3><div
+        data-rule="defense.wounds"><p><strong>Healing Threshold</strong>
+        describes how difficult it is to restore the Health of a creature. As
+        creatures become more severely wounded, they grow more difficult to
+        heal. This provides a measure of attrition which requires adventurers to
+        carefully manage their accumulation of <strong>Wounds </strong>over
+        time. Healing threshold is calculated as:</p><section class="formula"><p
         class="value">Healing Threshold</p><p class="equals">=</p><p
-        class="equation">12 + (Wounds / 10) - Bonus</p></section><h3
-        class="divider">Rallying Threshold</h3><p><strong>Rallying
-        Threshold</strong> describes how difficult it is to restore the Morale
-        of a creature. As creatures become more psychologically damaged they
-        become more difficult to rally. This provides a measure of attrition
-        which requires adventurers to carefully manage their accumulation of
+        class="equation">12 + (Wounds / 10) - Bonus</p></section></div><h3
+        class="divider">Rallying Threshold</h3><div
+        data-rule="defense.madness"><p><strong>Rallying Threshold</strong>
+        describes how difficult it is to restore the Morale of a creature. As
+        creatures become more psychologically damaged they become more difficult
+        to rally. This provides a measure of attrition which requires
+        adventurers to carefully manage their accumulation of
         <strong>Madness</strong> over time. Rallying threshold is calculated
         as:</p><section class="formula"><p class="value">Rallying
         Threshold</p><p class="equals">=</p><p class="equation">12 + (Madness /
-        10) - Bonus</p></section>
+        10) - Bonus</p></section></div>
     video:
       controls: true
       volume: 0.5
@@ -119,12 +124,12 @@ pages:
       compendiumSource: null
       duplicateSource: null
       exportSource: null
-      coreVersion: '14.363'
+      coreVersion: '14.367'
       systemId: crucible
       systemVersion: 0.9.0
       createdTime: 1761697191065
-      modifiedTime: 1780404092331
-      lastModifiedBy: ZXJsFnFZuf21WDAk
+      modifiedTime: 1789586737631
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
     _key: '!journal.pages!characterMechani.Defenses00000000'
   - _id: Resources0000000
     name: Resources
@@ -143,40 +148,46 @@ pages:
         resources is zero.</p><h2 class="divider">Physical and Mental
         Health</h2><p>Maintaining the physical and mental health of your
         character is an ever-present challenge. Crucible uses two separate pools
-        to represent the hero's state of wellbeing.</p><dl><dt><p>Health and
-        Wounds</p></dt><dd><p>The physical health of a character is modeled
-        using two resource pools. <strong>Health</strong> is a temporary
+        to represent the hero's state of wellbeing.</p><p>The physical health of
+        a character is modeled using two resource
+        pools.</p><dl><dt><p>Health</p></dt><dd
+        data-rule="resource.health"><p><strong>Health</strong> is a temporary
         resource which begins full and is decreased when a character sustains
-        damage in combat. <strong>Wounds</strong> are a permanent resource which
-        increase when a character suffers grievous injury.</p><p>If the Health
-        pool is reduced to zero, the character becomes @Condition[weakened] and
-        begins to suffer Wounds. If the Wounds meter reaches its maximum, the
-        character becomes @Condition[dead].</p></dd><dt><p>Morale and
-        Madness</p></dt><dd><p>The mental health of a character is similarly
-        modeled using two resource pools. <strong>Morale</strong> is a temporary
+        damage in combat. If the Health pool is reduced to zero, the character
+        becomes @Condition[weakened] and begins to suffer
+        <strong>Wounds</strong>.</p></dd><dt><p>Wounds</p></dt><dd
+        data-rule="resource.wounds"><p><strong>Wounds</strong> are a permanent
+        resource which increase when a character suffers grievous injury. If the
+        Wounds meter reaches its maximum, the character becomes
+        @Condition[dead].</p></dd></dl><p>The mental health of a character is
+        similarly modeled using two resource
+        pools.</p><dl><dt><p>Morale</p></dt><dd
+        data-rule="resource.morale"><p><strong>Morale</strong> is a temporary
         resource which begins full and is decreased as the character suffers
-        stress or trauma. <strong>Madness</strong> is a permanent resource which
-        increases when a character suffers grievous mental
-        strain.</p></dd></dl><p>If the Morale pool is reduced to zero, the
-        character becomes @Condition[broken] and begins to suffer Madness. If
-        the Madness meter reaches its maximum, the character becomes
-        @Condition[insane].</p><h2 class="divider">Capacity for
-        Action</h2><p>Two resource pools define a character's ability to take
-        action during game
-        situations.</p><dl><dt><p>Action</p></dt><dd><p><strong>Action
-        </strong>describes a character's capacity for rapid action during each
-        round of a combat encounter. Characters typically have a pool of 6
-        Action, all six of which replenish at the start of their turn in
-        combat.</p></dd><dt><p>Focus</p></dt><dd><p><strong>Focus</strong>
-        describes a character's capacity for extraordinary feats of heroism or
-        magic. A character's Focus is replenished when they successfully rest,
-        but during the midst of combat Focus must be used thoughtfully as it
-        will not naturally
-        replenish.</p></dd><dt><p>Heroism</p></dt><dd><p><strong>Heroism</strong>
-        is a special generated resource that allows you to perform spectacular
-        feats of magic or heroic prowess. Heroism is earned over the course of —
-        typically longer — combat encounters allowing you to narratively unleash
-        your most powerful abilities once the tension of battle has
+        stress or trauma. If the Morale pool is reduced to zero, the character
+        becomes @Condition[broken] and begins to suffer
+        <strong>Madness</strong>.</p></dd><dt><p>Madness</p></dt><dd
+        data-rule="resource.madness"><p><strong>Madness</strong> is a permanent
+        resource which increases when a character suffers grievous mental
+        strain. If the Madness meter reaches its maximum, the character becomes
+        @Condition[insane].</p></dd></dl><h2 class="divider">Capacity for
+        Action</h2><p>Three resource pools define a character's ability to take
+        action during game situations.</p><dl><dt><p>Action</p></dt><dd
+        data-rule="resource.action"><p><strong>Action </strong>describes a
+        character's capacity for rapid action during each round of a combat
+        encounter. Characters typically have a pool of 6 Action, all six of
+        which replenish at the start of their turn in
+        combat.</p></dd><dt><p>Focus</p></dt><dd
+        data-rule="resource.focus"><p><strong>Focus</strong> describes a
+        character's capacity for extraordinary feats of heroism or magic. A
+        character's Focus is replenished when they successfully rest, but during
+        the midst of combat Focus must be used thoughtfully as it will not
+        naturally replenish.</p></dd><dt><p>Heroism</p></dt><dd
+        data-rule="resource.heroism"><p><strong>Heroism</strong> is a special
+        generated resource that allows you to perform spectacular feats of magic
+        or heroic prowess. Heroism is earned over the course of — typically
+        longer — combat encounters allowing you to narratively unleash your most
+        powerful abilities once the tension of battle has
         peaked!</p></dd></dl><h2 class="divider">Substituting Heroism for
         Focus</h2><p>When a character cannot pay the <strong>Focus</strong> cost
         of an Action, either because their Focus pool is too low or because a
@@ -215,12 +226,12 @@ pages:
       compendiumSource: null
       duplicateSource: null
       exportSource: null
-      coreVersion: '14.363'
+      coreVersion: '14.368'
       systemId: crucible
       systemVersion: 0.9.0
       createdTime: 1761697210522
-      modifiedTime: 1780586345014
-      lastModifiedBy: fzBjA63BB4hW4rQb
+      modifiedTime: 1790262096199
+      lastModifiedBy: ZXJsFnFZuf21WDAk
     _key: '!journal.pages!characterMechani.Resources0000000'
   - _id: Resistances00000
     name: Resistances and Vulnerability
@@ -248,22 +259,70 @@ pages:
         associated
         @UUID[Compendium.crucible.rules.JournalEntry.crucibleConditio.JournalEntryPage.conditionsOvervi]{Condition}
         which can be caused as a consequence of that damage type, usually as a
-        result of a <strong>Critical
-        Hit</strong>.</p><table><thead><tr><th><p>Physical Damage
-        Types</p></th><th><p>Related
-        Conditions</p></th></tr></thead><tbody><tr><td><p>Bludgeoning</p></td><td><p>@Condition[staggered]</p></td></tr><tr><td><p>Piercing</p></td><td><p>@Condition[bleeding]</p></td></tr><tr><td><p>Slashing</p></td><td><p>@Condition[bleeding]</p></td></tr><tr><td><p>Poison</p></td><td><p>@Condition[poisoned]</p></td></tr><tr><th><p>Elemental
-        Damage Types</p></th><th><p>Related
-        Conditions</p></th></tr><tr><td><p>Acid</p></td><td><p>@Condition[corroding]</p></td></tr><tr><td><p>Fire</p></td><td><p>@Condition[burning]</p></td></tr><tr><td><p>Cold</p></td><td><p>@Condition[freezing]</p></td></tr><tr><td><p>Electricity</p></td><td><p>@Condition[shocked]</p></td></tr><tr><th><p>Spiritual
-        Damage Types</p></th><th><p>Related
-        Conditions</p></th></tr><tr><td><p>Corruption</p></td><td><p>@Condition[decaying]</p></td></tr><tr><td><p>Psychic</p></td><td><p>@Condition[confused]</p></td></tr><tr><td><p>Radiant</p></td><td><p>@Condition[irradiated]</p></td></tr><tr><td><p>Void</p></td><td><p>@Condition[entropy]</p></td></tr></tbody></table><h2
-        class="divider">Damage Resistance</h2><p>When an Action deals damage,
-        that damage may be reduced by an amount of Resistance that the target
-        creature has. This amount of resistance may even reduce the damage
-        caused by the Action to be zero!</p><section
-        class="gameplay"><h4>Example: Damage Resistance</h4><p>Suppose a
-        mechanical automaton, a Brass Sentinel, has resistance of
-        <strong>+5</strong> to <strong>Slashing</strong> damage. If the Brass
-        Sentinel receives an attack that deals <strong>13 Slashing
+        result of a <strong>Critical Hit</strong>. The damage types fall into
+        three categories:</p><h3 class="divider">Physical Damage
+        Types</h3><dl><dt><p>Bludgeoning</p></dt><dd
+        data-rule="damageType.bludgeoning"><p>The crack of a swung club, or the
+        crush of a giant's grip. <strong>Bludgeoning</strong> damage is caused
+        by blunt force, and is associated with the @Condition[staggered]
+        condition.</p></dd><dt><p>Piercing</p></dt><dd
+        data-rule="damageType.piercing"><p>The sting of an arrow, or the stab of
+        a beast's fangs. <strong>Piercing</strong> damage is caused by the sharp
+        point of an implement, and is associated with the @Condition[bleeding]
+        condition.</p></dd><dt><p>Slashing</p></dt><dd
+        data-rule="damageType.slashing"><p>The slice of a whirling blade, or the
+        rip of a beast's claws. <strong>Slashing</strong> damage is caused by
+        the pull of a sharpened weapon across flesh, and is associated with the
+        @Condition[bleeding] condition.</p></dd><dt><p>Poison</p></dt><dd
+        data-rule="damageType.poison"><p>The slow drain of an ingested toxin, or
+        the sudden burn of a snake's venomous bite. <strong>Poison</strong>
+        damage is caused by manufactured or natural toxins, and is associated
+        with the @Condition[poisoned] condition.</p></dd></dl><h3
+        class="divider">Elemental Damage Types</h3><dl><dt><p>Acid</p></dt><dd
+        data-rule="damageType.acid"><p>The blistering pain of a caustic liquid,
+        or the sizzling aftermath of a creature's corrosive spit.
+        <strong>Acid</strong> damage is caused by manufactured or natural
+        erosive sources, and is associated with the @Condition[corroding]
+        condition.</p></dd><dt><p>Fire</p></dt><dd
+        data-rule="damageType.fire"><p>The scorching heat of a flaming building,
+        or the melting intensity of a dragon's breath. <strong>Fire</strong>
+        damage is caused by flames and heat, and is associated with the
+        @Condition[burning] condition.</p></dd><dt><p>Cold</p></dt><dd
+        data-rule="damageType.cold"><p>The sapping chill of a glacial waste, or
+        the frigid bite of a frost elemental's touch. <strong>Cold</strong>
+        damage is caused by icy temperatures, and is associated with the
+        @Condition[freezing] condition.</p></dd><dt><p>Electricity</p></dt><dd
+        data-rule="damageType.electricity"><p>The arc of a heavily-charged
+        machine, or the explosive jolt of a lightning strike.
+        <strong>Electricity</strong> damage is caused by the flow of powerful
+        electric charge, and is associated with the @Condition[shocked]
+        condition.</p></dd></dl><h3 class="divider">Spiritual Damage
+        Types</h3><dl><dt><p>Corruption</p></dt><dd
+        data-rule="damageType.corruption"><p>The festering rot of an infected
+        wound, or the decay of a pestilent curse. <strong>Corruption</strong>
+        damage is caused by forces which wither and rot the living, and is
+        associated with the @Condition[decaying]
+        condition.</p></dd><dt><p>Psychic</p></dt><dd
+        data-rule="damageType.psychic"><p>The bewildering shock of seeing your
+        allies fall, or the stun of a telepathic attack.
+        <strong>Psychic</strong> damage is caused by assaults upon the mind, and
+        is associated with the @Condition[confused]
+        condition.</p></dd><dt><p>Radiant</p></dt><dd
+        data-rule="damageType.radiant"><p>The concentrated power of the stars,
+        or the searing brand of divine light. <strong>Radiant</strong> damage is
+        caused by intense or heavenly illumination, and is associated with the
+        @Condition[irradiated] condition.</p></dd><dt><p>Void</p></dt><dd
+        data-rule="damageType.void"><p>The insatiable hunger of darkness, or the
+        cold nothingness of inescapable oblivion. <strong>Void</strong> damage
+        is caused by forces of unmaking, and is associated with the
+        @Condition[entropy] condition.</p></dd></dl><h2 class="divider">Damage
+        Resistance</h2><p>When an Action deals damage, that damage may be
+        reduced by an amount of Resistance that the target creature has. This
+        amount of resistance may even reduce the damage caused by the Action to
+        be zero!</p><section class="gameplay"><h4>Example: Damage
+        Resistance</h4><p>Suppose a mechanical automaton, a Brass Sentinel, has
+        resistance of <strong>+5</strong> to <strong>Slashing</strong> damage.
+        If the Brass Sentinel receives an attack that deals <strong>13 Slashing
         damage</strong>, the effective damage dealt is reduced to <strong>8
         Slashing Damage</strong>.</p></section><h2 class="divider">Damage
         Vulnerability</h2><p>When a creature is vulnerable to a type of damage
@@ -278,7 +337,16 @@ pages:
         damage</strong>.</p></section><h2 class="divider">Damage
         Immunity</h2><p>In exceptional cases, a creature may be entirely
         <strong>Immune</strong> to a certain damage type. In this case, the
-        creature never takes damage of that type no matter its magnitude.</p>
+        creature never takes damage of that type no matter its
+        magnitude.</p><section class="foundryvtt"><h4>Damage
+        Breakdown</h4><p>The damage breakdown shown on an attack's chat card
+        reports only the amount of Resistance or Vulnerability that affected
+        that hit, not the target's full value. A modest hit against a highly
+        resistant creature shows a Resistance no greater than the damage it
+        would have dealt, and a capped hit against a vulnerable creature shows a
+        Vulnerability no greater than the damage before vulnerability. Striking
+        harder can reveal more. A creature that is Immune to a damage type
+        always shows its immunity.</p></section>
     video:
       controls: true
       volume: 0.5
@@ -293,12 +361,12 @@ pages:
       compendiumSource: null
       duplicateSource: null
       exportSource: null
-      coreVersion: '13.350'
+      coreVersion: '14.368'
       systemId: crucible
       systemVersion: 0.9.0
       createdTime: 1761697235112
-      modifiedTime: 1762098125781
-      lastModifiedBy: AnoypGxxNIMOS0XY
+      modifiedTime: 1790699853150
+      lastModifiedBy: ZXJsFnFZuf21WDAk
     _key: '!journal.pages!characterMechani.Resistances00000'
   - _id: abilityScores000
     name: Ability Scores
@@ -357,7 +425,7 @@ pages:
         using the physical ability scores of Strength, Toughness, and
         Dexterity.</p><h2 class="divider">Toughness</h2><p>Toughness is a
         physical resilience attribute describing physical hardiness and
-        tenacity. Toughness affects the <strong>Fortitude</strong> defense. Each
+        tenacity. Toughness affects the <strong>Willpower</strong> defense. Each
         point of Toughness increases base <strong>Health</strong> by
         4.</p><section class="gameplay"><p>Characters with high Toughness can
         typically withstand considerable physical strain, demonstrating both
@@ -384,7 +452,7 @@ pages:
         actions with the <strong>Reaction</strong> tag.</p><h2
         class="divider">Wisdom</h2><p>Wisdom is a mental power attribute
         describing a creature's force of conviction, depth of knowledge, and
-        patience. Wisdom affects <strong>Willpower</strong> defense and size of
+        patience. Wisdom affects <strong>Fortitude</strong> defense and size of
         <strong>Focus</strong> pool. Each point of Wisdom increases base
         <strong>Morale</strong> by 2.</p><section class="gameplay"><p>Characters
         with high Wisdom typically act deliberately, demonstrating patience and
@@ -438,12 +506,12 @@ pages:
       compendiumSource: null
       duplicateSource: null
       exportSource: null
-      coreVersion: '14.356'
+      coreVersion: '14.369'
       systemId: crucible
       systemVersion: 0.9.0
       createdTime: 1761771265716
-      modifiedTime: 1773776410891
-      lastModifiedBy: 4uFKaoDjEQwkkXjq
+      modifiedTime: 1793037217779
+      lastModifiedBy: ZXJsFnFZuf21WDAk
     _key: '!journal.pages!characterMechani.abilityScores000'
   - _id: talents000000000
     name: Talents
@@ -503,46 +571,28 @@ pages:
         unit of the talent tree. Each talent grants your character-specific
         abilities or bonuses. Many Talents have requirements which must be met
         before they can be purchased, such as attaining a certain level of
-        Ability score or degree of training in a Skill.</p><h2
-        class="divider">Training Talents</h2><p>Training talents are specific
-        types of talent nodes that grant advancements to Skills, or progress
-        Weapon or Tradecraft training. Weapon or Tradecraft Training Talents
-        authorize your character to use particular weapons or to craft
-        particular types of schematics, Skill Training Talents award the
-        following benefits:</p><table><tbody><tr><th
-        data-colwidth="50"><p>Bonus</p></th><th><p>Rank</p></th><th><p>Scale</p></th></tr><tr><td
-        data-colwidth="50"><p>-4</p></td><td><p>Untrained</p></td><td><p>You are
-        decidedly as good at this skill as the average person who has absolutely
-        no education or professional training related to
-        it.</p></td></tr><tr><td
-        data-colwidth="50"><p>0</p></td><td><p>Novice</p></td><td><p>You have
-        received training in the basic practices common across all parts of that
-        skill.</p></td></tr><tr><td
-        data-colwidth="50"><p>+1</p></td><td><p>Journeyman</p></td><td><p>You've
-        reached some degree of advanced training and know some of the less
-        common principles of that particular skill.</p></td></tr><tr><td
-        data-colwidth="50"><p>+2</p></td><td><p>Adept</p></td><td><p>You have
-        exceeded all the bounds of professional training. There is nothing more
-        about your skills that you can learn from others. All that is left is to
-        perfect your understanding.</p></td></tr><tr><td
-        data-colwidth="50"><p>+3</p></td><td><p>Master</p></td><td><p>You have
-        mastered this skill. There is nothing more to learn about
-        it.</p></td></tr></tbody></table><p></p><h2 class="divider">Signature
-        Talents</h2><p>Talent nodes at the outer edges of the Talent Tree
-        contain <strong>Signature Talents</strong>, powerful bonuses that
-        "Spellblade" or "Dread Lord" which offer iconic abilities. Signature
-        Talents represent the culmination of the abilities required to select
-        them, and are mirrored across two ability scores. Taking a Signature
-        Talent forms a bridge to its paired ability score, allowing you to
-        continue your path of progression into that sextant regardless of
-        whether you have already purchased lower-tier Talents.</p><p>The number
-        of Signature Talents you may acquire is determined by your character
-        level. You acquire your first Signature Talent at level 3, and one
-        additional Signature Talent at every third level thereafter, to a
-        maximum of six Signature Talents at level 18. Within this limit there
-        are no further restrictions: you may acquire multiple Signature Talents
-        from the same node, or from nodes which share the same tier or ability
-        scores.</p>
+        Ability score or a required rank in a
+        @UUID[Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.proficiencies000]{Proficiency}.</p><h2
+        class="divider">Proficiencies</h2><p>Every Talent contributes one
+        training point to the single
+        @UUID[Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.proficiencies000]{Proficiency}
+        it names, if it names any. The talents you choose therefore decide where
+        your character improves beyond the areas your Background already
+        trains.</p><h2 class="divider">Signature Talents</h2><p>Talent nodes at
+        the outer edges of the Talent Tree contain <strong>Signature
+        Talents</strong>, powerful bonuses that "Spellblade" or "Dread Lord"
+        which offer iconic abilities. Signature Talents represent the
+        culmination of the abilities required to select them, and are mirrored
+        across two ability scores. Taking a Signature Talent forms a bridge to
+        its paired ability score, allowing you to continue your path of
+        progression into that sextant regardless of whether you have already
+        purchased lower-tier Talents.</p><p>The number of Signature Talents you
+        may acquire is determined by your character level. You acquire your
+        first Signature Talent at level 3, and one additional Signature Talent
+        at every third level thereafter, to a maximum of six Signature Talents
+        at level 18. Within this limit there are no further restrictions: you
+        may acquire multiple Signature Talents from the same node, or from nodes
+        which share the same tier or ability scores.</p>
     video:
       controls: true
       volume: 0.5
@@ -610,7 +660,7 @@ pages:
         table:</p><p></p><table><thead><tr><th>Ancestry</th><th>Primary Ability
         (+3)</th><th>Secondary Ability (+2)</th><th>Damage
         Resistance</th><th>Damage
-        Vulnerability</th><td>Size</td><td>Stride</td></tr></thead><tbody><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.human00000000000]{Human}</p></td><td><p>Presence</p></td><td><p>Toughness</p></td><td><p>None</p></td><td><p>None</p></td><td>4</td><td>10</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.elvish0000000000]{Elvish}</p></td><td><p>Intellect</p></td><td><p>Dexterity</p></td><td><p>Radiant</p></td><td><p>Corruption</p></td><td>4</td><td>10</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.dwarven000000000]{Dwarven}</p></td><td><p>Toughness</p></td><td><p>Wisdom</p></td><td><p>Acid</p></td><td><p>Psychic</p></td><td>4</td><td>8</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.orcish0000000000]{Orcish}</p></td><td><p>Strength</p></td><td><p>Toughness</p></td><td><p>Cold</p></td><td><p>Fire</p></td><td>4</td><td>10</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.giantkin00000000]{Giantkin}</p></td><td><p>Wisdom</p></td><td><p>Toughness</p></td><td><p>Acid</p></td><td><p>Electricity</p></td><td>5</td><td>10</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.gnome00000000000]{Gnome}</p></td><td><p>Intellect</p></td><td><p>Dexterity</p></td><td><p>Electricity</p></td><td><p>Acid</p></td><td>3</td><td>8</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.halfling00000000]{Halfling}</p></td><td><p>Dexterity</p></td><td><p>Wisdom</p></td><td><p>Psychic</p></td><td><p>Cold</p></td><td>3</td><td>8</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.devilkin00000000]{Devilkin}</p></td><td><p>Strength</p></td><td><p>Presence</p></td><td><p>Fire</p></td><td><p>Radiant</p></td><td>4</td><td>10</td></tr></tbody></table><h2
+        Vulnerability</th><th>Size</th><th>Stride</th></tr></thead><tbody><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.human00000000000]{Human}</p></td><td><p>Presence</p></td><td><p>Toughness</p></td><td><p>None</p></td><td><p>None</p></td><td>4</td><td>10</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.elf0000000000000]{Elf}</p></td><td><p>Intellect</p></td><td><p>Dexterity</p></td><td><p>Radiant</p></td><td><p>Corruption</p></td><td>4</td><td>10</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.dwarf00000000000]{Dwarf}</p></td><td><p>Toughness</p></td><td><p>Wisdom</p></td><td><p>Acid</p></td><td><p>Psychic</p></td><td>4</td><td>8</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.orc0000000000000]{Orc}</p></td><td><p>Strength</p></td><td><p>Toughness</p></td><td><p>Cold</p></td><td><p>Fire</p></td><td>4</td><td>10</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.giantkin00000000]{Giantkin}</p></td><td><p>Wisdom</p></td><td><p>Toughness</p></td><td><p>Acid</p></td><td><p>Electricity</p></td><td>5</td><td>10</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.gnome00000000000]{Gnome}</p></td><td><p>Intellect</p></td><td><p>Dexterity</p></td><td><p>Electricity</p></td><td><p>Acid</p></td><td>3</td><td>8</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.halfling00000000]{Halfling}</p></td><td><p>Dexterity</p></td><td><p>Presence</p></td><td><p>Psychic</p></td><td><p>Cold</p></td><td>3</td><td>8</td></tr><tr><td><p>@UUID[Compendium.crucible.ancestry.Item.devilkin00000000]{Devilkin}</p></td><td><p>Strength</p></td><td><p>Presence</p></td><td><p>Fire</p></td><td><p>Radiant</p></td><td>4</td><td>10</td></tr></tbody></table><h2
         class="divider">Flexible Ancestry</h2><section
         class="foundryvtt"><p>Crucible allows use of custom ancestries by
         providing a way for GMs to configure their own compendium packs to use
@@ -627,9 +677,9 @@ pages:
         roleplay as an Orc who, at the beginning of their journey, is not
         particularly tough but instead unusually wise. In such cases the initial
         Ability Scores of <strong>3 Strength</strong> and <strong>2
-        Toughness</strong> that the example Orcish Ancestry provides are at odds
+        Toughness</strong> that the example Orc Ancestry provides are at odds
         with the character development Alex desires. The Gamemaster can work
-        with Alex to create a variation of the Orcish ancestry which offers
+        with Alex to create a variation of the Orc ancestry which offers
         different starting Ability Scores, for example by swapping the Primary
         Ability from Strength to Wisdom.</p></section>
     video:
@@ -674,59 +724,74 @@ pages:
         modify Backgrounds to fit the lore of their own worlds. To configure a
         Background in Crucible, create a new <strong>Item</strong> with the
         <strong>Background </strong>type. Fill out the Background configuration
-        sheet to select four acquired Skills which begin at Novice tier and one
-        acquired Talent.</p><p>Each Background includes:</p><ul><li><p>Novice
-        Skills (typically 2)</p></li><li><p>Knowledge Areas (typically
-        2)</p></li><li><p>Known Languages</p></li><li><p>Talents (typically at
-        least one weapon training talent and one additional
-        talent)</p></li></ul><h2 class="divider">Example Backgrounds</h2><p>The
-        table below presents some example Backgrounds which will be familiar for
-        many fantasy RPG
-        settings.</p><table><thead><tr><th>Background</th><th>Knowledge</th><th>Novice
-        Skills</th><th>Talents</th></tr></thead><tbody><tr><td>@UUID[Compendium.crucible.background.Item.acolyte000000000]{Acolyte}</td><td>Gods,
-        Souls</td><td>Arcana,
-        Medicine</td><td>@UUID[Compendium.crucible.talent.Item.talismanWeaponTr]{Talisman
-        Weapon Training},
-        @UUID[Compendium.crucible.talent.Item.runeSoul00000000]{Rune:
-        Soul}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.constable0000000]{Constable}</td><td>Crime,
-        Forensics</td><td>Awareness,
-        Intimidation</td><td>@UUID[Compendium.crucible.talent.Item.unarmedCombatTra]{Unarmed
-        Combat Training},
-        @UUID[Compendium.crucible.talent.Item.intercept0000000]{Intercept}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.merchant00000000]{Merchant}</td><td>Crafts,
-        Trade</td><td>Society,
-        Diplomacy</td><td>@UUID[Compendium.crucible.talent.Item.lightWeaponTrain]{Light
-        Weapon Training},
-        @UUID[Compendium.crucible.talent.Item.preparedness0000]{Preparedness}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.performer0000000]{Performer}</td><td>Arts,
-        Rituals</td><td>Deception,Performance</td><td>@UUID[Compendium.crucible.talent.Item.lightWeaponTrain]{Light
-        Weapon Training},
+        sheet to name the Proficiencies it trains, the Knowledge it confers, and
+        the Talents it grants.</p><p>Each Background includes:</p><ul><li><p>Six
+        trained Proficiencies, each receiving one training point. These need not
+        be Skills: a Background may train a weapon category or a family of
+        spellcraft.</p></li><li><p>Two Knowledge Areas</p></li><li><p>One known
+        Language</p></li><li><p>Three Talents</p></li></ul><p>A Background which
+        names fewer than six Proficiencies or fewer than three Talents remains
+        valid, but the Background sheet will warn you that it is
+        incomplete.</p><h2 class="divider">Example Backgrounds</h2><p>The table
+        below presents some example Backgrounds which will be familiar for many
+        fantasy RPG
+        settings.</p><table><thead><tr><th>Background</th><th>Knowledge</th><th>Trained
+        Proficiencies</th><th>Talents</th></tr></thead><tbody><tr><td>@UUID[Compendium.crucible.background.Item.acolyte000000000]{Acolyte}</td><td>Gods,
+        Souls</td><td>Arcana, Medicine, Talisman Weapons, Spiritual Spellcraft,
+        Glyphweaving,
+        Performance</td><td>@UUID[Compendium.crucible.talent.Item.refocus000000000]{Refocus},
+        @UUID[Compendium.crucible.talent.Item.runeSoul00000000]{Rune: Soul},
+        @UUID[Compendium.crucible.talent.Item.recognizespellcr]{Recognize
+        Spellcraft}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.constable0000000]{Constable}</td><td>Crime,
+        Forensics</td><td>Athletics, Awareness, Intimidation, Light Weapons,
+        Unarmed Combat,
+        Science</td><td>@UUID[Compendium.crucible.talent.Item.grapple000000000]{Grapple},
+        @UUID[Compendium.crucible.talent.Item.mnemonicrealizat]{Mnemonic
+        Realization},
+        @UUID[Compendium.crucible.talent.Item.hamstring0000000]{Hamstring}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.merchant00000000]{Merchant}</td><td>Crafts,
+        Trade</td><td>Society, Deception, Diplomacy, Jewelcraft, Tailoring,
+        Awareness</td><td>@UUID[Compendium.crucible.talent.Item.camaraderie00000]{Camaraderie},
         @UUID[Compendium.crucible.talent.Item.inspireheroism00]{Inspire
-        Heroism}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.physician0000000]{Physician}</td><td>Alchemy,
-        Undeath</td><td>Medicine,
-        Science</td><td>@UUID[Compendium.crucible.talent.Item.talismanWeaponTr]{Talisman
-        Weapon Training},
-        @UUID[Compendium.crucible.talent.Item.runeLife00000000]{Rune:
-        Life}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.scholar000000000]{Scholar}</td><td>Artifacts,
-        Legends</td><td>Arcana,
-        Science</td><td>@UUID[Compendium.crucible.talent.Item.mechanicalWeapon]{Mechanical
-        Weapon Training},
-        @UUID[Compendium.crucible.talent.Item.runeKinesis00000]{Rune:
-        Kinesis}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.soldier000000000]{Soldier}</td><td>Machines,
-        Warfare</td><td>Athletics,
-        Intimidation</td><td>@UUID[Compendium.crucible.talent.Item.heavyWeaponTrain]{Heavy
-        Weapon Training},
-        @UUID[Compendium.crucible.talent.Item.truegrit00000000]{True
-        Grit}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.urchin0000000000]{Urchin}</td><td>Crime,
-        Tracking</td><td>Stealth,
-        Deception</td><td>@UUID[Compendium.crucible.talent.Item.lightWeaponTrain]{Light
-        Weapon Training},
-        @UUID[Compendium.crucible.talent.Item.backstab00000000]{Backstab}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.wanderer00000000]{Wanderer}</td><td>Plants,
-        Tracking</td><td>Athletics,
-        Wilderness</td><td>@UUID[Compendium.crucible.talent.Item.projectileWeapon]{Projectile
-        Weapon Training},
+        Heroism},
+        @UUID[Compendium.crucible.talent.Item.preparedness0000]{Preparedness}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.performer0000000]{Performer}</td><td>Arts,
+        Rituals</td><td>Deception, Performance, Talisman Weapons, Kinematic
+        Spellcraft, Alchemy,
+        Society</td><td>@UUID[Compendium.crucible.talent.Item.camaraderie00000]{Camaraderie},
+        @UUID[Compendium.crucible.talent.Item.runeKinesis00000]{Rune: Kinesis},
+        @UUID[Compendium.crucible.talent.Item.diversionist0000]{Diversionist}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.physician0000000]{Physician}</td><td>Alchemy,
+        Undeath</td><td>Wilderness, Medicine, Science, Mechanical Weapons,
+        Alchemy, Kinematic
+        Spellcraft</td><td>@UUID[Compendium.crucible.talent.Item.runeLife00000000]{Rune:
+        Life}, @UUID[Compendium.crucible.talent.Item.mnemonicrealizat]{Mnemonic
+        Realization},
         @UUID[Compendium.crucible.talent.Item.precisionshot000]{Precision
-        Shot}</td></tr></tbody></table><p>As a Game Master and storyteller, you
-        should work with your players to create backgrounds which are suitable
-        for their personal stories.</p>
+        Shot}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.scholar000000000]{Scholar}</td><td>Artifacts,
+        Legends</td><td>Arcana, Science, Talisman Weapons, Elemental Spellcraft,
+        Enchanting,
+        Diplomacy</td><td>@UUID[Compendium.crucible.talent.Item.runeFlame0000000]{Rune:
+        Flame},
+        @UUID[Compendium.crucible.talent.Item.refocus000000000]{Refocus},
+        @UUID[Compendium.crucible.talent.Item.recognizespellcr]{Recognize
+        Spellcraft}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.soldier000000000]{Soldier}</td><td>Machines,
+        Warfare</td><td>Athletics, Intimidation, Heavy Weapons, Shield Combat,
+        Armored Combat,
+        Cooking</td><td>@UUID[Compendium.crucible.talent.Item.armoredefficienc]{Armored
+        Efficiency},
+        @UUID[Compendium.crucible.talent.Item.shieldBash000000]{Shield Bash},
+        @UUID[Compendium.crucible.talent.Item.intimidator00000]{Intimidator}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.urchin0000000000]{Urchin}</td><td>Crime,
+        Tracking</td><td>Awareness, Stealth, Deception, Light Weapons,
+        Projectile Weapons,
+        Society</td><td>@UUID[Compendium.crucible.talent.Item.diversionist0000]{Diversionist},
+        @UUID[Compendium.crucible.talent.Item.lunge00000000000]{Lunge},
+        @UUID[Compendium.crucible.talent.Item.preparedness0000]{Preparedness}</td></tr><tr><td>@UUID[Compendium.crucible.background.Item.wanderer00000000]{Wanderer}</td><td>Plants,
+        Tracking</td><td>Athletics, Wilderness, Projectile Weapons, Elemental
+        Spellcraft, Fletching,
+        Stealth</td><td>@UUID[Compendium.crucible.talent.Item.quickDraw0000000]{Quick
+        Draw}, @UUID[Compendium.crucible.talent.Item.runeEarth0000000]{Rune:
+        Earth},
+        @UUID[Compendium.crucible.talent.Item.preparedness0000]{Preparedness}</td></tr></tbody></table><p>As
+        a Game Master and storyteller, you should work with your players to
+        create backgrounds which are suitable for their personal stories.</p>
     video:
       controls: true
       volume: 0.5
@@ -876,91 +941,142 @@ pages:
     text:
       format: 1
       content: >-
-        <p><strong>Skills</strong> represent the education or degree of
-        professional training your character has received. These Skills might
-        have been learned as part of their
+        <p><strong>Skills</strong> are
+        @UUID[Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.proficiencies000]{Proficiencies}
+        which represent the education or degree of professional training your
+        character has received. These Skills might have been learned as part of
+        their
         @UUID[Compendium.crucible.rules.JournalEntry.gszlBVQ5fGh3y0I6.JournalEntryPage.uCwStnXHoUCV2TrK]{Background}
-        or some other aspect of their life experience. Skills progress when a
-        character selects a Training Talent. During
-        @UUID[Compendium.crucible.rules.JournalEntry.gszlBVQ5fGh3y0I6]{Character
-        Creation}, some Training Talents are awarded during the selection of a
-        Background.</p><p>More information on Training Talents can be found in
-        @UUID[Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.talents000000000]{Talents}.</p><h2
-        class="divider">Exploration
-        Skills</h2><dl><dt><p>Athletics</p></dt><dd><p>The
-        <strong>Athletics</strong> skill represents the ability to undertake and
-        surmount physical challenges. These could involve traversal of difficult
-        terrain like climbing, running, or swimming, or could involve feats of
-        strength, endurance, or
-        flexibility.</p></dd><dt><p>Awareness</p></dt><dd><p><strong>Awareness</strong>
-        is a measure of your skill in translating sensory input into useful
-        information. A character with high Awareness is able to notice and
-        interpret details that others might miss, and is able to quickly
-        identify and react to
-        threats.</p></dd><dt><p>Stealth</p></dt><dd><p><strong>Stealth</strong>
-        covers the ability to hide effectively, to move without making a sound,
-        to disguise oneself, and to otherwise use your environment to hide your
-        presence. Those trained in Stealth focus on finding ways to remain
-        unnoticed, whether sneaking in solitude through a dark alley at night,
-        or blending in at a celebration at a crowded
-        ballroom.</p></dd><dt><p>Wilderness</p></dt><dd><p>Those skilled in
+        or some other aspect of their life experience. A Skill advances as you
+        invest training points into it through character creation choices,
+        Talent purchases, or allocated Proficiency training points.</p><h2
+        class="divider">Exploration Skills</h2><dl><dt><p>Athletics</p></dt><dd
+        data-rule="skill.athletics"><p>The <strong>Athletics</strong> skill
+        represents the ability to undertake and surmount physical challenges.
+        These could involve traversal of difficult terrain like climbing,
+        running, or swimming, or could involve feats of strength, endurance, or
+        flexibility.</p></dd><dt><p>Awareness</p></dt><dd
+        data-rule="skill.awareness"><p><strong>Awareness</strong> is a measure
+        of your skill in translating sensory input into useful information. A
+        character with high Awareness is able to notice and interpret details
+        that others might miss, and is able to quickly identify and react to
+        threats.</p></dd><dt><p>Stealth</p></dt><dd
+        data-rule="skill.stealth"><p><strong>Stealth</strong> covers the ability
+        to hide effectively, to move without making a sound, to disguise
+        oneself, and to otherwise use your environment to hide your presence.
+        Those trained in Stealth focus on finding ways to remain unnoticed,
+        whether sneaking in solitude through a dark alley at night, or blending
+        in at a celebration at a crowded
+        ballroom.</p></dd><dt><p>Wilderness</p></dt><dd
+        data-rule="skill.wilderness"><p>Those skilled in
         <strong>Wilderness</strong> learn to create shelter where there is none,
         identify which water is safe to drink and which is not, and locate
         sources of food in even the most inhospitable places, and to otherwise
         survive in harsh environments.</p></dd></dl><h2
-        class="divider">Knowledge
-        Skills</h2><dl><dt><p>Arcana</p></dt><dd><p>Whether the focus of the
-        education is magical or religious in nature, <strong>Arcana</strong>
-        encompasses the study of esoteric knowledge. Students of Arcana learn
-        fundamental principles of metaphysics, study spiritual beings and
-        deities, runic theory and ritual, the nature of chaos and order, and the
-        history of how magical and spiritual forces impact societies and
-        cultures.</p></dd><dt><p>Medicine</p></dt><dd><p>The study of
-        <strong>Medicine</strong> is a practical one, with a focus on studying
-        the mechanical, biological components that make up living creatures, the
-        ailments that can afflict them, and the ways to best treat injury and
-        illness
-        alike.</p></dd><dt><p>Science</p></dt><dd><p><strong>Science</strong> is
-        concerned with physical phenomena and examining the world through the
-        lens of logic, reason, mathematics, and the use of structured
-        observation. A student of science learns to posit and confirm theories,
-        analyze the construction of physical objects and machines, and apply
-        mathematical thinking.</p></dd><dt><p>Society</p></dt><dd><p>The
-        <strong>Society</strong> skill is most often used for the purposes of
-        research or understanding into the nuanced aspects of a social
-        situation. Those educated in the workings of Society study the factors
-        which contribute to social structures. Knowledge of Society is used to
-        establish historical or socio-political context, to identify the social
-        rank of particular individuals, or to otherwise draw connections between
-        a person or place and its most likely contributors.</p></dd></dl><h2
-        class="divider">Social
-        Skills</h2><dl><dt><p>Deception</p></dt><dd><p><strong>Deception</strong>
-        most commonly comes into play when a character is attempting to lie or
-        mislead others, forge documents, or pierce the veil of lies others
-        construct. Those who pursue an education in Deception are often
-        politicians, diplomats, spies, thieves, or other professions for whom
-        flexibility in the truth is a
-        necessity.</p></dd><dt><p>Diplomacy</p></dt><dd><p><strong>Diplomacy</strong>
-        is rolled most often to persuade others to see things your way. A skill
-        most commonly found in the politically savvy or influential orators,
-        Diplomacy allows for the use of rhetoric and emotional appeals to
-        inspire and convince others. Diplomats focus their efforts on the use of
-        words, rather than deeds, to change opinions and inspire emotional
-        reactions.</p></dd><dt><p>Intimidation</p></dt><dd><p><strong>Intimidation</strong>
-        is used to force others to do your bidding, whether through displays of
+        class="divider">Knowledge Skills</h2><dl><dt><p>Arcana</p></dt><dd
+        data-rule="skill.arcana"><p>Whether the focus of the education is
+        magical or religious in nature, <strong>Arcana</strong> encompasses the
+        study of esoteric knowledge. Students of Arcana learn fundamental
+        principles of metaphysics, study spiritual beings and deities, runic
+        theory and ritual, the nature of chaos and order, and the history of how
+        magical and spiritual forces impact societies and
+        cultures.</p></dd><dt><p>Medicine</p></dt><dd
+        data-rule="skill.medicine"><p>The study of <strong>Medicine</strong> is
+        a practical one, with a focus on studying the mechanical, biological
+        components that make up living creatures, the ailments that can afflict
+        them, and the ways to best treat injury and illness
+        alike.</p></dd><dt><p>Science</p></dt><dd
+        data-rule="skill.science"><p><strong>Science</strong> is concerned with
+        physical phenomena and examining the world through the lens of logic,
+        reason, mathematics, and the use of structured observation. A student of
+        science learns to posit and confirm theories, analyze the construction
+        of physical objects and machines, and apply mathematical
+        thinking.</p></dd><dt><p>Society</p></dt><dd
+        data-rule="skill.society"><p>The <strong>Society</strong> skill is most
+        often used for the purposes of research or understanding into the
+        nuanced aspects of a social situation. Those educated in the workings of
+        Society study the factors which contribute to social structures.
+        Knowledge of Society is used to establish historical or socio-political
+        context, to identify the social rank of particular individuals, or to
+        otherwise draw connections between a person or place and its most likely
+        contributors.</p></dd></dl><h2 class="divider">Social
+        Skills</h2><dl><dt><p>Deception</p></dt><dd
+        data-rule="skill.deception"><p><strong>Deception</strong> most commonly
+        comes into play when a character is attempting to lie or mislead others,
+        forge documents, or pierce the veil of lies others construct. Those who
+        pursue an education in Deception are often politicians, diplomats,
+        spies, thieves, or other professions for whom flexibility in the truth
+        is a necessity.</p></dd><dt><p>Diplomacy</p></dt><dd
+        data-rule="skill.diplomacy"><p><strong>Diplomacy</strong> is rolled most
+        often to persuade others to see things your way. A skill most commonly
+        found in the politically savvy or influential orators, Diplomacy allows
+        for the use of rhetoric and emotional appeals to inspire and convince
+        others. Diplomats focus their efforts on the use of words, rather than
+        deeds, to change opinions and inspire emotional
+        reactions.</p></dd><dt><p>Intimidation</p></dt><dd
+        data-rule="skill.intimidation"><p><strong>Intimidation</strong> is used
+        to force others to do your bidding, whether through displays of
         aggression or threats of violence. Those trained in the art of
         intimidation are capable of using their words and actions to inspire
         fear in others, to demonstrate dominance or press others into
         subservience. Those who train their skill in intimidation need not
         necessarily be physically imposing in terms of stature, for words and
         deeds can be equally capable of inspiring
-        fear.</p></dd><dt><p>Performance</p></dt><dd><p>Those who study
+        fear.</p></dd><dt><p>Performance</p></dt><dd
+        data-rule="skill.performance"><p>Those who study
         <strong>Performance</strong> learn, above all else, how to use their
         talents to inspire and entertain others whether through music, dance,
         storytelling, or other forms of artistic expression.. Performers learn
         verse and music, use of pigment and light, poetry and story, dance and
         even physical feats to evoke emotional reactions in
-        others.</p></dd></dl>
+        others.</p></dd></dl><h2 class="divider">Trade Skills</h2><p>Trade
+        Skills are Proficiencies used to make things rather than to overcome
+        them. Each is described in full, with its abilities and example
+        products, within the
+        @UUID[Compendium.crucible.rules.JournalEntry.crucibleCrafting.JournalEntryPage.tradeskillsOverv]{Crafting}
+        journal.</p><dl><dt><p>Alchemy</p></dt><dd
+        data-rule="skill.alchemy"><p>@UUID[Compendium.crucible.rules.JournalEntry.crucibleCrafting.JournalEntryPage.alchemy000000000]{Alchemy}
+        reduces botanicals and minerals to their virtues and recombines them
+        into something which can be drunk, smeared upon a blade, or thrown. Its
+        products are consumables, made to be spent rather than kept, and its
+        practitioners refine the reagents other trades depend
+        upon.</p></dd><dt><p>Cooking</p></dt><dd
+        data-rule="skill.cooking"><p>@UUID[Compendium.crucible.rules.JournalEntry.crucibleCrafting.JournalEntryPage.cooking000000000]{Cooking}
+        is the trade of what goes into people: the meals which carry a company
+        from one hardship to the next, and also the poisons and drugs which do
+        nothing of the sort. A cook produces all three; anyone at all may use
+        them.</p></dd><dt><p>Enchanting</p></dt><dd
+        data-rule="skill.enchanting"><p>@UUID[Compendium.crucible.rules.JournalEntry.crucibleCrafting.JournalEntryPage.enchanting000000]{Enchanting}
+        binds a Glyph into a finished object so that it holds a magical property
+        permanently. An enchanter makes nothing alone, depending upon a
+        glyphweaver for the Glyph and upon another crafter for a base item fine
+        enough to hold it.</p></dd><dt><p>Fletching</p></dt><dd
+        data-rule="skill.fletching"><p>@UUID[Compendium.crucible.rules.JournalEntry.crucibleCrafting.JournalEntryPage.fletching0000000]{Fletching}
+        is the working of wood. It is best known for bows and their ammunition,
+        but extends to every wooden implement a company carries: staves and
+        cudgels, light shields, wooden talismans, and the seasoned stock other
+        crafters require.</p></dd><dt><p>Glyphweaving</p></dt><dd
+        data-rule="skill.glyphweaving"><p>@UUID[Compendium.crucible.rules.JournalEntry.crucibleCrafting.JournalEntryPage.glyphweaving0000]{Glyphweaving}
+        inscribes a metaphysical Rune into a physical Glyph which can be
+        carried, traded, and eventually bound into equipment. The same
+        discipline governs mundane inscription: letters and records, painted
+        work, and the spell scrolls a caster
+        spends.</p></dd><dt><p>Jewelcraft</p></dt><dd
+        data-rule="skill.jewelcraft"><p>@UUID[Compendium.crucible.rules.JournalEntry.crucibleCrafting.JournalEntryPage.jewelcraft000000]{Jewelcraft}
+        is the cutting of stones and the raising of settings to hold them. Its
+        products are rings, amulets and other ornaments worn in an accessory
+        slot, along with the cut gems other trades require for their finest
+        work.</p></dd><dt><p>Smithing</p></dt><dd
+        data-rule="skill.smithing"><p>@UUID[Compendium.crucible.rules.JournalEntry.crucibleCrafting.JournalEntryPage.smithing00000000]{Smithing}
+        is the working of base metals and alloys into arms and armor. A smith
+        produces metal weapons of every category, metal armor and heavy shields,
+        and is the trade a company relies upon most directly when a fight goes
+        badly.</p></dd><dt><p>Tailoring</p></dt><dd
+        data-rule="skill.tailoring"><p>@UUID[Compendium.crucible.rules.JournalEntry.crucibleCrafting.JournalEntryPage.tailoring0000000]{Tailoring}
+        works fabric, fur and leather. It covers cloth and leather armor and
+        clothing of every kind, but reaches far past what is worn: packs and
+        boots, belts and straps, scabbards and grips are all a tailor's
+        work.</p></dd></dl>
     video:
       controls: true
       volume: 0.5
@@ -975,13 +1091,99 @@ pages:
       compendiumSource: null
       duplicateSource: null
       exportSource: null
-      coreVersion: '14.361'
+      coreVersion: '14.368'
       systemId: crucible
       systemVersion: 0.8.6
       createdTime: 1763079763956
-      modifiedTime: 1778425102084
-      lastModifiedBy: WRGzDgYAt3ZuX6TU
+      modifiedTime: 1790255193381
+      lastModifiedBy: ZXJsFnFZuf21WDAk
     _key: '!journal.pages!characterMechani.skills0000000000'
+  - _id: proficiencies000
+    name: Proficiencies
+    type: text
+    system: {}
+    title:
+      show: true
+      level: 1
+    image: {}
+    text:
+      format: 1
+      content: >-
+        <p>A <strong>Proficiency</strong> is something your character can be
+        trained in: a Skill, a category of weapon, or a family of spellcraft.
+        Each one holds a total of training points, and the ranks below are
+        thresholds upon that total.</p><p>Training points come from three
+        sources. Your
+        @UUID[Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.backgrounds00000]{Background}
+        grants six areas where you start your journey with some proficiency,
+        every
+        @UUID[Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.talents000000000]{Talent}
+        you own contributes a point to the one Proficiency it names if it names
+        any, and you allocate Proficiency Points of your own at each level after
+        the first.</p><table><tbody><tr><th
+        data-colwidth="50"><p>Points</p></th><th
+        data-colwidth="50"><p>Bonus</p></th><th><p>Rank</p></th><th><p>Scale</p></th></tr><tr><td
+        data-colwidth="50"><p>0</p></td><td data-colwidth="50"><p>-4,
+        -2</p></td><td><p>Untrained</p></td><td><p>You are decidedly as good at
+        this skill as the average person who has absolutely no education or
+        professional training related to it.</p></td></tr><tr><td
+        data-colwidth="50"><p>2</p></td><td
+        data-colwidth="50"><p>0</p></td><td><p>Trained</p></td><td><p>You have
+        received training in the basic practices common across all parts of that
+        skill.</p></td></tr><tr><td data-colwidth="50"><p>6</p></td><td
+        data-colwidth="50"><p>+1</p></td><td><p>Proficient</p></td><td><p>You've
+        reached some degree of advanced training and know some of the less
+        common principles of that particular skill.</p></td></tr><tr><td
+        data-colwidth="50"><p>14</p></td><td
+        data-colwidth="50"><p>+2</p></td><td><p>Expert</p></td><td><p>You have
+        exceeded all the bounds of professional training. There is nothing more
+        about your skills that you can learn from others. All that is left is to
+        perfect your understanding.</p></td></tr><tr><td
+        data-colwidth="50"><p>30</p></td><td
+        data-colwidth="50"><p>+3</p></td><td><p>Master</p></td><td><p>You have
+        mastered this skill. There is nothing more to learn about
+        it.</p></td></tr></tbody></table><p>A rank is attained the moment its
+        point requirement is met.</p><h2 class="divider">Training Cap</h2><p>A
+        single Proficiency may hold no more than <strong>two points per
+        character level</strong>. You may not allocate a Proficiency Point into
+        a training which has already reached that limit, though points granted
+        by your Background, your Talents, or another bonus may still carry a
+        training past it. Points above the cap are retained and begin to count
+        as your level rises, but until then they contribute neither rank nor
+        bonus.</p><p>The cap stops rising at <strong>30</strong> points, the
+        requirement for <strong>Master</strong>, which is therefore out of reach
+        until level 15.</p><h2 class="divider">Untrained Penalty</h2><p>While
+        untrained, you have an initial penalty to your skill of
+        <strong>-4</strong>. This penalty is reduced to <strong>-2</strong> once
+        you have a single Proficiency point invested, and the penalty is removed
+        altogether once you reach the <strong>Trained</strong> rank with 2
+        points invested.</p><h2 class="divider">Intuitive Actions</h2><p>Some
+        things are simple enough to attempt without formal instruction. When an
+        item you use or Action you perform is <strong>Intuitive</strong> you are
+        treated as having one additional point in the Proficiency it requires,
+        so a character with no training at all suffers only a -2 penalty rather
+        than -4.</p>
+    video:
+      controls: true
+      volume: 0.5
+    src: null
+    category: null
+    sort: 237500
+    ownership:
+      default: -1
+      vke929uLgNzbrY41: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '14.367'
+      systemId: crucible
+      systemVersion: 0.10.2
+      createdTime: 1788600000000
+      modifiedTime: 1788886965442
+      lastModifiedBy: ZXJsFnFZuf21WDAk
+    _key: '!journal.pages!characterMechani.proficiencies000'
 folder: MMeWpMmsLOblp07U
 categories: []
 sort: 150000

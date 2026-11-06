@@ -2,6 +2,11 @@ name: Acid Spray
 type: talent
 img: icons/magic/acid/projectile-beams-salvo-green.webp
 system:
+  keywords:
+    - playstyle.ranged
+    - weapon.natural
+    - damageType.acid
+    - target.reflex
   nodes: []
   description: >-
     <p>The creature has salivary glands which produce a caustic acidic
@@ -13,7 +18,7 @@ system:
       condition: ''
       description: >-
         <p>The creature expels a spray of acidic bile in a 10 foot fan.</p><p>On
-        a <strong>Critical Hit</strong>, this attack causes the
+        a @Rule[dice.criticalSuccess]{Critical Hit}, this attack causes the
         @Condition[corroding] condition for <strong>3 Turns</strong>.</p>
       cost:
         action: 1
@@ -49,20 +54,13 @@ system:
             regions: []
             summons: []
       tags:
-        - melee
         - natural
         - reflex
         - acid
       summon:
         actorUuid: null
         permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: pfqBQPVP2KV9fQFs
 ownership:

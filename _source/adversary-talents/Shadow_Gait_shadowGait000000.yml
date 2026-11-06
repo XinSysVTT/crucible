@@ -2,6 +2,8 @@ name: Shadow Gait
 type: talent
 img: icons/creatures/magical/humanoid-silhouette-dashing-blue.webp
 system:
+  keywords:
+    - action.movement
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} is able to step into and out of shadow
@@ -37,13 +39,7 @@ system:
       effects: []
       tags:
         - movement
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: cIS6eiJYaMi1oZQJ
 ownership:

@@ -129,6 +129,14 @@ export default class CruciblePhysicalItem extends foundry.abstract.TypeDataModel
   /* -------------------------------------------- */
 
   /**
+   * Does this item bear an affix which carries the "cursed" property?
+   * @type {boolean}
+   */
+  get isCursed() {
+    return this.parent.effects.some(e => (e.type === "affix") && e.system.properties.has("cursed"));
+  }
+
+  /**
    * Does this item require investment?
    * @type {boolean}
    */
@@ -338,16 +346,34 @@ export default class CruciblePhysicalItem extends foundry.abstract.TypeDataModel
   /* -------------------------------------------- */
 
   /**
+   * Iterate the owning Actor's effects which exist because this item was deployed and end when it is recovered.
+   * @yields {CrucibleActiveEffect}
+   */
+  *deployedEffects() {
+    const item = this.parent;
+    for ( const effect of item.actor?.effects ?? [] ) {
+      if ( (effect.origin === item.uuid) && effect.system.properties?.has("deployed") ) yield effect;
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Return an object of string formatted tag data which describes this item type.
    * @param {string} [scope="full"]       The scope of tags being retrieved, "full" or "short"
    * @returns {Record<string, string>}    The tags which describe this item
    */
   getTags(scope="full") {
     const {QUALITY_TIERS: QT} = SYSTEM.ITEM;
+    const type = this.parent.type;
+    const rules = SYSTEM.RULES[type] ?? {};
     const tags = {};
-    tags.category = this.config.category.label;
+    const categoryLabel = this.config.category.label;
+    tags.category = (this.category in rules)
+      ? {label: categoryLabel, dataset: {"rule-id": `${type}.${this.category}`}} : categoryLabel;
     if ( this.quality && (this.quality !== "standard") ) tags.quality = QT[this.quality].label;
     if ( this.config.enchantment.id !== "mundane" ) tags.enchantment = this.config.enchantment.label;
+    if ( this.isCursed ) tags.cursed = {label: SYSTEM.ITEM.AFFIX_PROPERTIES.cursed.label, unmet: true};
     if ( this.broken ) tags.broken = this.schema.fields.broken.label;
     if ( this.equipped ) tags.equipped = this.schema.fields.equipped.label;
     else if ( this.parent.parent && !this.dropped ) tags.equipped = _loc("ITEM.PROPERTIES.Unequipped");
@@ -355,10 +381,11 @@ export default class CruciblePhysicalItem extends foundry.abstract.TypeDataModel
     if ( this.requiresInvestment ) tags.invested = this.invested ? this.schema.fields.invested.label
       : _loc("ITEM.PROPERTIES.NotInvested");
 
-    // Properties
+    // Properties, whose tooltips are extracted from the rules journal when documented there
     for ( const prop of this.properties ) {
       if ( ["investment", "stackable"].includes(prop) ) continue;
-      tags[prop] = this.constructor.ITEM_PROPERTIES[prop];
+      const cfg = this.constructor.ITEM_PROPERTIES[prop];
+      tags[prop] = (prop in rules) ? {label: cfg.label, dataset: {"rule-id": `${type}.${prop}`}} : cfg;
     }
     return tags;
   }

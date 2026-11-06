@@ -2,28 +2,28 @@ name: 'Gesture: Blast'
 type: talent
 img: icons/magic/fire/barrier-wall-explosion-orange.webp
 system:
+  keywords:
+    - playstyle.spellcraft
+    - spell.gesture
   nodes:
     - int4a
   description: >-
-    <p>You hurl the arcane power of a Rune into an intense explosion of energy
-    at a nearby point you can see.</p><p>The Blast gesture scales with
-    <strong>Intellect</strong> and produces a blast with 6 feet radius centered
-    on a point within 60 feet of the spellcaster. The blast deals <strong>8 Base
-    Damage</strong> to targets which fail to Resist the spell. This gesture
-    requires <strong>2 Hands</strong> to cast and has a base cost of <strong>5
-    Action</strong> and <strong>2 Focus</strong>.</p><h3
+    <p>You hurl the arcane power of a <strong>Rune</strong> into an intense
+    explosion of energy at a nearby point you can see.</p><p>The
+    <strong>Blast</strong> gesture scales with @Rule[ability.intellect] and
+    produces a blast with a <strong>6 foot</strong> radius centered on a point
+    within <strong>60 feet</strong> of the spellcaster. The blast deals
+    <strong>8 Base Damage</strong> to targets which fail to resist the spell.
+    This gesture requires <strong>2 Hands</strong> to cast and has a base cost
+    of <strong>5 Action</strong> and <strong>2 Focus</strong>.</p><h3
     class="divider">Playtest Notes</h3><p>This talent is currently placed at a
     <strong>Tier 4</strong> node. It will eventually only be attainable at a
     higher level (probably Level 6 required). It is currently available "early"
     for testing.</p>
   actions: []
-  rune: ''
-  gesture: blast
-  inflection: ''
+  spellcraft: blast
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: glyphweaving
 effects: []
 folder: rL8CBb8MbQi6PDS6
 ownership:
@@ -34,12 +34,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.8.6
+  systemVersion: 0.10.2
   createdTime: 1762794176016
-  modifiedTime: 1773514792578
-  lastModifiedBy: AnoypGxxNIMOS0XY
+  modifiedTime: 1789498200605
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 _id: gestureBlast0000
 sort: 0
 _key: '!items!gestureBlast0000'

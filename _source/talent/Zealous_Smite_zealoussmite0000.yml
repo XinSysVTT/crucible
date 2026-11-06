@@ -4,14 +4,14 @@ _id: zealoussmite0000
 img: icons/magic/fire/dagger-rune-enchant-flame-blue-yellow.webp
 system:
   description: >-
-    <p>You can imbue righteous power into your blow with a Strength-based
-    weapon.</p>
+    <p>You can imbue righteous power into your blow with a
+    @Rule[ability.strength]-based weapon.</p>
   actions:
     - id: zealousSmite
       condition: You are attacking an enemy with a Strength-based weapon.
       description: >-
-        <p>You <strong>Strike</strong> using a Strength-based weapon. The attack
-        becomes <strong>Deadly</strong> and any damage dealt is
+        <p>You <strong>Strike</strong> using a @Rule[ability.strength]-based
+        weapon. The attack becomes @Rule[action.deadly] and any damage dealt is
         <strong>Radiant</strong>.</p>
       tags:
         - brute
@@ -27,7 +27,7 @@ system:
       target:
         type: single
         number: 1
-        scope: 0
+        scope: 3
         self: false
       effects: []
       name: Zealous Smite
@@ -36,27 +36,23 @@ system:
         maximum: null
         weapon: true
         minimum: null
-      summon:
-        actorUuid: null
-        permanent: true
-      autoFavorite: false
+      summon: null
+  keywords:
+    - playstyle.melee
+    - weapon.heavy
+    - damageType.radiant
   nodes:
     - strwis1
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: heavy
 effects: []
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.4
-  coreVersion: '14.363'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160154
-  modifiedTime: 1780537641779
+  modifiedTime: 1789489038400
   lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null

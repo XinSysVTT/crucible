@@ -12,13 +12,14 @@ system:
       img: icons/creatures/mammals/bull-horns-eyes-glowin-orange.webp
       description: >-
         <p>Make an unarmed <strong>Strike</strong> against the
-        <strong>Fortitude</strong> defense of an adjacent enemy. If your
+        @Rule[defense.fortitude] defense of an adjacent enemy. If your
         <strong>Initiative</strong> is superior to that of your target, you gain
-        <strong>+1 Boon</strong> to this attack.</p><p>The attack is
-        <strong>Difficult</strong> and only deals @Rule[action.weakened] damage,
-        but if successful it inflicts the @Condition[staggered] for one
-        round.</p><p>This action always uses an Unarmed weapon, even if your
-        weapon slots are otherwise occupied.</p>
+        @Rule[dice.boon]{+1 Boon} to this attack.</p><p>The attack is
+        @Rule[action.difficult] and only deals @Rule[action.weakened] damage,
+        but if successful it inflicts the @Condition[staggered] for <strong>1
+        Round</strong>.</p><p>This action always uses an
+        <strong>Unarmed</strong> weapon, even if your weapon slots are otherwise
+        occupied.</p>
       cost:
         action: 2
         focus: 0
@@ -50,10 +51,11 @@ system:
           system:
             changes: []
             dot: []
-            maintenance: null
+            maintenance:
+              cost: null
+              hands: 0
             regions: []
             summons: []
-            dc: null
             properties: []
       tags:
         - melee
@@ -61,30 +63,27 @@ system:
         - weakened
         - fortitude
       condition: ''
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
+  keywords:
+    - playstyle.melee
+    - weapon.unarmed
+    - target.fortitude
   nodes:
-    - toustr1
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - tou2a
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: natural
 effects: []
 flags: {}
 _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.364'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.5
+  systemVersion: 0.10.2
   createdTime: 1776117265442
-  modifiedTime: 1781395064389
-  lastModifiedBy: fzBjA63BB4hW4rQb
+  modifiedTime: 1789489612458
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 ownership:
   default: 0
   AnoypGxxNIMOS0XY: 3

@@ -178,7 +178,6 @@ export default class CrucibleBaseItemSheet extends api.HandlebarsApplicationMixi
     if ( this.document.system instanceof CruciblePhysicalItem ) {
       context.isPhysical = true;
       context.stackable = this.document.system.properties.has("stackable");
-      context.propertiesWidget = this.#propertiesWidget.bind(this);
       context.currencyInput = this.#currencyInput.bind(this);
       context.scaledPriceField = new foundry.data.fields.StringField({label: _loc("ITEM.SHEET.ScaledPrice")});
       context.requiresInvestment = source.system.equipped && this.document.system.properties.has("investment");
@@ -217,16 +216,20 @@ export default class CrucibleBaseItemSheet extends api.HandlebarsApplicationMixi
         const editorOptions = {relativeTo: this.document, secrets: this.document.isOwner};
         if ( this.options.item.hasAdvancedDescription ) {
           const {public: publicSrc, private: privateSrc} = context.source.system.description;
+          const fields = context.fields.description.fields;
           context.description = {
             tab: context.tabs.description,
-            fields: context.fields.description.fields,
+            publicField: fields.public,
             publicSrc,
             publicHTML: await editorCls.enrichHTML(publicSrc, editorOptions),
-            publicClass: publicSrc ? "" : "empty",
+            publicClass: publicSrc ? "" : "empty"
+          };
+          if ( game.user.isGM ) Object.assign(context.description, {
+            privateField: fields.private,
             privateSrc,
             privateHTML: await editorCls.enrichHTML(privateSrc, editorOptions),
             privateClass: privateSrc ? "" : "empty"
-          };
+          });
         } else {
           const src = context.source.system.description;
           context.description = {
@@ -355,23 +358,6 @@ export default class CrucibleBaseItemSheet extends api.HandlebarsApplicationMixi
       else suffixes.push(data);
     }
     return {prefixes, suffixes};
-  }
-
-  /* -------------------------------------------- */
-
-  /**
-   * Render the properties field as a multi-checkboxes element.
-   * @param {foundry.data.fields.DataField} field
-   * @param {object} groupConfig
-   * @param {object} inputConfig
-   * @returns {HTMLMultiCheckboxElement}
-   */
-  #propertiesWidget(field, groupConfig, inputConfig) {
-    inputConfig.name = field.fieldPath;
-    const PROPERTIES = this.document.system.constructor.ITEM_PROPERTIES;
-    inputConfig.options = Object.entries(PROPERTIES).map(([k, v]) => ({value: k, label: v.label}));
-    inputConfig.type = "checkboxes";
-    return foundry.applications.fields.createMultiSelectInput(inputConfig);
   }
 
   /* -------------------------------------------- */

@@ -2,11 +2,11 @@ import * as ATTRIBUTES from "./attributes.mjs";
 import * as ACTION from "./action.mjs";
 import * as ARMOR from "./armor.mjs";
 import * as CONSUMABLE from "./consumable.mjs";
-import * as CRAFTING from "./crafting.mjs";
+import * as PROFICIENCY from "./proficiencies.mjs";
 import * as DICE from "./dice.mjs";
 import * as ITEM from "./items.mjs";
 import * as EFFECTS from "./effects.mjs";
-import * as SKILL from "./skills.mjs";
+import * as FOOTFALLS from "./footfalls.mjs";
 import * as SPELL from "./spellcraft.mjs";
 import * as WEAPON from "./weapon.mjs";
 import * as ACCESSORY from "./accessory.mjs";
@@ -43,6 +43,30 @@ export const COMPENDIUM_PACKS = Object.freeze({
   spell: "crucible.spell",
   talent: "crucible.talent",
   taxonomy: "crucible.taxonomy"
+});
+
+/* -------------------------------------------- */
+
+/**
+ * Combat encounter difficulty tiers, by the ratio of total adversary threat to total party level.
+ * Each tier applies below its `maximumRatio`, and its `icon` and `color` accent the tier's name, the color being
+ * `colorLight` in light mode.
+ * @type {Readonly<Record<string, {id: string, label: string, maximumRatio: number, icon: string, color: string,
+ *   colorLight: string}>>}
+ */
+export const ENCOUNTER_DIFFICULTIES = defineEnum({
+  trivial: {label: "ENCOUNTER.DIFFICULTIES.Trivial", maximumRatio: 0.5,
+    icon: "fa-solid fa-angles-down", color: "#3cb043", colorLight: "#2e7d32"},
+  easy: {label: "ENCOUNTER.DIFFICULTIES.Easy", maximumRatio: 0.75,
+    icon: "fa-solid fa-angle-down", color: "#3d8bff", colorLight: "#1f5fbf"},
+  moderate: {label: "ENCOUNTER.DIFFICULTIES.Moderate", maximumRatio: 1,
+    icon: "fa-solid fa-equals", color: "#f2c94c", colorLight: "#d6a104"},
+  challenging: {label: "ENCOUNTER.DIFFICULTIES.Challenging", maximumRatio: 1.25,
+    icon: "fa-solid fa-angle-up", color: "#f2994a", colorLight: "#b85c14"},
+  deadly: {label: "ENCOUNTER.DIFFICULTIES.Deadly", maximumRatio: 1.75,
+    icon: "fa-solid fa-angles-up", color: "#eb3b3b", colorLight: "#b71c1c"},
+  hopeless: {label: "ENCOUNTER.DIFFICULTIES.Hopeless", maximumRatio: Infinity,
+    icon: "fa-solid fa-skull", color: "#a855f7", colorLight: "#7e22ce"}
 });
 
 /* -------------------------------------------- */
@@ -207,15 +231,95 @@ export const TIME = Object.freeze({
 /* -------------------------------------------- */
 
 /**
- * @typedef {{name?: string, label?: string, tooltip?: string, page?: string}} RuleItem
+ * Prepare a provided system const enum for use in RULES, when its tooltip must be derived from a rules compendium
+ * page. Removes any existing tooltip (as these, if present, are not explanation of the rules but of value calculation)
+ * and adds the input page to each entry.
+ * @param {Record<string, object>} rulesEnum  The unprepared enum
+ * @param {string} page                       The UUID of the rules compendium journal page containing the tooltip text
+ * @returns {RulesRecord}
+ */
+function prepareRules(rulesEnum, page) {
+  return Object.values(rulesEnum).reduce((acc, {tooltip: _t, ...entry}) => {
+    return {...acc, [entry.id]: {...entry, page}};
+  }, {});
+}
+
+/**
+ * Prepare a system const enum for use in RULES as aliases of the same entries under another rules category.
+ * @param {Record<string, object>} rulesEnum  The unprepared enum
+ * @param {string} category                   The RULES category whose entries are aliased
+ * @returns {RulesRecord}
+ */
+function prepareAliasRules(rulesEnum, category) {
+  return Object.values(rulesEnum).reduce((acc, {id, label}) => {
+    acc[id] = {id, label, alias: `${category}.${id}`};
+    return acc;
+  }, {});
+}
+
+/**
+ * Prepare an item type's property enum for use in RULES, aliasing shared item properties to their `item` rule.
+ * @param {Record<string, object>} properties   The item type's property enum
+ * @param {string} page                         The UUID of the rules compendium journal page documenting the type
+ * @returns {RulesRecord}
+ */
+function preparePropertyRules(properties, page) {
+  return Object.values(properties).reduce((acc, {tooltip: _t, ...entry}) => {
+    if ( entry.deprecated ) return acc;
+    acc[entry.id] = (entry.id in ITEM.PROPERTIES) ? {...entry, alias: `item.${entry.id}`} : {...entry, page};
+    return acc;
+  }, {});
+}
+
+/**
+ * Prepare an item type's category enum for use in RULES, reading each label from the enum once it is localized.
+ * @param {Record<string, object>} categories   The item type's category enum
+ * @param {string} page                         The UUID of the rules compendium journal page documenting the type
+ * @returns {RulesRecord}
+ */
+function prepareCategoryRules(categories, page) {
+  return Object.keys(categories).reduce((acc, id) => {
+    acc[id] = {id, page, get label() { return categories[id].label; }};
+    return acc;
+  }, {});
+}
+
+const EQUIPMENT_PAGE = "Compendium.crucible.rules.JournalEntry.e33DSvx0cfa7fey6.JournalEntryPage";
+
+/**
+ * @typedef {{name?: string, label?: string, tooltip?: string, page?: string, alias?: string}} RuleItem
  * @typedef {Record<string, RuleItem|RulesRecord>} RulesRecord
  * Define rules objects used by the `@Rule` enricher.
+ * A rule whose `tooltip` resolves blank derives its content from the `data-rule` element of its `page`.
+ * A rule with an `alias` displays the tooltip of the rule it names.
  * @type {RulesRecord}
  */
 export const RULES = {
-  action: ACTION.TAGS,
-  // Everything `@Condition` may link to, which is broader than the statuses a creature can actually be given
-  condition: {...statusEffects, ...derivedConditions}
+  ability: ATTRIBUTES.ABILITIES,
+  accessory: preparePropertyRules(ACCESSORY.PROPERTIES, `${EQUIPMENT_PAGE}.Accessories00000`),
+  action: ACTION.TAGS, // Tags which pertain to an action; `reload`, `rest`, and `strike` also exist under `actions`
+  actions: Object.fromEntries(ACTION.DEFAULT_ACTIONS.map(a => [a.id, a])),
+  armor: {
+    ...preparePropertyRules(ARMOR.PROPERTIES, `${EQUIPMENT_PAGE}.JTsl6ENdxSDW765Q`),
+    ...prepareCategoryRules(ARMOR.CATEGORIES, `${EQUIPMENT_PAGE}.JTsl6ENdxSDW765Q`) // Natural shares its property rule
+  },
+  condition: {...statusEffects, ...derivedConditions}, // Encompasses everything `@Condition` may link to
+  consumable: preparePropertyRules(CONSUMABLE.PROPERTIES, `${EQUIPMENT_PAGE}.Text000000000000`),
+  damageType: prepareRules(ATTRIBUTES.DAMAGE_TYPES, "Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.Resistances00000"),
+  defense: ATTRIBUTES.DEFENSES,
+  dice: DICE.RULES,
+  item: {
+    ...prepareRules(ITEM.PROPERTIES, `${EQUIPMENT_PAGE}.6QxbcLoOhUkXTbAj`),
+    ...prepareAliasRules(ITEM.QUALITY_TIERS, "quality")
+  },
+  movement: ACTOR.MOVEMENT_RULES,
+  quality: prepareRules(ITEM.QUALITY_TIERS, `${EQUIPMENT_PAGE}.6QxbcLoOhUkXTbAj`),
+  resource: prepareRules(ATTRIBUTES.RESOURCES, "Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.Resources0000000"),
+  skill: prepareRules(PROFICIENCY.SKILLS, "Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.skills0000000000"),
+  weapon: {
+    ...preparePropertyRules(WEAPON.PROPERTIES, `${EQUIPMENT_PAGE}.LYj7sghAMoQj9FFR`),
+    ...prepareCategoryRules(WEAPON.CATEGORIES, `${EQUIPMENT_PAGE}.LYj7sghAMoQj9FFR`)
+  }
 };
 
 /* -------------------------------------------- */
@@ -235,19 +339,21 @@ export const SYSTEM = {
   ARMOR: {...ARMOR},
   COMPENDIUM_PACKS,
   CONSUMABLE: {...CONSUMABLE},
-  CRAFTING: {...CRAFTING},
   DAMAGE_CATEGORIES: ATTRIBUTES.DAMAGE_CATEGORIES,
   DAMAGE_TYPES: ATTRIBUTES.DAMAGE_TYPES,
   DEFENSES: ATTRIBUTES.DEFENSES,
   DICE: {...DICE},
   EFFECTS: {...EFFECTS},
+  ENCOUNTER_DIFFICULTIES,
+  FOOTFALLS: {...FOOTFALLS},
   ITEM: {...ITEM},
   PASSIVE_BASE: ATTRIBUTES.PASSIVE_BASE,
   RESOURCES: ATTRIBUTES.RESOURCES,
   RULES,
   RESOURCE_CONSTRAINTS: ATTRIBUTES.RESOURCE_CONSTRAINTS,
-  SKILL: {...SKILL},
-  SKILLS: SKILL.SKILLS,
+  PROFICIENCY: {...PROFICIENCY},
+  PROFICIENCIES: PROFICIENCY.PROFICIENCIES,
+  SKILLS: PROFICIENCY.SKILLS,
   SPELL: {...SPELL},
   TALENT: {...TALENT},
   TEMPERATURE_TIERS,

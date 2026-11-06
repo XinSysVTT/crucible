@@ -5,19 +5,18 @@ img: icons/magic/defensive/shield-hex-blue.webp
 system:
   description: >-
     <p>You are fast enough to lean into blows and take them on your armor's
-    strongest points. Any <strong>Reflex</strong> defense in excess of your
-    <strong>Physical</strong> defense is added as bonus
-    <strong>Armor</strong>.</p>
+    strongest points. Any @Rule[defense.reflex] defense in excess of your
+    @Rule[defense.physical] defense is added as bonus @Rule[defense.armor].</p>
   actions: []
+  keywords:
+    - playstyle.defensive
+    - armor.light
+    - armor.medium
+    - defense.reflex
   nodes:
     - dextou4
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: armor
 effects: []
 flags: {}
 _stats:

@@ -40,15 +40,13 @@ system:
       summon:
         actorUuid: null
         permanent: true
+  keywords:
+    - playstyle.melee
+    - weapons.twohand
   nodes:
     - str1a
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: heavy
 _stats:
   systemId: crucible
   systemVersion: 0.9.5

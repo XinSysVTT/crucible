@@ -2,6 +2,10 @@ name: Sacrifice Self
 type: talent
 img: icons/magic/death/skull-fire-white-yellow.webp
 system:
+  keywords:
+    - playstyle.defensive
+    - action.reaction
+    - action.movement
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} may intervene to take a blow instead of an
@@ -13,7 +17,7 @@ system:
       condition: A nearby ally is targeted by a hostile action.
       description: >-
         <p>The @ref[actor.name]{creature} reacts, performing a
-        <strong>Movement</strong> up to their <strong>Stride </strong>to
+        <strong>Movement</strong> up to their @Rule[movement.stride] to
         interpose itself between a nearby ally and some source of harm which it
         can perceive.</p><p>The @ref[actor.name]{creature} becomes
         @Condition[dead], destroyed in their sacrifice, but the triggering
@@ -53,13 +57,7 @@ system:
       summon:
         actorUuid: null
         permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: cIS6eiJYaMi1oZQJ
 ownership:

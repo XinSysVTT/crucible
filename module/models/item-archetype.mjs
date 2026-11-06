@@ -24,7 +24,10 @@ export default class CrucibleArchetypeItem extends foundry.abstract.TypeDataMode
         item: new fields.DocumentUUIDField({type: "Item"}),
         level: new fields.NumberField({required: true, nullable: true, integer: true, initial: null})
       })),
-      skills: new fields.SetField(new fields.StringField({required: true, choices: SYSTEM.SKILLS})),
+      // TODO: once https://github.com/foundryvtt/foundryvtt/issues/13564 addressed, make non-nullable again
+      training: new fields.TypedObjectField(new fields.NumberField({required: true, nullable: true, integer: true,
+        min: 0, max: SYSTEM.PROFICIENCY.WEIGHT_MAX, initial: 1}),
+      {validateKey: key => key in SYSTEM.PROFICIENCIES}),
       spells: new fields.ArrayField(new fields.SchemaField({
         item: new fields.DocumentUUIDField({type: "Item"}),
         level: new fields.NumberField({required: true, nullable: false, integer: true, initial: 0})
@@ -92,11 +95,7 @@ export default class CrucibleArchetypeItem extends foundry.abstract.TypeDataMode
   static migrateData(source) {
     source = super.migrateData(source);
 
-    if ( source.talents?.length ) {
-      if ( typeof source.talents[0] === "string") {
-        source.talents = source.talents.map(t => ({item: t, level: null}));
-      }
-    }
+    SYSTEM.TALENT.migrateTalentGrants(source);
 
     const abilities = source.abilities;
     if ( abilities ) {
@@ -106,6 +105,15 @@ export default class CrucibleArchetypeItem extends foundry.abstract.TypeDataMode
         obj[a] = 2;
         return obj;
       }, {});
+    }
+
+    /** @deprecated since 0.10.3 */
+    if ( source.skills ) {
+      source.training ??= {};
+      for ( const skillId of source.skills ) {
+        if ( skillId in SYSTEM.PROFICIENCIES ) source.training[skillId] ??= 1;
+      }
+      delete source.skills;
     }
     return source;
   }

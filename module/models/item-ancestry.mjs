@@ -6,6 +6,14 @@ import {ItemIdentifierField} from "./fields.mjs";
  */
 export default class CrucibleAncestryItem extends foundry.abstract.TypeDataModel {
 
+  /**
+   * Fields of an applied Ancestry which record the character's own choices rather than source data, and which
+   * therefore survive re-application from the upstream source. The Primary and Secondary ability slots are assigned
+   * by the player during character creation and exist nowhere else.
+   * @type {string[]}
+   */
+  static STATEFUL_FIELDS = ["abilities"];
+
   /* -------------------------------------------- */
   /*  Data Schema                                 */
   /* -------------------------------------------- */
@@ -24,6 +32,7 @@ export default class CrucibleAncestryItem extends foundry.abstract.TypeDataModel
       identifier: new ItemIdentifierField(),
       movement: new fields.SchemaField({
         size: new fields.NumberField({...reqInt, min: 1, initial: 4}),
+        heightRatio: new fields.NumberField({...reqInt, integer: false, positive: true, initial: 1.5, step: 0.05}),
         stride: new fields.NumberField({...reqInt, min: 1, initial: 10})
       }),
       resistances: new fields.SchemaField({
@@ -35,6 +44,7 @@ export default class CrucibleAncestryItem extends foundry.abstract.TypeDataModel
         level: new fields.NumberField({required: true, nullable: true, integer: true, initial: null})
       })),
       characteristics: new fields.SchemaField({
+        blooded: new fields.BooleanField({required: true, initial: true}),
         temperature: new fields.StringField({required: true, blank: true, initial: "",
           choices: SYSTEM.TEMPERATURE_TIERS})
       }),
@@ -91,27 +101,34 @@ export default class CrucibleAncestryItem extends foundry.abstract.TypeDataModel
 
     // Determine ability allocation
     const {primary, secondary} = abilities;
-    let tertiary;
-    if ( ![primary, secondary].includes("toughness") ) tertiary = "toughness";
+    const allocation = {};
+    if ( SYSTEM.ABILITIES[primary].groupInternal === SYSTEM.ABILITIES[secondary].groupInternal ) {
+      for ( const {id, type} of Object.values(SYSTEM.ABILITIES) ) {
+        if ( [primary, secondary].includes(id) ) allocation[id] = 3;
+        else allocation[id] = (type === "physical") ? 2 : 1;
+      }
+    }
     else {
-      const opposites = {strength: "intellect", wisdom: "dexterity", intellect: "strength", dexterity: "wisdom"};
-      tertiary = opposites[primary === "toughness" ? secondary : primary];
+      let tertiary = "toughness";
+      if ( [primary, secondary].includes("toughness") ) {
+        const opposites = {strength: "intellect", wisdom: "dexterity", intellect: "strength", dexterity: "wisdom"};
+        tertiary = opposites[primary === "toughness" ? secondary : primary];
+      }
+      for ( const {id} of Object.values(SYSTEM.ABILITIES) ) {
+        if ( id === primary ) allocation[id] = 4;
+        else if ( id === secondary ) allocation[id] = 3;
+        else if ( id === tertiary ) allocation[id] = 2;
+        else allocation[id] = 1;
+      }
     }
 
     // Prepare system data
     const system = {
       description,
       identifier,
-      size: movement.size,
-      stride: movement.stride,
+      movement,
       category: "humanoid",
-      abilities: Object.values(SYSTEM.ABILITIES).reduce((obj, {id}) => {
-        if ( id === primary ) obj[id] = 4;
-        else if ( id === secondary ) obj[id] = tertiary ? 3: 4;
-        else if ( id === tertiary ) obj[id] = 2;
-        else obj[id] = 1;
-        return obj;
-      }, {}),
+      abilities: allocation,
       resistances: Object.values(SYSTEM.DAMAGE_TYPES).reduce((obj, {id}) => {
         if ( id === resistances.resistance ) obj[id] = {value: 1};
         else if ( id === resistances.vulnerability ) obj[id] = {value: -1};
@@ -122,7 +139,7 @@ export default class CrucibleAncestryItem extends foundry.abstract.TypeDataModel
       characteristics: {
         equipment: true,
         spells: true,
-        temperature: characteristics.temperature
+        ...characteristics
       },
       talents
     };
@@ -151,11 +168,8 @@ export default class CrucibleAncestryItem extends foundry.abstract.TypeDataModel
   static migrateData(source) {
     source = super.migrateData(source);
 
-    if ( source.talents?.length ) {
-      if ( typeof source.talents[0] === "string") {
-        source.talents = source.talents.map(t => ({item: t, level: null}));
-      }
-    }
+    SYSTEM.TALENT.migrateTalentGrants(source);
+    CrucibleAncestryItem._migrateIdentifier(source);
 
     /** @deprecated since 0.7.0 until 0.8.0 */
     const {primary, secondary, resistance, vulnerability, size, stride} = source;
@@ -180,5 +194,18 @@ export default class CrucibleAncestryItem extends foundry.abstract.TypeDataModel
     }
 
     return source;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Replace the identifier of a renamed system-provided ancestry in candidate source data.
+   * @param {object} source   Candidate ancestry or ancestry-derived taxonomy source data, modified in place
+   * @deprecated since 0.11.1 until 0.13.0
+   * @internal
+   */
+  static _migrateIdentifier(source) {
+    const migrations = {dwarven: "dwarf", elvish: "elf", orcish: "orc"};
+    if ( Object.hasOwn(migrations, source.identifier) ) source.identifier = migrations[source.identifier];
   }
 }

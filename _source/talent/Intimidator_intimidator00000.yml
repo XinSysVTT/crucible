@@ -10,9 +10,11 @@ system:
     - id: intimidate
       name: Intimidate
       description: >-
-        <p>You physically intimidate an enemy that is within your engagement
-        range, performing an Intimidation skill attack against your target. On a
-        success they sustain Void damage to Morale.</p>
+        <p>You bring your intimidating presence to bear upon an enemy within 30
+        feet, performing an @Rule[skill.intimidation] @Rule[action.skill] attack
+        against your target's passive @Rule[skill.intimidation] defense. On a
+        success, they sustain @Rule[action.void] damage to their
+        @Rule[resource.morale].</p>
       tags:
         - void
         - morale
@@ -27,29 +29,26 @@ system:
       target:
         type: single
         number: 1
-        scope: 0
+        scope: 3
         self: false
       effects: []
       img: icons/magic/death/skull-humanoid-crown-white-blue.webp
       condition: ''
       range:
         minimum: null
-        maximum: null
+        maximum: 30
         weapon: false
-      summon:
-        actorUuid: null
-        permanent: true
+      summon: null
+  keywords:
+    - target.morale
+    - damageType.void
+    - skill.intimidation
   nodes:
-    - pre2c
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - pre0a
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: intimidation
 effects: []
-folder: 2MFixpDJ379KOogE
+folder: fldIntimidation0
 sort: 400000
 ownership:
   default: 0
@@ -57,11 +56,11 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160137
-  modifiedTime: 1773514792590
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789496258776
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

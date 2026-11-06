@@ -3,7 +3,7 @@
   "id": "crucible",
   "title": "Crucible",
   "description": "Crucible is an innovative and modern tabletop role-playing game system built exclusively for Foundry Virtual Tabletop as a digital platform. From the ground up, Crucible is designed to leverage the unique capabilities of Foundry VTT to provide gamemasters with a powerful toolset and effortless layers of automation, allowing gamemasters and players to focus on what matters most: telling a compelling story.",
-  "version": "0.10.2",
+  "version": "0.11.3",
   "manifest": "#{MANIFEST}#",
   "download": "#{DOWNLOAD}#",
   "url": "https://foundryvtt.com/packages/crucible",
@@ -15,7 +15,7 @@
     }
   ],
   "compatibility": {
-    "minimum": 14.366,
+    "minimum": 14.370,
     "verified": 14,
     "maximum": 14
   },
@@ -70,6 +70,12 @@
       "label": "Equipment",
       "path": "packs/equipment",
       "type": "Item"
+    },
+    {
+      "name": "effects",
+      "label": "System Effects",
+      "path": "packs/effects",
+      "type": "ActiveEffect"
     },
     {
       "name": "macros",
@@ -166,7 +172,8 @@
       "packs": [
         "rules",
         "playtest",
-        "macros"
+        "macros",
+        "effects"
       ]
     }
   ],
@@ -196,8 +203,7 @@
     "ActiveEffect": {
       "affix": {
         "htmlFields": ["actions.*.description"]
-      },
-      "flanked": {}
+      }
     },
     "Actor": {
       "hero": {
@@ -209,6 +215,9 @@
       "group": {
         "htmlFields": ["details.biography.public", "details.biography.private"]
       }
+    },
+    "ChatMessage": {
+      "rest": {}
     },
     "Combat": {
       "combat": {},
@@ -260,6 +269,9 @@
       "skill": {}
     },
     "RegionBehavior": {
+      "crucible.action": {
+        "htmlFields": ["action.description"]
+      },
       "crucible.hazard": {
         "htmlFields": ["description"]
       }

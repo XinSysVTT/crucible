@@ -6,17 +6,14 @@ system:
   description: >-
     <p>Your prodigious hardiness conveys a supernatural capability to recover
     from wounds quickly. At the start of your turn if you are not
-    @Condition[weakened] you gain <strong>+1 Health</strong>.</p>
+    @Condition[weakened] you gain @Rule[resource.health]{+1 Health}.</p>
   actions: []
+  keywords:
+    - playstyle.defensive
+    - target.healing
   nodes:
     - tou2c
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 flags: {}
 _stats:

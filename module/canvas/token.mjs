@@ -1,4 +1,7 @@
 import CrucibleHitBoxShader from "./grid/hit-box-shader.mjs";
+import {CrucibleTokenMovementAnimation} from "./movement-animation.mjs";
+
+/** @import {CrucibleFootfalls} from "./movement-animation.mjs"; */
 
 export default class CrucibleTokenObject extends foundry.canvas.placeables.Token {
 
@@ -9,10 +12,22 @@ export default class CrucibleTokenObject extends foundry.canvas.placeables.Token
   });
 
   /**
+   * The precision to which elevations are displayed, in the tooltip and the ruler.
+   * @type {number}
+   */
+  static ELEVATION_PRECISION = 0.1;
+
+  /**
    * Container to "store" some unused graphics in Crucible.
    * @type {PIXI.Container}
    */
   static #voidContainer = new PIXI.Container();
+
+  /**
+   * Formats an elevation with one decimal place, created on first use.
+   * @type {Intl.NumberFormat}
+   */
+  static #fixedElevation;
 
   /**
    * @typedef CrucibleTokenEngagement
@@ -78,6 +93,33 @@ export default class CrucibleTokenObject extends foundry.canvas.placeables.Token
     wasAnimating: false,
     animationTypes: new foundry.utils.BitMask(CrucibleHitBoxShader.STATES)
   };
+
+  /**
+   * The progress of this token's movement animation, which paces its footfall sounds and walk animations.
+   * Anticipates a core `Token#movementAnimation` in V15; until then it is interim support from movement-animation.mjs.
+   * @type {CrucibleTokenMovementAnimation}
+   */
+  get movementAnimation() {
+    return this.#movementAnimation;
+  }
+
+  #movementAnimation = new CrucibleTokenMovementAnimation(this);
+
+  /* -------------------------------------------- */
+
+  /**
+   * The surface this token stands on or would fall onto at its rendered position, which follows movement animation.
+   * @type {{elevation: number, region: RegionDocument|null, level: Level}|null}
+   */
+  get supportingSurface() {
+    if ( this.#supportingSurface === undefined ) {
+      this.#supportingSurface = this.document._findSupportingSurface(this.document);
+    }
+    return this.#supportingSurface;
+  }
+
+  /** @type {{elevation: number, region: RegionDocument|null, level: Level}|null|undefined} */
+  #supportingSurface;
 
   /* -------------------------------------------- */
   /*  Detection                                   */
@@ -178,6 +220,7 @@ export default class CrucibleTokenObject extends foundry.canvas.placeables.Token
   /** @inheritDoc */
   _applyRenderFlags(flags) {
     super._applyRenderFlags(flags);
+    if ( flags.refreshPosition || flags.refreshElevation ) this.#supportingSurface = undefined;
     if ( flags.refreshFlanking ) this.#updateFlanking();
   }
 
@@ -203,14 +246,15 @@ export default class CrucibleTokenObject extends foundry.canvas.placeables.Token
   /**
    * Get the desired adjusted scale of this token when applied to the Crucible microgrid.
    * Shrink or enlarge tokens with hyperbolic falloff factor, clamped to an allowed range of [0.5, 1.5]
+   * @param {number} [elevation]    The elevation to evaluate, defaulting to the token's own
    * @returns {number}
    */
-  getMicrogridScaleFactor() {
+  getMicrogridScaleFactor(elevation=this.document.elevation) {
     if ( !crucible.CONFIG.elevationScaling || !canvas.level || !this.document.parent.useMicrogrid ) return 1;
-    const de = this.document.elevation - canvas.level.elevation.base;
+    const de = elevation - canvas.level.elevation.base;
     if ( de === 0 ) return 1;
     if ( de < 0 ) return Math.max(0.5, 1 / (1 - (de / 90)));  // Reaches 0.5 at -90ft
-    if ( de > 0 ) return Math.min(1.5, 1 / (1 - (de / 270))); // Reaches 1.5 at +90ft
+    return Math.min(1.5, 1 / (1 - (de / 270))); // Reaches 1.5 at +90ft
   }
 
   /* -------------------------------------------- */
@@ -243,6 +287,21 @@ export default class CrucibleTokenObject extends foundry.canvas.placeables.Token
     if ( !canvas.scene.useMicrogrid ) return;
     const dialog = crucible.api.dice.ActionUseDialog.getActiveMovementPlan(this.document);
     if ( dialog ) dialog._onPreviewMovement(this._plannedMovement[game.user.id]);
+  }
+
+  /* -------------------------------------------- */
+
+  /** @override */
+  _getTooltipText() {
+    const {elevation, _source} = this.document;
+    const value = (elevation - canvas.level.elevation.base).toNearest(CrucibleTokenObject.ELEVATION_PRECISION);
+    if ( !Number.isFinite(value) ) return "";
+    const animating = !this.isPreview && (elevation !== _source.elevation); // Fixed decimal precision while animating
+    if ( !animating && (value === 0) ) return "";
+    CrucibleTokenObject.#fixedElevation ??= new Intl.NumberFormat(game.i18n.lang, {signDisplay: "exceptZero",
+      useGrouping: false, minimumFractionDigits: 1, maximumFractionDigits: 1});
+    const text = animating ? CrucibleTokenObject.#fixedElevation.format(value) : value.signedString();
+    return `${text} ${canvas.grid.units}`.trim();
   }
 
   /* -------------------------------------------- */
@@ -385,6 +444,8 @@ export default class CrucibleTokenObject extends foundry.canvas.placeables.Token
       const terrainCost = calculateTerrainCost(from, to, distance, segment);
 
       // Step 3: Apply movement action
+      const costMultiplier = actor?.system.movement.costMultipliers?.[segment.action];
+      if ( costMultiplier !== undefined ) return terrainCost * costMultiplier;
       const calculateActionCost = actionCostFunctions[segment.action]
         ??= segment.actionConfig.getCostFunction(this.document, options);
       return calculateActionCost(terrainCost, from, to, distance, segment);
@@ -453,6 +514,72 @@ export default class CrucibleTokenObject extends foundry.canvas.placeables.Token
     offset.j += (size * Math.sign(dx));
     offset.k += (size * Math.sign(dz));
     return canvas.grid.getTopLeftPoint(offset);
+  }
+
+  /* -------------------------------------------- */
+  /*  Movement Animation                          */
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  _onAnimationUpdate(changed, context) {
+    super._onAnimationUpdate(changed, context);
+    // TODO: remove in V15, when core advances the movement animation
+    if ( ("x" in changed) || ("y" in changed) || ("elevation" in changed) ) this.#movementAnimation.updatePosition();
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  _prepareAnimation(from, changes, context, options) {
+    const isMovement = foundry.documents.TokenDocument._isMovementUpdate(changes, from);
+    const attributes = super._prepareAnimation(from, changes, context, options);
+
+    // Follow each waypoint of a token movement, including its rotations, ending with the movement or its interruption
+    // TODO: remove in V15, when core requests footfalls per waypoint and tracks the movement animation
+    if ( context.name === this.movementAnimationName ) {
+      this.#movementAnimation.beginWaypoint(isMovement ? this._getFootfalls(from, changes, options) : null);
+      context.postAnimate.push(() => this.#movementAnimation.endMovement());
+    }
+    return attributes;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prepare the footfalls this token makes while animating one movement waypoint, or null for silence.
+   * In V15, this method should (in theory) become an `@override` or more lightweight extension of core logic.
+   * @param {DeepReadonly<TokenAnimationData>} from     The animation data at the start of the waypoint
+   * @param {Partial<TokenAnimationData>} changes       The animation data changes of the waypoint
+   * @param {TokenAnimationOptions} options             The options of the waypoint animation
+   * @returns {CrucibleFootfalls|null}
+   * @protected
+   */
+  _getFootfalls(from, changes, options) {
+    if ( !SYSTEM.FOOTFALLS.MOVEMENT_ACTIONS.has(options.action) ) return null;
+    const mover = this.#getFootfallMover();
+    if ( !mover ) return null;
+
+    // A footfall lands each body width walked
+    const stride = this.document.width * canvas.dimensions.distance;
+
+    // Larger movers are heard farther away
+    const {radius, size} = SYSTEM.FOOTFALLS.HEARING;
+    const hearingRadius = radius * Math.sqrt(this.document.size / size);
+    return {mover, stride, radius: hearingRadius, volume: 1, climbing: options.action === "climb"};
+  }
+
+
+  /* -------------------------------------------- */
+
+  /**
+   * The kind of mover this token's actor is, for the footfalls the system opts it in to.
+   * @returns {string|null}
+   */
+  #getFootfallMover() {
+    const actor = this.actor;
+    if ( actor?.type === "hero" ) return "footsteps";
+    if ( (actor?.type === "adversary") && (actor.system.details.taxonomy?.category === "humanoid") ) return "footsteps";
+    return null;
   }
 
   /* -------------------------------------------- */

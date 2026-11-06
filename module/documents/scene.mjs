@@ -12,6 +12,13 @@ export default class CrucibleScene extends Scene {
    */
   _microgrid;
 
+  /**
+   * Re-evaluate resting movement states once a burst of surface invalidations settles, e.g. a region hiding several
+   * surfaces at once.
+   * @type {function(): void}
+   */
+  #updateRestingMovementStatesDebounced = foundry.utils.debounce(this.#updateRestingMovementStates.bind(this), 100);
+
   /* -------------------------------------------- */
 
   /**
@@ -46,8 +53,10 @@ export default class CrucibleScene extends Scene {
   /** @inheritDoc */
   _invalidateSurfaces() {
     super._invalidateSurfaces();
-    // The usesSurfaces flag derives from getSurfaces, whose canonical invalidation is this hook
+    // Invalidate usesSurfaces which is re-derived in getSurfaces
     if ( this._microgrid ) this._microgrid.usesSurfaces = undefined;
+    // A surface that appears, disappears, or moves may leave tokens unsupported
+    if ( this.useMicrogrid && this.isView ) this.#updateRestingMovementStatesDebounced();
   }
 
   /* -------------------------------------------- */
@@ -101,6 +110,127 @@ export default class CrucibleScene extends Scene {
         opacity: 0.5
       }
     });
+  }
+
+  /* -------------------------------------------- */
+  /*  Surfaces                                    */
+  /* -------------------------------------------- */
+
+  /**
+   * Find the lowest movement-restricting surface at or above an elevation which any of a set of test points touches.
+   * The surface region must also span the elevation, so that it can be clung to from there.
+   * @param {Point[]} points                      Test points, any one of which the surface must contain
+   * @param {object} options
+   * @param {number} options.elevation            The elevation from which to search upward
+   * @param {string} options.level                The id of the level from which to search
+   * @returns {{elevation: number, region: RegionDocument, level: Level}|null}
+   */
+  findClimbableSurface(points, {elevation, level}) {
+    const surfaces = this.getSurfaces({level, type: "move"});
+    for ( const surface of surfaces ) {
+      if ( (surface.elevation < elevation) || (surface.region.elevation.bottom > elevation) ) continue;
+      if ( points.some(p => surface.region.polygonTree.testPoint(p)) ) {
+        const restLevel = this.#findRestingLevel(surface.region, surface.elevation, level);
+        return {elevation: surface.elevation, region: surface.region, level: restLevel};
+      }
+    }
+    return null;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Find the supporting surface at or below an elevation which contains a set of test points.
+   * A scene that defines any movement surface uses those surfaces as its only floors (surface mode); a scene with no
+   * surfaces treats the base of every level as an implied floor (level mode).
+   * @param {Point[]} points                      Test points which the surface must contain; used in surface mode
+   * @param {object} options
+   * @param {number} options.elevation            The elevation from which to search downward
+   * @param {string} options.level                The id of the level from which to search
+   * @param {number} [options.coverage=1]         The fraction of test points which a surface must contain
+   * @param {boolean} [options.inclusive=true]    Whether a surface exactly at the search elevation may be returned
+   * @returns {{elevation: number, region: RegionDocument|null, level: Level}|null}
+   */
+  findSupportingSurface(points, {elevation, level, coverage=1, inclusive=true}) {
+    const isAbove = e => (inclusive ? (e > elevation) : (e >= elevation));
+
+    // If the Scene uses Surfaces, then only Surface regions are treated as floors.
+    // Search highest to lowest and return the first region that is at-or-below the elevation which satisfies the test.
+    if ( this.usesSurfaces ) {
+      const surfaces = this.getSurfaces({level, type: "move"});
+      if ( !surfaces.length ) return null;
+      const required = Math.ceil(points.length * coverage);
+      const allowedMisses = points.length - required;
+      for ( let i = surfaces.length; i--; ) {
+        const surface = surfaces[i];
+        if ( isAbove(surface.elevation) ) continue;
+        let inside = 0;
+        let missed = 0;
+        for ( const p of points ) {
+          if ( surface.region.polygonTree.testPoint(p) ) {
+            if ( ++inside >= required ) {
+              const restLevel = this.#findRestingLevel(surface.region, surface.elevation, level);
+              return {elevation: surface.elevation, region: surface.region, level: restLevel};
+            }
+          }
+          else if ( ++missed > allowedMisses ) break;
+        }
+      }
+      return null;
+    }
+
+    // If there are no Surfaces in the Scene, the base of every Level is an implicit floor.
+    // The supporting surface is the highest level base at or below the elevation, which is also the resting Level.
+    let floorLevel = null;
+    for ( const lvl of this.levels ) {
+      if ( isAbove(lvl.elevation.base) ) continue;
+      if ( !floorLevel || (lvl.elevation.base > floorLevel.elevation.base) ) floorLevel = lvl;
+    }
+    if ( !floorLevel ) return null;
+    return {elevation: floorLevel.elevation.base, region: null, level: floorLevel};
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Resolve the level which comes to rest on a surface region at a given elevation. Candidates are the levels the
+   * region belongs to (an unrestricted region belongs to all); the result is the single candidate whose elevation
+   * range is home to the landing elevation, or the current level when there is no unambiguous home.
+   * @param {RegionDocument} region   The landed surface's region
+   * @param {number} elevation        The landing elevation
+   * @param {string} levelId          The current level id
+   * @returns {Level|null}            The level which comes to rest
+   */
+  #findRestingLevel(region, elevation, levelId) {
+    const current = this.levels.get(levelId) ?? null;
+    const candidates = region.levels.size
+      ? Array.from(region.levels, id => this.levels.get(id))
+      : this.levels.contents;
+    let home = null;
+    for ( const level of candidates ) {
+      if ( !level ) continue;
+      if ( (elevation >= level.elevation.bottom) && (elevation < level.elevation.top) ) {
+        if ( home ) return current;  // Ambiguous - more than one candidate level is home to this elevation
+        home = level;
+      }
+    }
+    return home ?? current;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Re-evaluate the resting movement state of each token this user is designated to act for, after the scene's
+   * surfaces change.
+   * @returns {Promise<PromiseSettledResult<void>[]>}
+   */
+  async #updateRestingMovementStates() {
+    if ( !this.isView ) return [];
+    const promises = [];
+    for ( const token of this.tokens ) {
+      if ( token.actor?.getDesignatedUser()?.isSelf ) promises.push(token.updateRestingMovementState());
+    }
+    return Promise.allSettled(promises);
   }
 
   /* -------------------------------------------- */

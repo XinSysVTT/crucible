@@ -1,0 +1,44 @@
+_id: orc0000000000000
+name: Orc
+type: ancestry
+img: icons/creatures/magical/construct-iron-stomping-yellow.webp
+effects: []
+folder: ZEUx6vEoijd34BgK
+flags: {}
+system:
+  description: >-
+    <p>Your birth was marked by the stars and traditions of a proud and enduring
+    people. Your tall and well-toned body and natural propensity for toughness
+    has origins amid a people exposed to the relentless struggle of a harsh
+    northern clime. Your people are known for their strength and resilience
+    above all else.</p>
+  identifier: orc
+  talents:
+    - item: Compendium.crucible.ancestry.Item.orcLineage000000
+      level: null
+  ui:
+    color: '#c14425'
+  abilities:
+    primary: strength
+    secondary: toughness
+  resistances:
+    resistance: cold
+    vulnerability: fire
+  movement:
+    size: 4
+    stride: 10
+_stats:
+  systemId: crucible
+  systemVersion: 0.10.2
+  coreVersion: '14.368'
+  createdTime: 1772307157416
+  modifiedTime: 1790438540633
+  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+sort: 101563
+ownership:
+  default: 0
+  AnoypGxxNIMOS0XY: 3
+_key: '!items!orc0000000000000'

@@ -2,23 +2,20 @@ name: Swarm
 type: talent
 img: icons/creatures/invertebrates/wasp-swarm-tan.webp
 system:
+  keywords:
+    - playstyle.defensive
+    - defense.resistance
   nodes: []
   description: >-
     <p>This adversary is a group of many identical creatures that operate as a
-    single swarming throng of foes.</p><ul><li><p>Maximum
-    <strong>Health</strong> is doubled.</p></li><li><p>Against any single-target
-    source of damage, the swarm gains additional <strong>Resistance</strong>
-    equal to its <strong>Toughness</strong>.</p></li><li><p>The swarm's
-    <strong>Size</strong> decreases as its Health is depleted until reaching a
-    minimum Size of 2.</p></li></ul>
+    single swarming throng of foes.</p><ul><li><p>Maximum @Rule[resource.health]
+    is doubled.</p></li><li><p>Against any single-target source of damage, the
+    swarm gains additional <strong>Resistance</strong> equal to its
+    @Rule[ability.toughness].</p></li><li><p>The swarm's @Rule[movement.size]
+    decreases as its @Rule[resource.health] is depleted until reaching a minimum
+    @Rule[movement.size] of 2.</p></li></ul>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 9Ej4QwUt1yVpv4Wn
 ownership:
@@ -29,12 +26,12 @@ flags:
   ember:
     crucibleOverride: true
 _stats:
-  coreVersion: '14.360'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.1
+  systemVersion: 0.10.2
   createdTime: 1776980101863
-  modifiedTime: 1776980351840
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1789416051230
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   exportSource: null
   compendiumSource: null
   duplicateSource: null

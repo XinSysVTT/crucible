@@ -4,6 +4,7 @@
         <div class="advancement flexrow" data-tooltip="{{advancementTooltip}}" data-tooltip-direction="UP">
             {{#if incomplete.progress}}
             <button type="button" class="icon level-up fa-solid fa-triangle-exclamation incomplete"
+                    data-action="resolveProgress" aria-label="{{localize "ACTOR.ACTIONS.ResolveProgress"}}"
                     data-tooltip-html="{{incomplete.progressTooltip}}" data-tooltip-direction="DOWN"
                     data-tooltip-class="crucible crucible-tooltip incomplete"></button>
             {{else if incomplete.level}}
@@ -35,8 +36,8 @@
         {{/if}}
         <div class="metadata flexrow">
             <div class="size flexrow">
-                <span class="label" data-tooltip="ANCESTRY.FIELDS.movement.size.hint">{{localize "ANCESTRY.FIELDS.movement.size.label"}}</span>
-                <span role="button" tabindex="0" class="hex" data-action="editSize"
+                <span class="label" data-tooltip="{{sizeTooltip}}" data-tooltip-class="crucible">{{localize "ANCESTRY.FIELDS.movement.size.label"}}</span>
+                <span role="button" tabindex="0" class="hex tiny" data-action="editSize"
                       aria-label="{{localize 'ACTOR.ACTIONS.EditSize'}}" data-tooltip>{{actor.size}}</span>
             </div>
         </div>

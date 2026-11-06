@@ -15,9 +15,9 @@ system:
       img: icons/skills/movement/feet-winged-boots-glowing-yellow.webp
       condition: You Dodge an incoming melee Strike.
       description: >-
-        <p>When you <strong>Dodge</strong> a melee attack you can expend
-        <strong>Focus</strong> to leap into a defensive roll, moving up to your
-        <strong>Size</strong> in any direction.</p>
+        <p>When you @Rule[defense.dodge] a melee attack you can expend
+        @Rule[resource.focus] to leap into a defensive roll, moving up to your
+        @Rule[movement.size] in any direction.</p>
       tags:
         - reaction
         - movement
@@ -41,15 +41,15 @@ system:
         actorUuid: null
         permanent: true
       autoFavorite: false
+  keywords:
+    - playstyle.defensive
+    - defense.dodge
+    - action.movement
+    - action.reaction
   nodes:
     - dex2a
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: athletics
 _stats:
   systemId: crucible
   systemVersion: 0.9.4

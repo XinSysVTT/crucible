@@ -2,20 +2,17 @@ name: Blood Sense
 type: talent
 img: icons/skills/wounds/injury-hand-blood-red.webp
 system:
+  keywords:
+    - playstyle.utility
+    - senses
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} can precisely sense any blooded creature
     within 20 feet which does not have all its hit points. Any weapon or skill
-    attack against a wounded creature does not suffer <strong>Banes</strong>
+    attack against a wounded creature does not suffer @Rule[dice.bane]{Banes}
     that would normally apply if the creature were @Condition[blinded].</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 flags: {}
 _stats:

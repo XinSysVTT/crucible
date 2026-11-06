@@ -1,9 +1,24 @@
 import VFXResolvedReferenceField from "../fields/vfx-resolved-reference-field.mjs";
 import CrucibleParticleShader from "../../particles/particle-shader.mjs";
+import CrucibleFlipbookMesh from "../flipbook-mesh.mjs";
 import {applyParticleDensity} from "../blocks.mjs";
+import {getVFXFlipbook} from "../sprites.mjs";
 
 const {ArrayField, BooleanField, ColorField, NumberField, ObjectField, SchemaField, StringField} = foundry.data.fields;
 const {SOUND_ALIGNMENT} = foundry.canvas.vfx.constants;
+
+/**
+ * A positional sound played by a phase or timed cue of a {@link CrucibleVFXComponent}.
+ * @typedef VFXPhaseSoundData
+ * @property {string} src         The sound file path
+ * @property {number} align       Alignment of the sound to its phase in SOUND_ALIGNMENT
+ * @property {number} volume      Playback volume
+ * @property {number} radius      Audible radius in grid units
+ * @property {boolean} loop       Loop the sound for the length of its phase
+ * @property {number} fade        Milliseconds of fade in and out
+ * @property {number} offset      Milliseconds to shift the sound relative to its aligned time
+ * @property {number} release     Milliseconds to hold the sound past the end of its phase
+ */
 
 /**
  * Shared base class for all Crucible VFX components, extending the core {@link VFXComponent} with
@@ -42,6 +57,7 @@ export default class CrucibleVFXComponent extends foundry.canvas.vfx.VFXComponen
       sounds: new ArrayField(new SchemaField({
         sound: this._soundField(),
         time: new NumberField({required: true, nullable: false, initial: 0}),
+        duration: new NumberField({required: true, nullable: false, initial: 0}),
         origin: this._pointField()
       }))
     };
@@ -430,7 +446,7 @@ export default class CrucibleVFXComponent extends foundry.canvas.vfx.VFXComponen
   /**
    * Schedule each declared sound cue on the component timeline at its `time`. Each cue's `origin` is
    * a reference-resolvable point; when null, the cue plays at the state's origin. Cues are loaded as
-   * part of `_load` (subclasses extend their asset plan to include them).
+   * part of `_load` (subclasses extend their asset plan to include them). A looping cue plays for its `duration`.
    * @protected
    */
   _attachSounds() {
@@ -438,8 +454,9 @@ export default class CrucibleVFXComponent extends foundry.canvas.vfx.VFXComponen
       const cue = entry.sound;
       if ( !cue?.instance ) continue;
       const origin = entry.origin ?? this.state.origin;
-      this._scheduleSound(cue.instance, origin,
-        {position: entry.time, align: cue.align, radius: cue.radius, volume: cue.volume});
+      this._scheduleSound(cue.instance, origin, {position: entry.time, duration: entry.duration ?? 0,
+        align: cue.align, radius: cue.radius, volume: cue.volume, loop: cue.loop, fade: cue.fade,
+        offset: cue.offset, release: cue.release});
     }
   }
 
@@ -449,27 +466,33 @@ export default class CrucibleVFXComponent extends foundry.canvas.vfx.VFXComponen
 
   /**
    * Create a transparent {@link VFXCanvasContainer} holding a sized {@link PrimarySpriteMesh} (named
-   * "mesh") at a point.
-   * @param {string} texture   The texture path.
+   * "mesh") at a point. A flipbook path, or a list of variant paths, yields a {@link CrucibleFlipbookMesh} instead.
+   * @param {string|string[]} texture   The texture path, or several to flip between.
    * @param {number} size      Sprite size in feet (fit to the larger dimension).
    * @param {{x: number, y: number, elevation: number, sort: number, sortLayer: number}} point
    * @param {object} [options]
    * @param {boolean} [options.useTextureAnchor=false]   Pivot on the frame's defaultAnchor (the artist's
    *   directional contact point) instead of the center; for directional impact frames.
+   * @param {number} [options.blend]   A PIXI.BLEND_MODES value for the mesh, NORMAL by default.
    * @returns {VFXCanvasContainer}
    * @internal
    */
-  _createSprite(texture, size, point, {useTextureAnchor=false}={}) {
+  _createSprite(texture, size, point, {useTextureAnchor=false, blend=PIXI.BLEND_MODES.NORMAL}={}) {
     const container = new foundry.canvas.vfx.VFXCanvasContainer();
     container.position.set(point.x, point.y);
     container.elevation = point.elevation;
     container.sort = point.sort;
     container.sortLayer = point.sortLayer;
     container.alpha = 0;
-    const tex = foundry.canvas.getTexture(texture);
+    const frames = Array.isArray(texture)
+      ? texture.flatMap(path => getVFXFlipbook(path) ?? foundry.canvas.getTexture(path)).filter(Boolean)
+      : getVFXFlipbook(texture);
+    const tex = frames ? frames[0] : foundry.canvas.getTexture(texture);
     if ( !tex ) return container;
-    const mesh = new foundry.canvas.primary.PrimarySpriteMesh(tex);
+    const mesh = frames ? new CrucibleFlipbookMesh(frames, {frameAnchors: useTextureAnchor})
+      : new foundry.canvas.primary.PrimarySpriteMesh(tex);
     mesh.name = "mesh";
+    mesh.blendMode = blend;
     const anchor = (useTextureAnchor && tex.defaultAnchor) ? tex.defaultAnchor : {x: 0.5, y: 0.5};
     mesh.anchor.set(anchor.x, anchor.y);
     if ( Number.isNumeric(size) ) {
@@ -555,7 +578,8 @@ export default class CrucibleVFXComponent extends foundry.canvas.vfx.VFXComponen
       const behavior = this._animationEntry(layer.animation);
       if ( !behavior ) continue;
       const params = layer.params ?? {};
-      const textures = layer.textures.map(path => foundry.canvas.getTexture(path)).filter(Boolean);
+      const textures = layer.textures.flatMap(path => getVFXFlipbook(path) ?? foundry.canvas.getTexture(path))
+        .filter(Boolean);
       if ( textures.length && (typeof behavior.setup === "function") ) {
         const gridScale = this.state.gridScale;
         const config = {

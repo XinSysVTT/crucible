@@ -4,11 +4,11 @@ img: icons/magic/earth/projectile-boulder-debris.webp
 system:
   description: >-
     <p>The orderly force of elemental earth, responsible for physical matter.
-    The Earth rune governs minerals, metals, soils, and other physical
-    compounds.</p><p>The Earth rune scales using <strong>Wisdom</strong>,
-    targets <strong>Reflex</strong>, and deals <strong>Acid</strong> damage to
-    <strong>Health</strong>. It is opposed by the chaotic rune of
-    <strong>Storm</strong>.</p>
+    The <strong>Earth</strong> rune governs minerals, metals, soils, and other
+    physical compounds.</p><p>The <strong>Earth</strong> rune scales using
+    @Rule[ability.wisdom], targets @Rule[defense.reflex], and deals
+    <strong>Acid</strong> damage to @Rule[resource.health]. It is opposed by the
+    chaotic rune of <strong>Storm</strong>.</p>
   actions:
     - id: mould
       name: Mould
@@ -50,15 +50,17 @@ system:
       summon:
         actorUuid: null
         permanent: true
-  rune: earth
+  spellcraft: earth
+  keywords:
+    - playstyle.spellcraft
+    - spell.rune
+    - spell.elemental
+    - damageType.acid
+    - target.reflex
   nodes:
     - wis0b
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: earth
-    rank: 1
+  training: elemental
 effects: []
 flags:
   core: {}
@@ -66,12 +68,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.10.2
   createdTime: 1772307160143
-  modifiedTime: 1773514792607
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789498649706
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 ownership:
   default: 0
   AnoypGxxNIMOS0XY: 3

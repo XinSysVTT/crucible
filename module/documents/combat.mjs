@@ -86,7 +86,6 @@ export default class CrucibleCombat extends foundry.documents.Combat {
     if ( this.type === "combat" ) this.system.constructor.refreshCombatTracker();
   }
 
-
   /* -------------------------------------------- */
 
   /** @inheritDoc */
@@ -103,7 +102,22 @@ export default class CrucibleCombat extends foundry.documents.Combat {
       actor.reset();
       actor.render(false);
     }
-    if ( actorUpdates.length ) Actor.updateDocuments(actorUpdates);
+    if ( !isGM ) return;
+    const batchOperations = [];
+    if ( actorUpdates.length ) batchOperations.push({
+      action: "update",
+      documentName: "Actor",
+      updates: actorUpdates
+    });
+
+    // Flush the affectedActors tracking of any Crucible Action behaviors which fired during this combat
+    for ( const uuid of (this.getFlag("crucible", "trackedActionBehaviors") ?? []) ) {
+      const behavior = fromUuidSync(uuid);
+      if ( behavior?.type !== "crucible.action" ) continue;
+      const operation = behavior.system.updateAffectedActors(this, {batch: true});
+      if ( operation ) batchOperations.push(operation);
+    }
+    if ( batchOperations.length ) foundry.documents.modifyBatch(batchOperations);
   }
 
   /* -------------------------------------------- */
@@ -111,9 +125,7 @@ export default class CrucibleCombat extends foundry.documents.Combat {
   /** @override */
   async _onStartTurn(combatant, context) {
     await super._onStartTurn(combatant, context);
-
-    // TODO forward turn events to the system subtype
-    return combatant.actor.onStartTurn(context);
+    await this.system._onStartTurn?.(combatant, context);
   }
 
   /* -------------------------------------------- */
@@ -121,27 +133,7 @@ export default class CrucibleCombat extends foundry.documents.Combat {
   /** @override */
   async _onStartRound(context) {
     await super._onStartRound(context);
-    if ( this.turns.length < 2 ) return;
-
-    // Identify the first combatant to act in the round
-    const firstCombatant = this.turns[0];
-    const firstActor = firstCombatant?.actor;
-
-    // Identify the last non-incapacitated combatant to act in the round
-    let lastCombatant;
-    for ( let i=this.turns.length-1; i>0; i-- ) {
-      if ( this.turns[i].actor?.isIncapacitated !== true ) {
-        lastCombatant = this.turns[i];
-        break;
-      }
-    }
-    const lastActor = lastCombatant?.actor;
-
-    // Morale Escalation
-    if ( this.round > 6 ) {
-      await firstActor?.alterResources({morale: this.round}, {}, {statusText: [{text: _loc("COMBAT.Escalation")}]});
-      await lastActor?.alterResources({morale: -this.round}, {}, {statusText: [{text: _loc("COMBAT.Escalation")}]});
-    }
+    await this.system._onStartRound?.(context);
   }
 
   /* -------------------------------------------- */
@@ -149,7 +141,7 @@ export default class CrucibleCombat extends foundry.documents.Combat {
   /** @inheritDoc */
   async _onEndTurn(combatant, context) {
     await super._onEndTurn(combatant, context);
-    await combatant.actor.onEndTurn(context);
+    await this.system._onEndTurn?.(combatant, context);
   }
 
   /* -------------------------------------------- */

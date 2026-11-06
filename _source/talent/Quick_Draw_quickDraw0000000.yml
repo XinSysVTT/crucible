@@ -1,0 +1,62 @@
+folder: zksJqmFhNaGTWekG
+name: Quick Draw
+type: talent
+img: icons/skills/ranged/arrow-barbed-flying-gray.webp
+system:
+  description: <p>You have a basic education in archery and other projectile weaponry.</p>
+  actions:
+    - id: quickDraw
+      name: Quick Draw
+      img: icons/skills/ranged/arrow-barbed-flying-gray.webp
+      condition: ''
+      description: >-
+        <p>You can loose a shot under pressure, although with decreased
+        accuracy. You perform a <strong>Strike</strong> that is
+        @Rule[action.difficult], but has a reduced @Rule[resource.action]
+        cost.</p>
+      cost:
+        action: -1
+        focus: 0
+        heroism: 0
+        hands: 0
+        weapon: true
+      range:
+        minimum: null
+        maximum: null
+        weapon: true
+      target:
+        type: single
+        number: 1
+        scope: 3
+        self: false
+      effects: []
+      tags:
+        - projectile
+        - ranged
+        - difficult
+      summon: null
+  iconicSpells: 0
+  training: projectile
+  keywords:
+    - playstyle.ranged
+    - weapon.projectile
+  nodes:
+    - dex0a
+effects: []
+flags: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.367'
+  systemId: crucible
+  systemVersion: 0.10.2
+  createdTime: 1772307160142
+  modifiedTime: 1789490851762
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+ownership:
+  default: 0
+  AnoypGxxNIMOS0XY: 3
+_id: quickDraw0000000
+sort: -50000
+_key: '!items!quickDraw0000000'

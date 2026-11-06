@@ -252,12 +252,83 @@ const circleParticleOrbit = {
 /* -------------------------------------------- */
 
 /**
+ * @typedef CircleParticleAuraParams
+ * @property {number} chargeRadius       Radius of the aura: the sprite is sized to span its diameter. REQUIRED.
+ * @property {number} [spinSpeed]        Slow turn of the sprite between its jumps (rad/sec, default 0.6).
+ * @property {{min: number, max: number}} [jumpInterval]   Ms between jumps (default 250-700).
+ * @property {{in: number, out: number}} [fade]
+ * @property {number} [blend]
+ */
+
+/**
+ * One aura sprite held on the anchor for the length of its layer, turning slowly and at irregular moments jumping
+ * to another rotation or mirroring itself.
+ * @type {CrucibleParticleBehavior<CircleParticleAuraParams>}
+ */
+const circleParticleAura = {
+  setup(phase, layer) {
+    const params = layer.params;
+    const anchor = this.state.anchors[layer.anchor] ?? this.state.anchors.origin;
+    const duration = layer.duration ?? phase.duration;
+    const spin = params.spinSpeed ?? 0.6;
+    const jump = params.jumpInterval ?? {min: 250, max: 700};
+    const pace = canvas.photosensitiveMode ? 4 : 1;
+    const textureSize = foundry.canvas.getTexture(layer.textures[0])?.orig.width ?? 128;
+    const diameterScale = (params.chargeRadius * 2) / textureSize;
+    const wait = () => (jump.min + (Math.random() * (jump.max - jump.min))) * pace;
+    return {
+      count: 1, initial: 1, spawnRate: 0,
+      area: {type: "circle", x: anchor.x, y: anchor.y, radius: 2},
+      velocity: {speed: [0, 0], angle: [0, 360]},
+      rotation: {alignVelocity: false, spread: Math.PI},
+      scale: [diameterScale, diameterScale],
+      lifetime: {min: duration, max: duration},
+      fade: params.fade ?? {in: 0.15, out: 0.2},
+      blend: params.blend ?? PIXI.BLEND_MODES.NORMAL,
+      onSpawn: p => {
+        p._auraRotation = p.rotation;
+        p._auraNext = wait();
+      },
+      onUpdate: p => {
+        if ( p.elapsedTime >= p._auraNext ) {
+          if ( Math.random() < 0.5 ) p.scale.x *= -1;
+          else p._auraRotation += (Math.PI / 3) + (Math.random() * ((Math.PI * 4) / 3));
+          p._auraNext = p.elapsedTime + wait();
+        }
+        p.rotation = p._auraRotation + (spin * p.elapsedTime * 0.001);
+      }
+    };
+  }
+};
+
+/* -------------------------------------------- */
+
+/**
  * @typedef ProjectileParticleTrailParams
  * @property {boolean} [align]  Lock streaks to projectile heading (directional wake) vs scatter outward.
  * @property {boolean} [flipX]  Mirror sprite horizontally for asymmetric streak textures.
+ * @property {boolean} [body]   Shed from along the visible art of the projectile's current frame, not its anchor.
  * @property {number} [rotationSpread]
  * @property {{min: number, max: number}} [speed]
  */
+
+/**
+ * Measure the visible art of a projectile mesh along its heading, from the trim of its current texture.
+ * @param {PIXI.Container} container   The projectile container, whose "mesh" child carries the texture.
+ * @returns {{center: number, half: number}|null}   Pixel offsets from the container origin along its heading.
+ */
+function _projectileBodyExtent(container) {
+  const mesh = container.getChildByName?.("mesh");
+  const texture = mesh?.texture;
+  if ( !texture?.orig ) return null;
+  const {trim, orig} = texture;
+  const scale = Math.abs(mesh.scale.x);
+  const half = ((trim?.width ?? orig.width) * scale) / 2;
+  const left = ((trim?.x ?? 0) - (mesh.anchor.x * orig.width)) * scale;
+  return {center: left + half, half};
+}
+
+/* -------------------------------------------- */
 
 /**
  * Trailing stream chasing the projectile through space. Aligned streaks read as a directional wake of
@@ -268,11 +339,13 @@ const projectileParticleTrail = {
   setup(phase, layer) {
     const {state} = this;
     const gridScale = state.gridScale;
-    const {align = false, flipX = false, rotationSpread = 0.15, speed = {min: 5, max: 25}} = layer.params;
+    const {align = false, flipX = false, body = false, rotationSpread = 0.15,
+      speed = {min: 5, max: 25}} = layer.params;
     const POSITION_STEP = 4; // Quantize spawn-area moves to throttle updateSource calls
     let shape = null;
     let lastX = -Infinity;
     let lastY = -Infinity;
+    let bodyHalf = 0;
     const config = {
       area: {type: "circle", x: 0, y: 0, radius: 4},
       rotation: align ? {spread: rotationSpread} : {alignVelocity: false, spread: Math.PI},
@@ -281,8 +354,16 @@ const projectileParticleTrail = {
       onTick: (_dt, generator) => {
         const container = state.delivery?.container;
         if ( !container ) return;
-        const x = Math.round(container.x / POSITION_STEP) * POSITION_STEP;
-        const y = Math.round(container.y / POSITION_STEP) * POSITION_STEP;
+        let cx = container.x;
+        let cy = container.y;
+        const extent = body ? _projectileBodyExtent(container) : null;
+        if ( extent ) { // Center the spawn area on the visible art of the current frame
+          bodyHalf = extent.half;
+          cx += Math.cos(container.rotation) * extent.center;
+          cy += Math.sin(container.rotation) * extent.center;
+        }
+        const x = Math.round(cx / POSITION_STEP) * POSITION_STEP;
+        const y = Math.round(cy / POSITION_STEP) * POSITION_STEP;
         if ( !shape ) {
           shape = new foundry.data.CircleShapeData({type: "circle", x, y, radius: 4});
           generator.spawnArea = shape;
@@ -296,10 +377,16 @@ const projectileParticleTrail = {
         }
       }
     };
-    if ( align ) {
+    if ( align || body ) {
       config.onSpawn = p => {
         const container = state.delivery?.container;
         if ( !container ) return;
+        if ( body ) { // Scatter along the length of the visible art
+          const along = ((Math.random() * 2) - 1) * bodyHalf;
+          p.x += Math.cos(container.rotation) * along;
+          p.y += Math.sin(container.rotation) * along;
+        }
+        if ( !align ) return;
         const variance = (Math.random() - 0.5) * rotationSpread * 2;
         p.rotation = container.rotation + variance;
         p.movementSpeed.x = 0;
@@ -1288,6 +1375,7 @@ export const PARTICLE_ANIMATIONS = {
   circleParticleVortex,
   circleParticleSpiral,
   circleParticleOrbit,
+  circleParticleAura,
   circleParticleBloom,
   projectileParticleTrail,
   circleParticleResidue,

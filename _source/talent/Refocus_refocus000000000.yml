@@ -1,0 +1,70 @@
+folder: zQ7pKvR3mNxL8sTa
+name: Refocus
+type: talent
+img: icons/magic/light/orb-shadow-blue.webp
+system:
+  description: >-
+    <p>You understand the arcane usage of talismans, orbs, foci, or other
+    similar implements to channel magic or empower spellcraft.</p>
+  actions:
+    - id: refocus
+      name: Refocus
+      img: icons/magic/light/orb-shadow-blue.webp
+      condition: ''
+      description: >-
+        <p>You use your equipped <strong>Talisman</strong> to attempt to regain
+        some @Rule[resource.focus]. You perform a @Rule[action.harmless]
+        <strong>Strike</strong> against your own
+        @Rule[defense.madness].</p><p>On a success you recover
+        @Rule[resource.focus]{+1 Focus} if using a one-handed
+        <strong>Talisman</strong> and @Rule[resource.focus]{+2 Focus} if using a
+        two-handed <strong>Talisman</strong>. On a @Rule[dice.criticalSuccess]
+        the amount of @Rule[resource.focus] recovered increases by an additional
+        +1.</p>
+      cost:
+        action: 0
+        focus: 0
+        heroism: 0
+        hands: 0
+        weapon: true
+      range:
+        minimum: null
+        maximum: null
+        weapon: false
+      target:
+        type: self
+        number: 1
+        scope: 1
+        self: false
+      effects: []
+      tags:
+        - talisman
+        - ranged
+        - harmless
+        - rallying
+      summon: null
+  iconicSpells: 0
+  training: talisman
+  keywords:
+    - weapon.talisman
+    - resource.focus
+  nodes:
+    - pre0a
+effects: []
+flags: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.367'
+  systemId: crucible
+  systemVersion: 0.10.2
+  createdTime: 1772307160151
+  modifiedTime: 1789491130909
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+ownership:
+  default: 0
+  AnoypGxxNIMOS0XY: 3
+_id: refocus000000000
+sort: 1200000
+_key: '!items!refocus000000000'

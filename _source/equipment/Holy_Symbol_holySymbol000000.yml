@@ -5,22 +5,22 @@ system:
   identifier: holySymbol
   category: talisman1
   quantity: 1
-  weight: 2
-  price: 320
+  weight: 1
+  price: 780
   quality: standard
   broken: false
   enchantment: mundane
   equipped: false
   invested: false
-  properties: []
+  properties:
+    - ambush
   description:
     public: >-
-      <p>This talisman is a visible proclamation of its wielder's faith and the
-      power it bestows upon them. In combat it can be used to project a searing
-      beam of radiant light towards an enemy.</p>
-    private: >-
-      <p>The type of damage dealt by this talisman can be tailored to the domain
-      of whichever deity its weilder worships.</p>
+      <p>An amulet bearing the sign of a divine patron, which glows faintly in
+      the presence of faith. Spellcasters may focus their spellcraft through
+      this talisman, or use it to strike foes with @Rule[damageType.radiant]
+      damage.</p>
+    private: ''
   actions: []
   damageType: radiant
   dropped: false
@@ -35,12 +35,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.368'
   systemId: crucible
-  systemVersion: 0.8.6
+  systemVersion: 0.11.1
   createdTime: 1749828473016
-  modifiedTime: 1773514792272
-  lastModifiedBy: AnoypGxxNIMOS0XY
+  modifiedTime: 1791159898887
+  lastModifiedBy: WRGzDgYAt3ZuX6TU
 _id: holySymbol000000
 sort: 400000
 _key: '!items!holySymbol000000'

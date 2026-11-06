@@ -39,20 +39,20 @@ pages:
         Category</p></th><th><p>Threat Multiplier</p></th><th><p>Action
         Points</p></th><th><p>Bonus Focus</p></th><th
         style="width:50%"><p>Description</p></th></tr></thead><tbody><tr><td><p>Minion</p></td><td><p>×
-        0.5</p></td><td><p>2</p></td><td><p>-</p></td><td><p>Weaker than average
+        0.5</p></td><td><p>4</p></td><td><p>-</p></td><td><p>Weaker than average
         foes at a given level, minions are less dangerous and more easily
         dispatched - but may be numerous in
         quantity.</p></td></tr><tr><td><p>Normal</p></td><td><p>×
-        1</p></td><td><p>3</p></td><td><p>-</p></td><td><p>The standard level of
+        1</p></td><td><p>6</p></td><td><p>-</p></td><td><p>The standard level of
         difficulty and challenge for a certain
         level.</p></td></tr><tr><td><p>Elite</p></td><td><p>×
-        1.5</p></td><td><p>4</p></td><td><p>+1</p></td><td><p>Stronger than
+        1.5</p></td><td><p>8</p></td><td><p>+1</p></td><td><p>Stronger than
         average foes at a given level, elites are more dangerous and more
         difficult to dispatch. Elites are more rarely
         encountered.</p></td></tr><tr><td><p>Boss</p></td><td><p>×
-        2</p></td><td><p>5</p></td><td><p>+2</p></td><td><p>Especially dangerous
-        enemies which represent the ultimate degree of challenge at a certain
-        level. Most encounters do not contain a
+        2</p></td><td><p>10</p></td><td><p>+2</p></td><td><p>Especially
+        dangerous enemies which represent the ultimate degree of challenge at a
+        certain level. Most encounters do not contain a
         boss.</p></td></tr></tbody></table><h2 class="divider">Defeating
         Adversaries</h2><p>Most Adversaries do not have <strong>Wounds</strong>
         or <strong>Madness</strong> pools like Protagonist characters; their
@@ -102,22 +102,17 @@ pages:
         attained, and are removed automatically if its Level is later reduced
         below that threshold.</p></section><p>Adversaries may also be assigned
         additional bespoke Talents beyond those provided by their Taxonomy and
-        Archetype at the Gamemaster's discretion.</p><h2 class="divider">Skill
-        Progression</h2><p>An Adversary's @UUID[.O8IesdQo8SQpIKbo]{Archetype}
-        designates the skills favored by its combat style. The Adversary's
-        training rank in each designated skill advances automatically as it
-        increases in Level, one rank every 6
-        levels:</p><table><thead><tr><th><p>Training
-        Rank</p></th><th><p>Level</p></th></tr></thead><tbody><tr><td><p>Trained</p></td><td><p>5
-        or lower</p></td></tr><tr><td><p>Proficient</p></td><td><p>6 to
-        11</p></td></tr><tr><td><p>Expert</p></td><td><p>12 to
-        17</p></td></tr><tr><td><p>Master</p></td><td><p>18+</p></td></tr></tbody></table><p>Automatic
-        skill progression establishes a minimum training rank; it never reduces
-        a higher rank which has been manually assigned. This same progression
-        advances the <strong>Natural</strong> weapon training of Adversaries
-        whose Taxonomy cannot use equipment.</p><h2 class="divider">Equipment
-        Progression</h2><p>An Adversary may be granted equipment by its
-        @UUID[.qSeJNy28eK9axO7C]{Taxonomy} or
+        Archetype at the Gamemaster's discretion.</p><h2
+        class="divider">Proficiency Progression</h2><p>An Adversary's
+        @UUID[.O8IesdQo8SQpIKbo]{Archetype} assigns a weight to each
+        @UUID[Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.proficiencies000]{Proficiency}
+        favored by its combat style. The Adversary receives a budget of training
+        points determined by its Level and Threat, and that budget is divided
+        among its desired Proficiencies in proportion to assigned weights. A
+        heavier weight receives a larger share of whatever the Adversary has to
+        spend. A Proficiency weighted zero receives points only if any are left
+        over.</p><h2 class="divider">Equipment Progression</h2><p>An Adversary
+        may be granted equipment by its @UUID[.qSeJNy28eK9axO7C]{Taxonomy} or
         @UUID[.O8IesdQo8SQpIKbo]{Archetype}, each item with a configured
         quantity and equipped state. If the Taxonomy cannot use typical humanoid
         equipment, granted equipment is limited to <strong>Natural
@@ -157,10 +152,10 @@ pages:
     _stats:
       systemId: crucible
       systemVersion: 0.9.0
-      coreVersion: '14.363'
+      coreVersion: '14.369'
       createdTime: 1684375058270
-      modifiedTime: 1780586748994
-      lastModifiedBy: QvBFYpRRXHRBcOfP
+      modifiedTime: 1793036742879
+      lastModifiedBy: ZXJsFnFZuf21WDAk
       compendiumSource: null
       duplicateSource: null
       exportSource: null
@@ -241,28 +236,31 @@ pages:
         <strong>Adversary</strong> in Crucible. Each Archetype further defines a
         taxonomy to:</p><ul><li><p>Refine scaling weights for
         @UUID[Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.abilityScores000]{Abilities}
-        (above and beyond those defined by the Taxonomy), </p></li><li><p>Define
-        automatic @UUID[.WH0YSVcYo09aHNZ2]{Skill
+        (above and beyond those defined by the Taxonomy),</p></li><li><p>Define
+        automatic @UUID[.WH0YSVcYo09aHNZ2#proficiency-progression]{Proficiency
         Progression}</p></li><li><p>Configure granted equipment which may
         automatically scale in quality, as described under
-        @UUID[.WH0YSVcYo09aHNZ2]{Equipment Progression}</p></li><li><p>Provides
-        a set of automatically attained
-        @UUID[Compendium.crucible.rules.JournalEntry.characterMechani.JournalEntryPage.talents000000000]{Talents},
-        each gated by the Level at which it is attained</p></li></ul><section
-        class="gameplay"><h4>Example: Fighter Archetype</h4><p>Hardened melee
-        combatants expert at wielding one-handed weaponry, shield, and heavy
-        armor.</p><p>The Fighter Archetype defines scaling weights such that
-        emphasize faster progression of Strength and Toughness, normal
-        progression of Presence and Dexterity, and slower progression of Wisdom
-        and Intellect.</p><p>Furthermore, the Fighter Archetype provides the
-        <strong>Martial Weapon Training</strong>, <strong>Bulwark</strong>, and
-        <strong>Armored Efficiency</strong> talents.</p></section><p>Many
-        different Adversaries will use the same Archetype. For example a Level 2
-        <strong>Bandit Fighter</strong>, a Level 4 <strong>Hobgoblin
-        Fighter</strong>, and a Level 7 <strong>Hellguard</strong> all share the
-        Fighter Archetype, but they each have different Taxonomies and therefore
-        have different attributes and talents, but all share a common aspect of
-        progression due to the Fighter Archetype.</p>
+        @UUID[.WH0YSVcYo09aHNZ2#equipment-progression]{Equipment
+        Progression}</p></li><li><p>Define
+        @UUID[.WH0YSVcYo09aHNZ2#talent-progression]{Talent Progression} which
+        includes both Talents which are automatically obtained by all
+        adversaries of the Archetype as well as Talents that are conditionally
+        obtained when the adversary has a sufficient level.</p></li></ul><p>As
+        an example, the
+        @UUID[Compendium.crucible.archetype.Item.fighter000000000]{Fighter}
+        archetype weights <strong>Strength</strong>, <strong>Toughness</strong>,
+        and <strong>Dexterity</strong> toward faster progression, while
+        <strong>Wisdom</strong>, <strong>Presence</strong>, and
+        <strong>Intellect</strong> progress more slowly. The Fighter prefers
+        advancing Proficiency in <strong>Heavy Weapons</strong>,
+        <strong>Shields</strong>, and <strong>Armor</strong> while obtaining a
+        range of talents that reinforce those gameplay themes.</p><p>Many
+        different Adversaries will use the same Archetype. For example suppose a
+        Level 2 "Bandit Fighter", a Level 4 "Hobgoblin Fighter", and a Level 7
+        "Hellguard" all share the Fighter Archetype, but they each have
+        different Taxonomies and therefore have different attributes and
+        talents, but all share a common aspect of progression due to the Fighter
+        Archetype.</p>
     video:
       controls: true
       volume: 0.5
@@ -275,10 +273,10 @@ pages:
     _stats:
       systemId: crucible
       systemVersion: 0.9.0
-      coreVersion: '13.350'
+      coreVersion: '14.368'
       createdTime: 1684375072170
-      modifiedTime: 1762045154975
-      lastModifiedBy: vke929uLgNzbrY41
+      modifiedTime: 1789669365649
+      lastModifiedBy: WRGzDgYAt3ZuX6TU
       compendiumSource: null
       duplicateSource: null
       exportSource: null

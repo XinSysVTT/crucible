@@ -58,6 +58,7 @@ system:
     temperature: ''
   movement:
     size: 4
+    heightRatio: 1.5
     stride: 10
   talents:
     - item: Compendium.crucible.adversary-talents.Item.livingBoulder000
@@ -67,6 +68,8 @@ system:
     - item: Compendium.crucible.adversary-talents.Item.immuntableForm00
       level: null
     - item: Compendium.crucible.adversary-talents.Item.bloodless0000000
+      level: null
+    - item: Compendium.crucible.adversary-talents.Item.darkvision000000
       level: null
     - item: Compendium.crucible.adversary-talents.Item.falseAppearance0
       level: 1

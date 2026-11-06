@@ -3,6 +3,11 @@ type: talent
 _id: maddeningShriek0
 img: icons/magic/sonic/scream-wail-shout-teal.webp
 system:
+  keywords:
+    - damageType.psychic
+    - target.fortitude
+    - target.morale
+    - skill.intimidation
   nodes: []
   description: >-
     <p>This @ref[actor.name]{creature} is capable of emitting a piercing screech
@@ -14,7 +19,7 @@ system:
       img: icons/magic/sonic/scream-wail-shout-teal.webp
       description: >-
         <p>The @ref[actor.name]{creature} emits a shrill and piercing screech,
-        attacking the <strong>Morale</strong> of all those contained within and
+        attacking the @Rule[resource.morale] of all those contained within and
         afflicting them with the @Condition[deafened] condition for one
         round.</p>
       condition: ''
@@ -65,13 +70,7 @@ system:
         - skill
         - intimidation
       autoFavorite: false
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 flags:
   ember:

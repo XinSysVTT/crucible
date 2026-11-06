@@ -3,18 +3,16 @@ type: talent
 _id: falseAppearance0
 img: icons/magic/perception/silhouette-stealth-shadow.webp
 system:
+  keywords:
+    - playstyle.utility
+    - skill.stealth
+    - senses
   nodes: []
   description: >-
     <p>While it remains motionless, the @ref[actor.name]{creature} is
     indistinguishable from some other object or material.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: qmA72jUC4FASsfvS
 ownership:

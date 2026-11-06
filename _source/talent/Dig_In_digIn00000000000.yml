@@ -1,0 +1,35 @@
+name: Dig In
+type: talent
+img: icons/magic/earth/projectile-stone-landslide.webp
+system:
+  description: >-
+    <p>You have been at the end of your rope before and you know the shape of
+    it. The first time in a <strong>Combat</strong> encounter that an attack
+    would reduce you to zero @Rule[resource.morale] and leave you
+    @Condition[broken], you are only reduced to @Rule[resource.morale]{1 Morale}
+    instead.</p>
+  actions: []
+  keywords:
+    - playstyle.defensive
+  nodes:
+    - wis3a
+  iconicSpells: 0
+  training: ''
+effects: []
+folder: 4Ll3b4Q4us2mp4Fu
+ownership:
+  default: 0
+flags: {}
+_stats:
+  systemId: crucible
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
+  createdTime: 1788364800000
+  modifiedTime: 1789492276192
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+_id: digIn00000000000
+sort: 500000
+_key: '!items!digIn00000000000'

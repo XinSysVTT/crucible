@@ -30,8 +30,6 @@ system:
       level: 2
     - item: Compendium.crucible.talent.Item.necromancer00000
       level: 3
-    - item: Compendium.crucible.talent.Item.deathProficiency
-      level: 4
     - item: Compendium.crucible.talent.Item.gesturecreate000
       level: 0
     - item: Compendium.crucible.talent.Item.gestureConjure00
@@ -48,11 +46,16 @@ system:
       level: 5
     - item: Compendium.crucible.talent.Item.counterspell0000
       level: 5
-  skills:
-    - stealth
-    - arcana
-    - deception
-    - intimidation
+  training:
+    stealth: 0
+    arcana: 3
+    medicine: 1
+    deception: 1
+    intimidation: 1
+    talisman: 3
+    physical: 4
+    spiritual: 2
+    glyphweaving: 0
   spells: []
   equipment: []
 effects: []
@@ -65,12 +68,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.368'
   systemId: crucible
-  systemVersion: 0.8.7
+  systemVersion: 0.10.2
   createdTime: 1771797216892
-  modifiedTime: 1773514792219
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1791130481799
+  lastModifiedBy: 2g4T1RcAPz2LBKZ1
 _id: necromancer00000
-sort: 0
+sort: 600000
 _key: '!items!necromancer00000'

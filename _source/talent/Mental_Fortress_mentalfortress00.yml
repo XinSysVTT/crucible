@@ -5,18 +5,16 @@ img: icons/magic/holy/barrier-shield-winged-blue.webp
 system:
   description: >-
     <p>Your strong will makes you exceedingly difficult to influence. You gain
-    +1 to your <strong>Willpower</strong> defense and +5 resistance to
-    <strong>Psychic</strong> damage.</p>
+    +1 to your @Rule[defense.willpower] defense and <strong>+5
+    Resistance</strong> to <strong>Psychic</strong> damage.</p>
   actions: []
+  keywords:
+    - playstyle.defensive
+    - defense.willpower
+    - defense.resistance
   nodes:
     - pre3a
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 ownership:
   default: 0
@@ -25,11 +23,11 @@ flags:
   core: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160139
-  modifiedTime: 1773514792596
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789488125161
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: Item.mentalfortress00
   duplicateSource: null
   exportSource: null

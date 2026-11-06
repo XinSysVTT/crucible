@@ -3,6 +3,10 @@ type: talent
 _id: venomousBite0000
 img: icons/creatures/abilities/fang-tooth-poison-green.webp
 system:
+  keywords:
+    - playstyle.melee
+    - weapon.natural
+    - damageType.poison
   nodes: []
   description: <p>The @ref[actor.name]{creature} injects toxin with their bite.</p>
   actions:
@@ -53,13 +57,7 @@ system:
       summon:
         actorUuid: null
         permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 9uAW3eV4LNZ2lQ0V
 ownership:

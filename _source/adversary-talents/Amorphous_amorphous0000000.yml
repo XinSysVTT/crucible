@@ -3,20 +3,18 @@ type: talent
 _id: amorphous0000000
 img: icons/creatures/slimes/slime-movement-dripping-purple.webp
 system:
+  keywords:
+    - playstyle.defensive
+    - defense.dodge
+    - action.movement
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} may move through a space as narrow as 1
-    inch in diameter without any penalty to its <strong>Stride</strong>. It
-    gains a bonus to <strong>Dodge</strong> equal to half its <strong>Toughness
-    </strong>score and is immune to the @Condition[restrained] condition.</p>
+    inch in diameter without any penalty to its @Rule[movement.stride]. It gains
+    a bonus to @Rule[defense.dodge] equal to half its @Rule[ability.toughness]
+    score and is immune to the @Condition[restrained] condition.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: cIS6eiJYaMi1oZQJ
 ownership:

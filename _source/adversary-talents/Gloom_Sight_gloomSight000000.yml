@@ -2,6 +2,9 @@ name: Gloom Sight
 type: talent
 img: icons/magic/perception/eye-slit-pink.webp
 system:
+  keywords:
+    - playstyle.utility
+    - senses
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} can gaze into the gloom of total darkness
@@ -10,13 +13,7 @@ system:
     automation to configure vision and detection modes that are unaffected by
     magical darkness.</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: qmA72jUC4FASsfvS
 ownership:

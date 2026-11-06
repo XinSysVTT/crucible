@@ -1,10 +1,12 @@
 export * as animations from "./animations/_module.mjs";
 export * as blocks from "./blocks.mjs";
+export * as equipment from "./equipment.mjs";
 export * as landing from "./landing.mjs";
 export * as sounds from "./sounds.mjs";
 export * as spells from "./spells.mjs";
 export * as sprites from "./sprites.mjs";
 export * as strikes from "./strikes.mjs";
+export {default as CrucibleFlipbookMesh} from "./flipbook-mesh.mjs";
 
 /**
  * Set the VFX playback rate for debugging. Controls both the animejs engine speed and the

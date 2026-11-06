@@ -4,21 +4,21 @@ _id: perspicacity0000
 img: icons/magic/sonic/bell-alarm-red-purple.webp
 system:
   description: >-
-    <p>You have heightened insight into aspects of your surroundings. You gain
-    +2 Boons to any <strong>Awareness</strong> skill test which does not rely
-    upon eyesight.</p>
+    <p>You take in your surroundings without needing to stop and look. You may
+    sacrifice your @Rule[movement.freeMovement] for the <strong>Round</strong>
+    to instead @Action[default search] without spending any
+    @Rule[resource.action] points.</p>
   actions: []
+  keywords:
+    - playstyle.utility
+    - skill.awareness
+    - action.movement
   nodes:
-    - int1b
-  rune: ''
-  gesture: ''
-  inflection: ''
+    - wis0a
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: awareness
 effects: []
-folder: 2MFixpDJ379KOogE
+folder: fldAwareness0000
 sort: 200000
 ownership:
   default: 0
@@ -26,11 +26,11 @@ ownership:
 flags: {}
 _stats:
   systemId: crucible
-  systemVersion: 0.9.0
-  coreVersion: '14.356'
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
   createdTime: 1772307160141
-  modifiedTime: 1773514792602
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789495718660
+  lastModifiedBy: ZXJsFnFZuf21WDAk
   compendiumSource: null
   duplicateSource: null
   exportSource: null

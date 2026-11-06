@@ -3,10 +3,10 @@ import CrucibleAction from "../models/action.mjs";
 import CrucibleSpellAction from "../models/spell-action.mjs";
 import {SYSTEM} from "../const/system.mjs";
 import {TEMPLATES} from "../chat.mjs";
+import {getEquipmentIndex, migrateEquipmentItem} from "../migrations.mjs";
 const {DialogV2} = foundry.applications.api;
 
 /**
- * @import {TRAINING_TYPES} from "../const/talents.mjs";
  * @import {TokenMovementOperation} from "@client/documents/_types.mjs";
  * @import {GroupCheckSkillConfig} from "../dice/group-check.mjs";
  */
@@ -15,8 +15,6 @@ const {DialogV2} = foundry.applications.api;
  * @typedef ActorRoundStatus
  * @property {boolean} hasMoved
  * @property {string} freeMovementId
- * @property {boolean} hasAttacked
- * @property {boolean} wasAttacked
  */
 
 /**
@@ -28,9 +26,28 @@ const {DialogV2} = foundry.applications.api;
  */
 
 /**
+ * A Talent granted by a detail item, optionally gated by level.
+ * @typedef CrucibleDetailTalentGrant
+ * @property {string} item            The UUID of the granted Talent
+ * @property {number|null} level      The level at which the Talent is granted
+ */
+
+/**
+ * The original and replacement UUIDs of a background talent grant which the ancestry duplicates.
+ * An Array of these is stored in `flags.crucible.substitutions`.
+ * @typedef {[original: string, replacement: string]} CrucibleTalentSubstitution
+ */
+
+/**
  * The Actor document subclass in the Crucible system which extends the behavior of the base Actor class.
  */
 export default class CrucibleActor extends Actor {
+
+  /**
+   * The Item types which are stored as a data snapshot under `system.details` rather than as an owned Item.
+   * @type {readonly string[]}
+   */
+  static #DETAIL_ITEM_TYPES = Object.freeze(["ancestry", "archetype", "background", "taxonomy"]);
 
   /**
    * The Actions which this Actor has available to use.
@@ -150,6 +167,14 @@ export default class CrucibleActor extends Actor {
   }
 
   /**
+   * The effects this Actor maintains with Focus, independent of whether maintenance is currently due.
+   * @type {CrucibleActiveEffect[]}
+   */
+  get maintainedEffects() {
+    return this.effects.filter(e => e.system.properties?.has("maintained"));
+  }
+
+  /**
    * Adjusted threat level of this Actor.
    * @type {number}
    */
@@ -195,6 +220,14 @@ export default class CrucibleActor extends Actor {
   }
 
   /**
+   * Arbitrary state which persists for the duration of a Combat encounter, cleared when that encounter ends.
+   * @type {Record<string, unknown>}
+   */
+  get encounterFlags() {
+    return this.flags.crucible?.encounter ?? {};
+  }
+
+  /**
    * The IDs of purchased talents.
    * A convenience reference to CrucibleBaseActor#talentIds
    */
@@ -220,14 +253,15 @@ export default class CrucibleActor extends Actor {
     for ( const record of history ) {
       const message = game.messages.get(record.messageId);
       if ( !message ) continue;
-      const {action, confirmed} = message.flags.crucible;
-      if ( action && confirmed ) {
-        if ( this.#lastConfirmedAction.messageId !== message.id ) {
-          this.#lastConfirmedAction.messageId = message.id;
-          this.#lastConfirmedAction = {messageId: message.id, action: CrucibleAction.fromChatMessage(message)};
-        }
-        return this.#lastConfirmedAction.action;
+      const isRest = message.type === "rest";
+      const {action: actionData, confirmed} = message.flags.crucible ?? {};
+      if ( isRest ? (message.system.status !== "complete") : !(actionData && confirmed) ) continue;
+      if ( this.#lastConfirmedAction.messageId !== message.id ) {
+        const action = isRest ? message.system.getAction(this) : CrucibleAction.fromChatMessage(message);
+        if ( !action ) continue;
+        this.#lastConfirmedAction = {messageId: message.id, action};
       }
+      return this.#lastConfirmedAction.action;
     }
     return null;
   }
@@ -249,14 +283,6 @@ export default class CrucibleActor extends Actor {
    * @internal
    */
   _cachedResources = {};
-
-  /**
-   * Snapshot taken after the most recent `TokenDocument#prepareDerivedData` pass, recording whether token-affecting
-   * hooks are present.
-   * @type {boolean}
-   * @internal
-   */
-  _hadTokenHooks = false;
 
   /* -------------------------------------------- */
   /*  Data Preparation                            */
@@ -293,7 +319,8 @@ export default class CrucibleActor extends Actor {
     if ( !hookConfig ) throw new Error(`Invalid Actor hook function "${hook}"`);
     if ( hookConfig.async ) throw new Error(`Actor hook "${hook}" is async; use callActorHooksAsync`);
     const hooks = this.system.actorHooks[hook] ||= [];
-    for ( const {item, fn} of hooks ) {
+    for ( const {item, fn, affix} of hooks ) {
+      if ( affix?.isSuppressed ) continue;
       if ( CONFIG.debug.crucibleHooks ) console.debug(`Calling ${hook} hook for Item ${item.name}`);
       try {
         fn.call(this, item, ...args);
@@ -319,7 +346,8 @@ export default class CrucibleActor extends Actor {
     const hookConfig = SYSTEM.ACTOR.HOOKS[hook];
     if ( !hookConfig ) throw new Error(`Invalid Actor hook function "${hook}"`);
     const hooks = this.system.actorHooks[hook] ||= [];
-    for ( const {item, fn} of hooks ) {
+    for ( const {item, fn, affix} of hooks ) {
+      if ( affix?.isSuppressed ) continue;
       if ( CONFIG.debug.crucibleHooks ) console.debug(`Calling ${hook} hook for Item ${item.name}`);
       try {
         await fn.call(this, item, ...args);
@@ -361,15 +389,17 @@ export default class CrucibleActor extends Actor {
   /**
    * Get the skill bonus that this Actor has in a certain training area.
    * @param {string[]} training
+   * @param {object} [options]
+   * @param {boolean} [options.intuitive]   Resolve the bonus as though one further training point were invested
    * @returns {number}
    */
-  getSkillBonus(training) {
-    let bonus = training.length ? -4 : 0; // Does the skill require training?
+  getSkillBonus(training, {intuitive=false}={}) {
+    if ( !training.length ) return 0; // A use which demands no training is never penalized for lacking it
+    const points = intuitive ? 1 : 0;
+    let bonus = -Infinity;
     for ( const t of training ) {
-      const tier = this.system.training[t] ?? 0;
-      const rank = SYSTEM.TALENT.TRAINING_RANK_VALUES[tier];
-      const b = rank.bonus;
-      if ( b > bonus ) bonus = b;
+      const invested = this.system.training[t]?.points ?? 0;
+      bonus = Math.max(bonus, SYSTEM.PROFICIENCY.getRankBonus(invested + points));
     }
     return bonus;
   }
@@ -384,7 +414,7 @@ export default class CrucibleActor extends Actor {
    */
   _configureAttackerRollData(action, rollData) {
     const {boons, banes} = rollData;
-    const {isAttack=false} = action.usage;
+    const {isAttack} = action.target;
     const statuses = CONFIG.statusEffects;
 
     // Global conditions
@@ -393,6 +423,7 @@ export default class CrucibleActor extends Actor {
     // Attack-related conditions
     if ( isAttack ) {
       if ( this.statuses.has("blinded") ) banes.blind = {label: statuses.blinded.name, number: 2};
+      // TODO: a future action tag for attacks that aren't affected by physical restraints could skip prone/restrained?
       if ( this.statuses.has("prone") ) banes.prone = {label: statuses.prone.name, number: 1};
       if ( this.statuses.has("restrained") ) banes.restrained = {label: statuses.restrained.name, number: 2};
     }
@@ -421,27 +452,38 @@ export default class CrucibleActor extends Actor {
    * @internal
    */
   _configureTargetRollData(action, rollData) {
-    const {boons, banes} = rollData;
-    const {isAttack=false, isRanged=false} = action.usage;
+    const {boons, banes, defenseType, restoration=false} = rollData;
+    const rangeCategory = action.range.category;
     const statuses = CONFIG.statusEffects;
 
-    // Attack-related conditions
-    if ( isAttack ) {
-      if ( this.statuses.has("blinded") ) boons.blind = {label: statuses.blinded.name, number: 2};
-      if ( this.statuses.has("guarded") && !(action.damage?.restoration) ) {
-        banes.guarded = {label: statuses.guarded.name, number: 1};
+    // Attack-related conditions apply to hostile rolls only, never to a roll which restores its target
+    if ( !action.target.isAttack ) return;
+    if ( restoration ) {
+      delete boons.flanked; // Discard the flanking boon previewed for the attack as a whole
+      return;
+    }
+
+    // Blinded and guarded targets
+    // TODO: a future action tag for attacks which do not rely on sight could exempt them from a blinded target
+    if ( this.statuses.has("blinded") ) boons.blind = {label: statuses.blinded.name, number: 2};
+    if ( this.statuses.has("guarded") ) banes.guarded = {label: statuses.guarded.name, number: 1};
+
+    // Prone targets cannot evade a Reflex attack and are harder to strike physically from range
+    if ( this.statuses.has("prone") ) {
+      const prone = {label: statuses.prone.name, number: 1};
+      if ( defenseType === "reflex" ) boons.prone = prone;
+      else if ( defenseType === "physical" ) {
+        if ( rangeCategory === "melee" ) boons.prone = prone;
+        else if ( rangeCategory === "ranged" ) banes.prone = prone;
       }
-      if ( this.statuses.has("prone") ) {
-        if ( isRanged ) banes.prone = {label: statuses.prone.name, number: 1};
-        else boons.prone = {label: statuses.prone.name, number: 1};
-      }
-      // Flanking is per-target, so the optimistic boon previewed in action usage is replaced or cleared here.
-      // A ranged attack keeps whatever usage offered, since only a hook (like Thread the Needle) can grant it.
-      rollData.flanked = action.targets.get(this)?.flanked ?? 0;
-      if ( !isRanged ) {
-        if ( rollData.flanked ) boons.flanked = {label: SYSTEM.RULES.condition.flanked.name, number: rollData.flanked};
-        else delete boons.flanked;
-      }
+    }
+
+    // Flanking is per-target, so the optimistic boon previewed in action usage is replaced or cleared here.
+    // A ranged attack keeps whatever usage offered, since only a hook (like Thread the Needle) can grant it.
+    rollData.flanked = action.targets.get(this)?.flanked ?? 0;
+    if ( rangeCategory === "melee" ) {
+      if ( rollData.flanked ) boons.flanked = {label: SYSTEM.RULES.condition.flanked.name, number: rollData.flanked};
+      else delete boons.flanked;
     }
   }
 
@@ -458,10 +500,9 @@ export default class CrucibleActor extends Actor {
   static _configureRollData(action, actor, target, rollData) {
     actor._configureAttackerRollData(action, rollData);
     target._configureTargetRollData(action, rollData);
-
-    // Call attacker & defender hooks now that base rollData is populated
-    actor.callActorHooks("prepareAttack", action, target, rollData);
-    target.callActorHooks("defendAttack", action, actor, rollData);
+    actor.callActorHooks("prepareAttack", action, target, rollData);  // The attacker customizes the attack
+    target.callActorHooks("defendAttack", action, actor, rollData);   // The defender registers special defenses
+    actor.callActorHooks("finalizeAttack", action, target, rollData); // The attacker controls final bonuses
   }
 
   /* -------------------------------------------- */
@@ -474,6 +515,11 @@ export default class CrucibleActor extends Actor {
    */
   getResistance(resource, damageType, restoration=false) {
     if ( restoration ) return 0;
+
+    // Damage against a pool which does not exist is fully resisted and treated as immune
+    if ( this.system.resources?.[resource]?.max === 0 ) return Infinity;
+
+    // Damage type resistance and status immunities
     let r = this.resistances[damageType]?.total ?? 0;
     switch ( resource ) {
       case "health":
@@ -614,16 +660,27 @@ export default class CrucibleActor extends Actor {
   /* -------------------------------------------- */
 
   /**
+   * Find a connected player who can roll for this actor, preferring an assigned character match then any
+   * non-GM owner. Unlike {@link CrucibleActor#getDesignatedUser}, this does not fall back to the GM.
+   * @returns {User|null}    The active player, or null if none is connected
+   */
+  getActivePlayerUser() {
+    const assigned = game.users.find(user => user.active && (user.character === this));
+    return assigned ?? game.users.getDesignatedUser(user => {
+      if ( !user.active || user.isGM ) return false;
+      return this.testUserPermission(user, "OWNER");
+    }) ?? null;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Find the best active user to roll on this actor's behalf, preferring an assigned character match then any
    * owner, falling back to the active GM.
    * @returns {User|null}    The designated user, or null if none is found
    */
   getDesignatedUser() {
-    const assigned = game.users.find(user => user.active && (user.character === this));
-    return assigned ?? game.users.getDesignatedUser(user => {
-      if ( !user.active || user.isGM ) return false;
-      return this.testUserPermission(user, "OWNER");
-    }) ?? game.users.activeGM;
+    return this.getActivePlayerUser() ?? game.users.activeGM;
   }
 
   /* -------------------------------------------- */
@@ -836,14 +893,15 @@ export default class CrucibleActor extends Actor {
     if ( !(target instanceof CrucibleActor) ) throw new Error("You must define a target Actor for the spell.");
 
     // Coalesce AttackRollData from spell usage and per-attack options
+    const {bonuses} = spell.usage;
     const defenseType = options.defenseType || spell.usage.defenseType;
     const rollData = {
       actorId: this.id,
       spellId: spell.id,
       target: target.uuid,
-      ability: this.getAbilityBonus(spell.scaling),
-      skill: 0,
-      enchantment: 0,
+      ability: bonuses.ability,
+      skill: bonuses.skill,
+      enchantment: bonuses.enchantment,
       boons: {...spell.usage.boons, ...options.boons},
       banes: {...spell.usage.banes, ...options.banes},
       defenseType,
@@ -851,7 +909,8 @@ export default class CrucibleActor extends Actor {
       resource: options.resource || spell.rune.resource,
       damageType: options.damageType || spell.damage.type,
       damageBonus: options.damageBonus || spell.damage.bonus || 0,
-      multiplier: options.multiplier || spell.damage.multiplier || 1
+      multiplier: options.multiplier || ((spell.damage.multiplier ?? 1) * (bonuses.multiplier ?? 1)),
+      restoration: options.restoration ?? spell.usage.restoration
     };
 
     // Actor configuration and hooks
@@ -866,7 +925,7 @@ export default class CrucibleActor extends Actor {
       bonus: rollData.damageBonus + (this.system.rollBonuses.damage?.[rollData.damageType] ?? 0),
       resource: rollData.resource,
       damageType: rollData.damageType,
-      restoration: spell.damage.restoration
+      restoration: rollData.restoration
     });
     target.callActorHooks("receiveAttack", spell, roll);
     return roll;
@@ -888,14 +947,13 @@ export default class CrucibleActor extends Actor {
 
   /**
    * Cause this actor to receive the effects of an Action.
-   * This is used for cases like environmental hazards where the incoming action is not caused by a specific Actor.
    * @param {CrucibleAction} action                   The action being received
    * @param {Partial<AttackRollData>} [options]       Per-attack options that override action-level defaults
    * @returns {Promise<AttackRoll>}
    */
   async receiveAttack(action, options={}) {
     if ( !(action instanceof CrucibleAction) ) throw new Error("The provided action must be a CrucibleAction instance");
-    const {bonuses, restoration} = action.usage;
+    const {bonuses} = action.usage;
 
     // Coalesce AttackRollData from action usage and per-attack options
     const defenseType = options.defenseType || action.usage.defenseType;
@@ -912,24 +970,24 @@ export default class CrucibleActor extends Actor {
       resource: options.resource || action.usage.resource || "health",
       damageType: options.damageType || action.usage.damageType,
       damageBonus: options.damageBonus || 0,
-      multiplier: options.multiplier || 1
+      multiplier: options.multiplier || 1,
+      restoration: options.restoration ?? action.usage.restoration
     };
 
-    // Target configuration (no attacker/hooks for hazards)
+    // Defender configuration, which may handle special cases like the "Environment" or the actor attacking themselves
     this._configureTargetRollData(action, rollData);
+    this.callActorHooks("defendAttack", action, action.actor, rollData);
 
-    // Create and evaluate the AttackRoll instance
+    // Create and evaluate the AttackRoll instance, resolving its outcome and damage result
     const roll = new AttackRoll(rollData);
     await roll.evaluate();
-
-    // Resolve the attack outcome and structured damage
     roll.resolveDamage(null, this, {
       multiplier: rollData.multiplier,
       base: bonuses.base ?? 0,
       bonus: rollData.damageBonus,
       resource: rollData.resource,
       damageType: rollData.damageType,
-      restoration: !!restoration
+      restoration: rollData.restoration
     });
     return roll;
   }
@@ -944,7 +1002,7 @@ export default class CrucibleActor extends Actor {
    * @returns {Promise<AttackRoll|null>}                  A created AttackRoll instance or null
    */
   async skillAttack(action, target, options={}) {
-    const {bonuses, restoration, skillId} = action.usage;
+    const {bonuses, skillId} = action.usage;
 
     // Coalesce AttackRollData from action usage and per-attack options
     let defenseType = options.defenseType || action.usage.defenseType;
@@ -968,7 +1026,8 @@ export default class CrucibleActor extends Actor {
       resource: options.resource || action.usage.resource || "health",
       damageType: options.damageType || action.usage.damageType,
       damageBonus: options.damageBonus || bonuses.damageBonus || 0,
-      multiplier: options.multiplier || bonuses.multiplier || 1
+      multiplier: options.multiplier || bonuses.multiplier || 1,
+      restoration: options.restoration ?? action.usage.restoration
     };
 
     // Actor configuration and hooks
@@ -983,7 +1042,7 @@ export default class CrucibleActor extends Actor {
       bonus: rollData.damageBonus,
       resource: rollData.resource,
       damageType: rollData.damageType,
-      restoration
+      restoration: rollData.restoration
     });
     target.callActorHooks("receiveAttack", action, roll);
     return roll;
@@ -1023,7 +1082,8 @@ export default class CrucibleActor extends Actor {
       resource: options.resource || action.usage.resource || "health",
       damageType: options.damageType || action.usage.damageType || weapon.system.damageType,
       damageBonus: options.damageBonus || action.usage.bonuses.damageBonus || 0,
-      multiplier: options.multiplier || action.usage.bonuses.multiplier || 1
+      multiplier: options.multiplier || action.usage.bonuses.multiplier || 1,
+      restoration: options.restoration ?? action.usage.restoration
     };
 
     // Actor configuration and hooks
@@ -1037,7 +1097,8 @@ export default class CrucibleActor extends Actor {
       base: weapon.system.damage.weapon,
       bonus: weapon.system.damage.bonus + rollData.damageBonus,
       resource: rollData.resource,
-      damageType: rollData.damageType
+      damageType: rollData.damageType,
+      restoration: rollData.restoration
     });
 
     // Finalize the attack and return; hooks fire for every result so talents can react to misses, dodges, and parries
@@ -1097,8 +1158,9 @@ export default class CrucibleActor extends Actor {
    * Build a resource update payload that fills every non-reserve resource pool to its current maximum.
    * Used during initial actor creation and as part of level/ability change simulation.
    * @returns {object}
+   * @internal
    */
-  #getRecoveryData() {
+  _getRecoveryData() {
     const updates = {system: {resources: {}}};
     for ( const [id, resource] of Object.entries(this.system.resources) ) {
       const cfg = SYSTEM.RESOURCES[id];
@@ -1217,11 +1279,11 @@ export default class CrucibleActor extends Actor {
 
   /**
    * Apply or reverse ActiveEffect changes from an action's event stream.
-   * @param {ActionEffect[]} effects            The effect data array to apply
-   * @param {object} [options]                  Options which configure how the effects are applied
-   * @param {boolean} [options.reverse=false]     Reverse the effects instead of applying them?
-   * @param {boolean} [options.commit=true]       When false, apply to this document's source in-memory and re-derive,
-   *                                              without persistence, for ephemeral simulation.
+   * @param {ActionEffect[]} effects                The effect data array to apply
+   * @param {object} [options]                      Options which configure how the effects are applied
+   * @param {boolean} [options.reverse=false]       Reverse the effects instead of applying them?
+   * @param {boolean} [options.commit=true]         When false, apply to this document's source in-memory and
+   *                                                re-derive, without persistence, for ephemeral simulation
    * @returns {Promise<void>}
    * @internal
    */
@@ -1239,7 +1301,9 @@ export default class CrucibleActor extends Actor {
       // Reverse: restore the pre-action snapshot of a delete/update, or undo a creation by deleting it
       if ( reverse ) {
         if ( forceUpdate ) {
-          if ( effectData._snapshot ) (existing ? toUpdate : toCreate).push(effectData._snapshot);
+          if ( !existing ) continue; // Deleted since by something other than this action
+          if ( effectData._snapshot ) toUpdate.push(effectData._snapshot);
+          else toDelete.push(effectData._id);
         }
         else if ( forceDelete ) {
           if ( effectData._snapshot && !existing ) toCreate.push(effectData._snapshot);
@@ -1256,7 +1320,10 @@ export default class CrucibleActor extends Actor {
 
     // Simulate application without persistence
     if ( !commit ) {
-      for ( const data of toCreate ) this.effects.set(data._id, this.effects.createDocument(data));
+      for ( const data of toCreate ) {
+        const effectData = this.effects.createDocument(foundry.utils.deepClone(data)); // Clean copy
+        this.effects.set(data._id, effectData);
+      }
       for ( const data of toUpdate ) this.effects.get(data._id)?.updateSource(data);
       for ( const id of toDelete ) this.effects.delete(id);
       this.reset();
@@ -1297,10 +1364,6 @@ export default class CrucibleActor extends Actor {
    */
   async onStartTurn(context) {
 
-    // Skip cases where the actor delayed, and it is now their turn again
-    const {round, from, to} = this.flags.crucible?.delay || {};
-    if ( from && (round === game.combat.round) && (game.combat.combatant?.initiative === to) ) return;
-
     // Plan actor changes
     const statusText = [];
     const resourceChanges = {action: [{label: null, amount: Infinity}]};
@@ -1317,7 +1380,7 @@ export default class CrucibleActor extends Actor {
       actorUpdates, effectChanges, statusText, dot: []};
 
     // Actor turn start configuration hook
-    await this.#prepareTurnStartConfig(turnStartConfig, context);
+    this.#prepareTurnStartConfig(turnStartConfig, context);
     this.callActorHooks("startTurn", turnStartConfig, context);
 
     // Remove any no-longer-expiring effects from `effectChanges.toExpire`
@@ -1370,12 +1433,12 @@ export default class CrucibleActor extends Actor {
    * Damage-over-time effects are identified.
    * Effects which core will expire are identified.
    * Unaware effect is primed for deletion.
-   * Effects with a maintenance cost are checked here; effects without sufficient focus are primed for deletion.
+   * Effects with a maintenance cost are suppressed until their maintenance is paid.
    * @param {CrucibleTurnChangeConfig & {dot: CrucibleActiveEffect[]}} turnStartConfig
    * @param {CombatTurnEventContext} context
    */
-  async #prepareTurnStartConfig(turnStartConfig, context) {
-    const {effectChanges, resourceChanges, dot} = turnStartConfig;
+  #prepareTurnStartConfig(turnStartConfig, context) {
+    const {effectChanges, dot} = turnStartConfig;
     for ( const effect of this.effects ) {
 
       // Gather damage-over-time effects
@@ -1393,28 +1456,9 @@ export default class CrucibleActor extends Actor {
         continue;
       }
 
-      // Identify maintained effects (only base-type effects carry maintenance data)
-      if ( effect.type !== "base" ) continue;
-      const maintainedCost = effect.system.maintenance.cost;
-      if ( maintainedCost ) {
-        if ( maintainedCost > this.resources.focus.value ) {
-          effectChanges.toDelete.push(effect.id);
-          continue;
-        }
-        const confirm = await DialogV2.query(this.getDesignatedUser(), "confirm", {
-          window: {
-            title: _loc("ACTION.MaintainTitle", {effect: effect.name})
-          },
-          content: _loc("ACTION.MaintainContent", {cost: maintainedCost, effect: effect.name})
-        });
-        if ( confirm ) {
-          resourceChanges.focus.push({
-            label: _loc("COMBAT.SUMMARY.Maintaining", {effect: effect.name}),
-            amount: -maintainedCost
-          });
-        } else {
-          effectChanges.toDelete.push(effect.id);
-        }
+      // Suppress maintained effects until their maintenance is paid
+      if ( effect.system.properties?.has("maintained") ) {
+        effectChanges.toUpdate.push({_id: effect.id, system: {suppression: {maintenance: true}}});
       }
     }
   }
@@ -1432,10 +1476,6 @@ export default class CrucibleActor extends Actor {
    * @returns {Promise<void>}
    */
   async onEndTurn(context) {
-
-    // Skip cases where the turn is over because the actor delayed
-    const {round, from, to} = this.flags.crucible?.delay || {};
-    if ( from && (round === game.combat.round) && (game.combat.combatant?.initiative > to) ) return;
 
     // Plan actor changes
     const actorUpdates = {};
@@ -1492,6 +1532,7 @@ export default class CrucibleActor extends Actor {
    * Identify changes that should occur as part of a turn end workflow.
    * Delay flag is reset.
    * Effects which core will expire are identified.
+   * Maintained effects whose maintenance went unpaid are primed for deletion.
    * @param {CrucibleTurnChangeConfig} turnEndConfig
    * @param {CombatTurnEventContext} context
    */
@@ -1505,6 +1546,9 @@ export default class CrucibleActor extends Actor {
         effectChanges.toExpire.push(effect.id);
         continue; // No need to manually delete an effect which is about to expire naturally
       }
+
+      // Delete maintained effects whose maintenance went unpaid
+      if ( effect.system.suppression?.maintenance ) effectChanges.toDelete.push(effect.id);
     }
   }
 
@@ -1546,6 +1590,23 @@ export default class CrucibleActor extends Actor {
       effects.push({name: this.effects.get(deletedId)?.name ?? deletedId,
         changeLabel: _loc("COMBAT.SUMMARY.EffectExpired")});
     }
+    for ( const updated of effectChanges.toUpdate ) {
+      const effect = this.effects.get(updated._id);
+      for ( const [reason, suppressed] of Object.entries(updated.system?.suppression ?? {}) ) {
+        if ( !suppressed ) continue;
+        const entry = {name: effect?.name ?? updated._id};
+
+        // Maintenance due renders as a button which pays it
+        const action = (reason === "maintenance") ? effect?.system.getMaintainAction() : null;
+        if ( action ) {
+          entry.changeLabel = _loc("BASE_EFFECT.ACTIONS.Maintain");
+          entry.maintain = {uuid: effect.uuid,
+            tooltip: _loc("BASE_EFFECT.ACTIONS.MaintainCost", {cost: action.cost.focus})};
+        }
+        else entry.changeLabel = SYSTEM.EFFECTS.SUPPRESSION_REASONS[reason]?.label ?? reason;
+        effects.push(entry);
+      }
+    }
     for ( const created of effectChanges.toCreate ) {
       const showDuration = created.duration.units === "rounds";
       const duration = showDuration ? _loc("ACTION.DurationRounds", {value: created.duration.value}) : "";
@@ -1578,7 +1639,9 @@ export default class CrucibleActor extends Actor {
   prepareLeaveCombatUpdates() {
     const updates = {};
     if ( this.resources.heroism.value ) updates["system.resources.heroism.value"] = 0;
-    if ( this.flags.crucible?.delay ) updates["flags.crucible.delay"] = _del;
+    const crucibleFlags = this.flags.crucible ?? {};
+    if ( "delay" in crucibleFlags ) updates["flags.crucible.delay"] = _del;
+    if ( "encounter" in crucibleFlags ) updates["flags.crucible.encounter"] = _del;
     return updates;
   }
 
@@ -1600,6 +1663,7 @@ export default class CrucibleActor extends Actor {
     // Prompt designated user to pick up dropped items
     // TODO: Consider whether to extend this dialog to an Owner who does not have this actor as their character
     const itemUpdates = [];
+    const deployedIds = [];
     const designatedUser = game.users.getDesignatedUser(user => {
       return user.active && (user.character === this);
     });
@@ -1609,10 +1673,12 @@ export default class CrucibleActor extends Actor {
         window: { title: "ITEM.ACTIONS.RecoverAllTitle" },
         content: _loc("ITEM.ACTIONS.RecoverAllContent", {actor: this.name})
       });
-      if ( pickUp ) itemUpdates.push(...droppedItems.map(i => ({
-        _id: i.id,
-        "system.dropped": false
-      })));
+      if ( pickUp ) {
+        for ( const item of droppedItems ) {
+          itemUpdates.push({_id: item.id, "system.dropped": false});
+          for ( const effect of item.system.deployedEffects() ) deployedIds.push(effect.id);
+        }
+      }
     }
 
     // Reload any equipped weapons
@@ -1625,7 +1691,12 @@ export default class CrucibleActor extends Actor {
         });
       }
     }
-    if ( !this.isIncapacitated && itemUpdates.length ) await this.updateEmbeddedDocuments("Item", itemUpdates);
+    if ( !this.isIncapacitated && itemUpdates.length ) {
+      await foundry.documents.modifyBatch(this.defineBatchOperations({}, {
+        updateItems: itemUpdates,
+        deleteEffects: deployedIds
+      }));
+    }
   }
 
   /* -------------------------------------------- */
@@ -1735,6 +1806,141 @@ export default class CrucibleActor extends Actor {
       return arr;
     }, []);
     await this.deleteEmbeddedDocuments("Item", deleteIds);
+
+    // Refund purchases of empty nodes
+    if ( this.system.advancement?.talentNodes?.size ) {
+      await this.update({"system.advancement.talentNodes": []});
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Reclaim every Proficiency Point this Actor has allocated to training.
+   * Only allocated increases are refunded; training granted by ancestry, background, or talents is untouched.
+   * @param {object} [options]        Options which modify how training is reset
+   * @param {boolean} [options.dialog]    Present the user with a confirmation dialog?
+   * @returns {Promise<void>}         A Promise which resolves once training is reset or the dialog is declined
+   */
+  async resetTraining({dialog=true}={}) {
+
+    // Prompt for confirmation
+    if ( dialog ) {
+      const confirm = await DialogV2.confirm({
+        window: {
+          title: _loc("ACTOR.ACTIONS.ResetProficiencyTitle", {actor: this.name}),
+          icon: "fa-solid fa-undo"
+        },
+        content: _loc("ACTOR.ACTIONS.ResetProficiencyContent"),
+        yes: {
+          default: true
+        }
+      });
+      if ( !confirm ) return;
+    }
+
+    // Zero every allocation
+    const update = {};
+    for ( const [id, t] of Object.entries(this.system.training) ) {
+      if ( t.increases ) update[`system.training.${id}.increases`] = 0;
+    }
+    if ( foundry.utils.isEmpty(update) ) return;
+
+    // Temporary modification for ephemeral Actor
+    if ( !this._id ) this.updateSource(update);
+    else await this.update(update);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * @typedef CrucibleDetailSyncConfig
+   * @property {string} type          The detail type being synchronized
+   * @property {CrucibleItem} item    The item which will be applied; mutate via updateSource to alter what is written
+   * @property {object} current       The Actor's existing snapshot of this detail, for reference only
+   */
+
+  /**
+   * Re-apply this Actor's detail items from the current compendium versions of the documents they were built from.
+   * Detail items are rediscovered by their `system.identifier` among the configured packs.
+   * A detail which cannot be rediscovered is left alone and not replaced.
+   * Each applied detail is passed through the `"crucible.preSyncDetailItem"` hook, which may mutate the item which
+   * will be written or return false to skip that detail. The hook is not called during a dry run.
+   * @param {object} [options]
+   * @param {boolean} [options.performUpdates=true]   Whether to actually apply the resolved detail items
+   * @param {string[]} [options.types]                Restrict synchronization to specific detail types
+   * @returns {Promise<{applied: string[], unresolved: string[], cancelled: string[]}>}  Outcome per detail type
+   */
+  async syncDetailItems({performUpdates=true, types}={}) {
+    const applied = [];
+    const unresolved = [];
+    const cancelled = [];
+    for ( const type of (types ?? CrucibleActor.#DETAIL_ITEM_TYPES) ) {
+      const detail = this.system.details[type];
+      if ( !detail?.identifier ) continue;
+      const item = await CrucibleActor.#findDetailItem(type, detail.identifier);
+      if ( !item ) {
+        unresolved.push(type);
+        continue;
+      }
+      if ( !performUpdates ) {
+        applied.push(type);
+        continue;
+      }
+      const config = {type, item: this.#preserveDetailState(item, detail), current: detail};
+      if ( Hooks.call("crucible.preSyncDetailItem", this, config) === false ) {
+        cancelled.push(type);
+        continue;
+      }
+      applied.push(type);
+      const substitutions = (type === "background") ? this._validateTalentSubstitutions(config.item) : undefined;
+      await this._applyDetailItem(config.item, {type, notify: false, substitutions});
+    }
+    return {applied, unresolved, cancelled};
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Return the upstream detail item with any fields it declares as character state restored from the current snapshot.
+   * Equipment synchronization preserves its own stateful fields the same way; see {@link CruciblePhysicalItem}.
+   * @param {CrucibleItem} item     The upstream detail item resolved from a compendium
+   * @param {object} detail         The Actor's current snapshot of that detail
+   * @returns {CrucibleItem}        A clone of the item to apply, which the preSyncDetailItem hook may safely mutate
+   */
+  #preserveDetailState(item, detail) {
+    const system = {};
+    for ( const field of (item.system.constructor.STATEFUL_FIELDS ?? []) ) {
+      if ( detail[field] !== undefined ) system[field] = foundry.utils.deepClone(detail[field]);
+    }
+    return item.clone({system}); // Always cloned: the compendium document must never be mutated by a listener
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Find the compendium document which a detail snapshot was built from, matching on `system.identifier`.
+   * @param {string} type           The detail item type
+   * @param {string} identifier     The identifier recorded on the Actor's detail snapshot
+   * @returns {Promise<CrucibleItem|null>}
+   */
+  static async #findDetailItem(type, identifier) {
+
+    // Scan each configured pack for a matching detail item
+    for ( const packId of crucible.CONFIG.packs[type] ?? [] ) {
+      const pack = game.packs.get(packId);
+      if ( !pack ) continue;
+      await pack.getIndex();
+      const entry = pack.index.find(e => (e.type === type) && (e.system?.identifier === identifier));
+      if ( entry ) return pack.getDocument(entry._id);
+    }
+
+    // If no taxonomy was provided, check if it was converted from an ancestry
+    if ( type === "taxonomy" ) {
+      const entry = await CrucibleActor.#findDetailItem("ancestry", identifier);
+      if ( entry ) return entry.system.toTaxonomy();
+    }
+    return null;
   }
 
   /* -------------------------------------------- */
@@ -1765,8 +1971,8 @@ export default class CrucibleActor extends Actor {
       // Known talent ID migration
       if ( item._id in migrations ) {
         const uuid = migrations[item._id];
-        talent = await fromUuid(uuid);
-        if ( (uuid === null) || this.items.has(talent.id) ) {
+        talent = uuid ? await fromUuid(uuid) : null;
+        if ( !talent || this.items.has(talent.id) ) {
           toDelete.push(item._id);
           continue;
         }
@@ -1789,8 +1995,8 @@ export default class CrucibleActor extends Actor {
       }
     }
 
-    // Ensure all details "items" are using migrated versions of uuids
-    const detailItemTypes = ["ancestry", "archetype", "background", "taxonomy"];
+    // Ensure all details "items" are using migrated UUID values
+    const detailItemTypes = CrucibleActor.#DETAIL_ITEM_TYPES;
     for ( const detailType of detailItemTypes ) {
       const oldTalents = this.system.details[detailType]?.talents;
       if ( !oldTalents ) continue;
@@ -1799,8 +2005,6 @@ export default class CrucibleActor extends Actor {
       for ( const {item, level} of oldTalents ) {
         const talentId = foundry.utils.parseUuid(item).id;
         const migratedUuid = migrations[talentId];
-
-        // If undefined, no migration. If null, talent was deleted, and we should remove. Otherwise use new uuid
         if ( migratedUuid !== undefined ) {
           needsUpdate ||= true;
           if ( migratedUuid ) talents.push({item: migratedUuid, level});
@@ -1873,6 +2077,30 @@ export default class CrucibleActor extends Actor {
       if ( batchOperations.length ) await foundry.documents.modifyBatch(batchOperations);
     }
     return {toCreate, toUpdate, toDelete};
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Re-sync physical inventory Items on this actor with updated equipment compendium data.
+   * @param {object} [options]
+   * @param {boolean} [options.performUpdates]                  Whether to actually perform the updates
+   * @param {Record<string, CrucibleItem>} [options.index]      A prepared equipment index, built if not provided
+   * @returns {Promise<{toUpdate: object[]}>}
+   */
+  async syncInventoryItems({performUpdates=true, index}={}) {
+    index ??= await getEquipmentIndex();
+    const toUpdate = [];
+    for ( const item of this.items ) {
+      const update = migrateEquipmentItem(item, index);
+      if ( !update ) continue;
+      toUpdate.push(update);
+      console.debug(`Syncing equipment: ${item.name} in Actor ${this.name} [${item.uuid}]`);
+    }
+    if ( performUpdates && toUpdate.length ) {
+      await this.updateEmbeddedDocuments("Item", toUpdate, {diff: false, recursive: false, noHook: true});
+    }
+    return {toUpdate};
   }
 
   /* -------------------------------------------- */
@@ -1982,11 +2210,11 @@ export default class CrucibleActor extends Actor {
    * @returns {boolean}             Whether the Talent would be usable
    */
   canUtilizeTalent(talent) {
-    // Can't use a Gesture or Inflection without a Rune
-    if ( (talent.system.gesture || talent.system.inflection) && !this.items.find(i => (i.type === "talent" && i.system.rune)) ) {
-      throw new Error(_loc(`TALENT.WARNINGS.RequiresRune${talent.system.inflection ? "Inflection" : "Gesture"}`));
+    // Can't use a Gesture or Inflection without knowing a Rune
+    const {type} = SYSTEM.SPELL.COMPONENTS[talent.system.spellcraft] ?? {};
+    if ( type && (type !== "rune") && !this.system.grimoire.runes.size ) {
+      throw new Error(_loc(`TALENT.WARNINGS.RequiresRune${type.capitalize()}`));
     }
-
     return true;
   }
 
@@ -2078,6 +2306,55 @@ export default class CrucibleActor extends Actor {
 
   /* -------------------------------------------- */
 
+  /**
+   * Allocate or reclaim a training point for the Actor.
+   * @param {string} type         The training type id to advance
+   * @param {number} delta        A number in [-1, 1] for the direction of the allocation
+   * @returns {Promise}
+   */
+  async purchaseTraining(type, delta=1) {
+    delta = Math.sign(delta);
+    const t = this.system.training[type];
+    if ( !t || !delta ) return;
+
+    // Can the training point be allocated?
+    if ( !this.canPurchaseTraining(type, delta) ) {
+      return ui.notifications.warn(_loc(`WARNING.TrainingCannot${delta > 0 ? "Increase" : "Decrease"}`));
+    }
+
+    // Modify the allocation
+    const update = {[`system.training.${type}.increases`]: t.increases + delta};
+
+    // Temporary modification for ephemeral Actor
+    if ( !this._id ) this.updateSource(update);
+    else await this.update(update);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Test whether this Actor can modify a training point allocation in a certain direction.
+   * @param {string} type         A value in TRAINING.TYPES
+   * @param {number} delta        A number in [-1, 1] for the direction of the allocation
+   * @returns {boolean}           Can the allocation be changed?
+   */
+  canPurchaseTraining(type, delta=1) {
+    if ( !this.system.points ) return false;
+    delta = Math.sign(delta);
+    const t = this.system.training[type];
+    if ( !t || !delta ) return false;
+
+    // Case 1 - Refund, which may only reclaim points that were allocated
+    if ( delta < 0 ) return t.increases > 0;
+
+    // Case 2 - Allocate a point, which must be affordable and must fit beneath the cap
+    if ( this.points.proficiency.available < 1 ) return false;
+    return t.points < this.system.details.progression.trainingCap;
+  }
+
+  /* -------------------------------------------- */
+  /*  Detail Items: Ancestry, Background, etc...  */
+  /* -------------------------------------------- */
 
   /**
    * Apply actor detail data.
@@ -2089,11 +2366,42 @@ export default class CrucibleActor extends Actor {
    * @param {boolean} [options.canClear]        Allow the prior data to be cleared if null is passed?
    * @param {boolean} [options.local=false]     Apply the item locally without saving changes to the database
    * @param {boolean} [options.notify=true]     Display a notification about the application result?
-   * @param {boolean} [options.skillTalents]
+   * @param {CrucibleTalentSubstitution[]} [options.substitutions]  Background talent substitutions
    * @returns {Promise<void>}
    * @internal
    */
-  async _applyDetailItem(item, {type, canApply=true, canClear=false, local=false, notify=true, skillTalents=true}={}) {
+  async _applyDetailItem(item, {type, canApply=true, canClear=false, local=false, notify=true, substitutions}={}) {
+    const {updateData, deleteItemIds, message} = await this._prepareDetailItem(item, {type, canApply, canClear,
+      substitutions});
+
+    // Update locally (for example during character creation)
+    if ( local ) {
+      for ( const itemId of deleteItemIds ) this.items.delete(itemId);
+      this.updateSource(updateData);
+      return;
+    }
+
+    // Commit the update. Deletion first, intentionally.
+    if ( deleteItemIds.size ) await this.deleteEmbeddedDocuments("Item", Array.from(deleteItemIds));
+    await this.update(updateData, {keepEmbeddedIds: true});
+    if ( message && notify ) ui.notifications.info(message);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prepare the changes which apply or clear actor detail data, without applying them.
+   * This is an internal helper method not intended for external use.
+   * @param {CrucibleItem|null} item          An Item document, object of Item data, or null to clear data
+   * @param {object} [options]                Options which affect how details are prepared
+   * @param {string} [options.type]             Assert a particular type of detail item. Required when clearing
+   * @param {boolean} [options.canApply]        Allow new detail data to be applied?
+   * @param {boolean} [options.canClear]        Allow the prior data to be cleared if null is passed?
+   * @param {CrucibleTalentSubstitution[]} [options.substitutions]  Background talent substitutions
+   * @returns {Promise<{updateData: object, deleteItemIds: Set<string>, message: string}>}
+   * @internal
+   */
+  async _prepareDetailItem(item, {type, canApply=true, canClear=false, substitutions}={}) {
     type ??= item?.type;
     if ( item ) {
       if ( !canApply ) throw new Error(`You are not allowed to apply ${type} data to Actor ${this.name}`);
@@ -2107,15 +2415,19 @@ export default class CrucibleActor extends Actor {
 
     // Remove items granted by the detail being replaced, preserving those granted elsewhere
     const existing = this.system.details[type];
-    const deleteItemIds = this.#detailGrantedItemIds(existing, skillTalents);
+    const deleteItemIds = this.#detailGrantedItemIds(existing);
     for ( const [otherType, otherDetail] of Object.entries(this.system.details) ) {
       if ( otherType === type ) continue;
-      for ( const id of this.#detailGrantedItemIds(otherDetail, skillTalents) ) deleteItemIds.delete(id);
+      for ( const id of this.#detailGrantedItemIds(otherDetail) ) deleteItemIds.delete(id);
     }
 
-    // Clear the detail data
+    // Record intentional background talent substitutions
     const key = `system.details.${type}`;
     const updateData = {};
+    if ( type !== "background" ) substitutions = undefined;
+    if ( substitutions ) updateData["flags.crucible.substitutions"] = substitutions;
+
+    // Clear the detail data
     let message;
     if ( !item ) {
       updateData[key] = _replace(null);
@@ -2126,22 +2438,19 @@ export default class CrucibleActor extends Actor {
     else {
       const itemData = item.toObject();
       const detail = Object.assign(itemData.system, {name: itemData.name, img: itemData.img});
+      detail.talents = CrucibleActor.#substituteTalentGrants(detail.talents || [], substitutions);
       updateData[key] = _replace(detail);
       const updateItems = [];
 
       // Grant Talents
-      const talents = [
-        ...(detail.talents || []),
-        ...(skillTalents ? (detail.skills || []).map(skillId => ({item: SYSTEM.SKILLS[skillId]?.talents[1],
-          level: 0})) : [])
-      ];
+      const talents = detail.talents;
       const {toCreate: talentsToCreate, toKeep: talentsToKeep} = await this.#prepareGrantedDetailTalents(talents);
       for ( const id of talentsToKeep ) deleteItemIds.delete(id); // Talent already owned
       updateItems.push(...talentsToCreate);                       // Add new Talent
 
       // Grant Equipment
       for ( const {item: uuid, quantity, equipped, autoScale} of (detail.equipment || []) ) {
-        const item = await fromUuid(uuid);
+        const item = await CrucibleActor.#resolveGrant(this, uuid, "Equipment");
         if ( !item ) continue;
         const itemData = this._cleanItemData(item);
         Object.assign(itemData.system, {quantity, equipped});
@@ -2155,9 +2464,7 @@ export default class CrucibleActor extends Actor {
 
       // Grant Spells
       for ( const {item: uuid} of (detail.spells || []) ) {
-
-        // TODO: Respect level when granting
-        const item = await fromUuid(uuid);
+        const item = await CrucibleActor.#resolveGrant(this, uuid, "Spell"); // TODO: Respect level when granting
         if ( !item ) continue;
         if ( this.items.has(item.id) ) deleteItemIds.delete(item.id); // Spell already known
         else updateItems.push(this._cleanItemData(item));             // Add new Spell
@@ -2167,29 +2474,17 @@ export default class CrucibleActor extends Actor {
       if ( updateItems.length ) updateData.items = updateItems;
       message = _loc("ACTOR.ACTIONS.AppliedDetailItem", {name: detail.name, type, actor: this.name});
     }
-
-    // Update locally (for example during character creation)
-    if ( local ) {
-      for ( const itemId of deleteItemIds ) this.items.delete(itemId);
-      this.updateSource(updateData);
-      return;
-    }
-
-    // Commit the update
-    await this.deleteEmbeddedDocuments("Item", Array.from(deleteItemIds));
-    await this.update(updateData, {keepEmbeddedIds: true});
-    if ( message && notify ) ui.notifications.info(message);
+    return {updateData, deleteItemIds, message};
   }
 
   /* -------------------------------------------- */
 
   /**
-   * Identify the IDs of currently owned items granted by a detail's data (talents, equipment, spells, skill talents).
+   * Identify the IDs of currently owned items granted by a detail's data (talents, equipment, spells).
    * @param {object} detail               The detail data, e.g. system.details.ancestry
-   * @param {boolean} [skillTalents=true] Include the talents granted by the detail's trained skills?
    * @returns {Set<string>}               Granted item IDs provided by the detail item
    */
-  #detailGrantedItemIds(detail, skillTalents=true) {
+  #detailGrantedItemIds(detail) {
     const grantedIds = new Set();
     if ( !detail ) return grantedIds;
     const add = uuid => {
@@ -2199,8 +2494,146 @@ export default class CrucibleActor extends Actor {
     for ( const {item} of (detail.talents || []) ) add(item);
     for ( const {item} of (detail.equipment || []) ) add(item);
     for ( const {item} of (detail.spells || []) ) add(item);
-    if ( skillTalents ) for ( const skillId of (detail.skills || []) ) add(SYSTEM.SKILLS[skillId]?.talents[1]);
     return grantedIds;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Get the current background data with any substituted talent grants restored to their originals.
+   * @returns {object|null}
+   */
+  #getOriginalBackground() {
+    const background = this._source.system.details.background; // Preparation substitutes a default when absent
+    if ( !background ) return null;
+    const originals = new Map((this.#getTalentSubstitutions() ?? []).map(([o, r]) => [r, o]));
+    const talents = (background.talents || []).map(grant => {
+      const original = originals.get(grant.item);
+      return original ? {...grant, item: original} : grant;
+    });
+    return {...foundry.utils.deepClone(background), talents};
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Get the recorded background talent substitutions with both UUIDs of each passed through talent ID migrations.
+   * Substitutions involving a talent which was retired without replacement are discarded.
+   * @returns {CrucibleTalentSubstitution[]|undefined}
+   */
+  #getTalentSubstitutions() {
+    const recorded = this.getFlag("crucible", "substitutions");
+    if ( !recorded ) return;
+    const {migrateTalentUuid} = SYSTEM.TALENT;
+    return recorded.reduce((arr, [original, replacement]) => {
+      original = migrateTalentUuid(original);
+      replacement = migrateTalentUuid(replacement);
+      if ( original && replacement ) arr.push([original, replacement]);
+      return arr;
+    }, []);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prompt for replacements of background talent grants which the ancestry also grants.
+   * Each replacement is chosen from the other talents which share a talent tree node with the duplicated talent.
+   * @param {object} [details]
+   * @param {object|null} [details.ancestry]      Ancestry data, defaulting to the current ancestry
+   * @param {object|null} [details.background]    Background data with its original grants, defaulting to the current
+   *                                              background
+   * @returns {Promise<CrucibleTalentSubstitution[]|null>}  The substitutions to record, or null if dismissed
+   * @internal
+   */
+  async _promptTalentSubstitutions({ancestry=this.system.details.ancestry,
+    background=this.#getOriginalBackground()}={}) {
+    const substitutions = [];
+    if ( !background ) return substitutions;
+    const prior = new Map(this.#getTalentSubstitutions() ?? []);
+
+    // Talents which cannot be chosen as a replacement
+    const ancestryIds = CrucibleActor.#grantedTalentIds(ancestry);
+    const excludedIds = new Set([...ancestryIds, ...CrucibleActor.#grantedTalentIds(background)]);
+    const detailIds = new Set([...CrucibleActor.#grantedTalentIds(this.system.details.ancestry),
+      ...CrucibleActor.#grantedTalentIds(this.system.details.background)]);
+    for ( const i of this.items ) {
+      if ( (i.type === "talent") && !detailIds.has(i.id) ) excludedIds.add(i.id);
+    }
+
+    // Offer a choice of replacement for each duplicated grant
+    const {StringField} = foundry.data.fields;
+    const fields = {};
+    const originals = {};
+    for ( const {item: uuid} of background.talents ) {
+      const id = foundry.utils.parseUuid(uuid)?.documentId;
+      if ( !ancestryIds.has(id) || (id in fields) ) continue;
+      originals[id] = uuid;
+      const talent = await CrucibleActor.#resolveGrant(this, uuid, "Talent");
+      if ( !talent ) continue;
+      const choices = {};
+      for ( const node of talent.system.nodes ) {
+        for ( const t of node.talents ) {
+          if ( !excludedIds.has(t.id) ) choices[t.uuid] = t.name;
+        }
+      }
+      if ( foundry.utils.isEmpty(choices) ) continue;
+      const initial = (prior.get(uuid) in choices) ? prior.get(uuid) : undefined;
+      fields[id] = new StringField({required: true, blank: false, choices, initial, label: talent.name});
+    }
+    if ( foundry.utils.isEmpty(fields) ) return substitutions;
+
+    // Prompt for replacements
+    const content = document.createElement("div");
+    const hint = document.createElement("p");
+    hint.className = "hint";
+    hint.textContent = _loc("ACTOR.SUBSTITUTION.Hint");
+    content.append(hint);
+    for ( const [name, field] of Object.entries(fields) ) {
+      content.append(field.toFormGroup({}, {name, value: field.initial, sort: true}));
+    }
+    const response = await DialogV2.input({
+      window: {title: _loc("ACTOR.SUBSTITUTION.Title"), icon: "fa-solid fa-shuffle"},
+      ok: {label: _loc("ACTOR.SUBSTITUTION.Confirm"), icon: "fa-solid fa-shuffle"},
+      content
+    });
+    if ( !response ) return null;
+    for ( const [id, replacement] of Object.entries(response) ) substitutions.push([originals[id], replacement]);
+    return substitutions;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Re-apply the current background with new talent substitutions, restoring its original grants first.
+   * @param {CrucibleTalentSubstitution[]} substitutions   The background talent substitutions
+   * @param {object} [options]
+   * @param {boolean} [options.local=false]     Apply the background locally without saving changes to the database
+   * @returns {Promise<void>}
+   * @internal
+   */
+  async _reapplyBackground(substitutions, {local=false}={}) {
+    const background = this.#getOriginalBackground();
+    if ( !background ) return;
+    const cls = getDocumentClass("Item");
+    const item = new cls({name: background.name, img: background.img, type: "background", system: background});
+    await this._applyDetailItem(item, {type: "background", local, notify: false, substitutions});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Retain recorded background talent substitutions only while a background still grants the replaced talent and
+   * the ancestry still duplicates it.
+   * @param {CrucibleItem} background     The background being applied in place of the current one
+   * @returns {CrucibleTalentSubstitution[]|undefined}  Retained substitutions, if any were recorded
+   * @internal
+   */
+  _validateTalentSubstitutions(background) {
+    const recorded = this.#getTalentSubstitutions();
+    if ( !recorded ) return;
+    const granted = new Set(background.system.talents.map(g => g.item));
+    const ancestry = new Set((this.system.details.ancestry?.talents || []).map(g => g.item));
+    return recorded.filter(([original]) => granted.has(original) && ancestry.has(original));
   }
 
   /* -------------------------------------------- */
@@ -2233,24 +2666,37 @@ export default class CrucibleActor extends Actor {
       return;
     }
 
-    // Browse compendium pack
+    // Browse every configured compendium pack for the detail item type
     if ( this.isL0 || !data?.name ) {
-      const pack = game.packs.get(SYSTEM.COMPENDIUM_PACKS[type]);
-      pack.render(true);
+      for ( const packId of crucible.CONFIG.packs[type] ?? [] ) game.packs.get(packId)?.render(true);
     }
   }
 
   /* -------------------------------------------- */
 
   /**
-   * Clean data for an Item that is being added to this Actor.
-   * @param {CrucibleItem} item
-   * @internal
+   * Identify the IDs of talents granted by detail data.
+   * @param {object|null} detail          The detail data
+   * @returns {Set<string>}
    */
-  _cleanItemData(item) {
-    const itemData = game.items.fromCompendium(item, {clearFolder: true, clearOwnership: true, keepId: true});
-    delete itemData.ownership;
-    return itemData;
+  static #grantedTalentIds(detail) {
+    return new Set((detail?.talents || []).map(g => foundry.utils.parseUuid(g.item)?.documentId));
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Replace talent grants with their substitutions.
+   * @param {CrucibleDetailTalentGrant[]} talents     The talent grants of the detail item
+   * @param {CrucibleTalentSubstitution[]} [substitutions]  Substitutions to apply
+   * @returns {CrucibleDetailTalentGrant[]}
+   */
+  static #substituteTalentGrants(talents, substitutions=[]) {
+    const replacements = new Map(substitutions);
+    return talents.map(grant => {
+      const replacement = replacements.get(grant.item);
+      return replacement ? {...grant, item: replacement} : grant;
+    });
   }
 
   /* -------------------------------------------- */
@@ -2300,7 +2746,11 @@ export default class CrucibleActor extends Actor {
 
     // Outside of combat, make item updates directly and support automatic stack combination
     else if ( action?.usage.actorUpdates.items.length ) {
-      await this.updateEmbeddedDocuments("Item", action.usage.actorUpdates.items);
+      const deployedIds = item.system.dropped ? Array.from(item.system.deployedEffects(), e => e.id) : [];
+      await foundry.documents.modifyBatch(this.defineBatchOperations({}, {
+        updateItems: action.usage.actorUpdates.items,
+        deleteEffects: deployedIds
+      }));
       if ( !equipped && !dropped ) await item.combineStack();
     }
   }
@@ -2591,7 +3041,7 @@ export default class CrucibleActor extends Actor {
     const updates = {};
 
     // Populate initial resource data
-    if ( this.system.schema.has("resources") ) this.updateSource(this.#getRecoveryData());
+    if ( this.system.schema.has("resources") ) this.updateSource(this._getRecoveryData());
 
     // Begin Character Creation
     if ( !this.pack && (this.type === "hero") && (this.level === 0) ) {
@@ -2639,8 +3089,13 @@ export default class CrucibleActor extends Actor {
     const abl1 = data.system?.abilities;
     const abilityChange = !!abl1 && Object.keys(SYSTEM.ABILITIES).some(k => !foundry.utils.isEmpty(abl1[k]));
 
+    // Detail item changes, which shift ability scores indirectly and therefore resource pool maximums
+    const det1 = data.system?.details;
+    const detailChange = !!det1 && CrucibleActor.#DETAIL_ITEM_TYPES.some(k => k in det1);
+
     // Simulate changes on a cloned actor?
-    const simulate = (levelChange || abilityChange) && (options.characterCreation || (options.recursive !== false));
+    const simulate = (levelChange || abilityChange || detailChange)
+      && (options.characterCreation || (options.recursive !== false));
     let clone;
     if ( simulate ) {
       try {
@@ -2651,15 +3106,16 @@ export default class CrucibleActor extends Actor {
               health: {value: 1}, // Clear weakened
               morale: {value: 1}  // Clear broken
             }
-          }
-        }, {inplace: false});
+          },
+          items: _del
+        }, {inplace: false, applyOperators: true});
         clone.updateSource(simulateData);
       } finally {
         if ( !clone ) return;
       }
 
       // Replenish resources
-      if ( !this.inCombat ) foundry.utils.mergeObject(data, clone.#getRecoveryData());
+      if ( !this.inCombat ) foundry.utils.mergeObject(data, clone._getRecoveryData());
 
       // Constrain milestones
       if ( levelChange && (this.type === "hero") ) {
@@ -2810,6 +3266,19 @@ export default class CrucibleActor extends Actor {
       });
     }
     return batchOperation;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Clean data for an Item that is being added to this Actor.
+   * @param {CrucibleItem} item
+   * @internal
+   */
+  _cleanItemData(item) {
+    const itemData = game.items.fromCompendium(item, {clearFolder: true, clearOwnership: true, keepId: true});
+    delete itemData.ownership;
+    return itemData;
   }
 
   /* -------------------------------------------- */
@@ -3032,7 +3501,7 @@ export default class CrucibleActor extends Actor {
     const deleteItemIds = new Set();
     const keepItemIds = new Set();
     const createItems = [];
-    for ( const itemType of ["ancestry", "archetype", "background", "taxonomy"] ) {
+    for ( const itemType of CrucibleActor.#DETAIL_ITEM_TYPES ) {
       const detail = this.system.details[itemType];
       if ( !detail ) continue;
       const {toDelete, toKeep, toCreate} = await this.#prepareGrantedDetailTalents(detail.talents);
@@ -3065,6 +3534,22 @@ export default class CrucibleActor extends Actor {
   /* -------------------------------------------- */
 
   /**
+   * Resolve a granted item, reporting rather than passing over one which cannot be found.
+   * Retired grants are dropped by {@link migrateTalentGrants}, so anything unresolved here is a broken reference.
+   * @param {CrucibleActor} actor   The actor receiving the grant
+   * @param {string} uuid           UUID of the granted item
+   * @param {string} type           The kind of grant, named in the warning
+   * @returns {Promise<CrucibleItem|null>}
+   */
+  static async #resolveGrant(actor, uuid, type) {
+    const item = await fromUuid(uuid);
+    if ( !item ) console.warn(`Unresolved ${type} grant "${uuid}" for Actor "${actor.name}" [${actor.uuid}]`);
+    return item;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Given a list of Talent UUIDs & their associated levels, return which should be deleted from the actor,
    * which should be kept on the actor, and which should be added to the actor
    * @param {{item: string, level: number|null}[]} talents
@@ -3076,7 +3561,7 @@ export default class CrucibleActor extends Actor {
     const toCreate = [];
     const effectiveLevel = Math.max(0, this.system.advancement.level);
     for ( const {item: uuid, level} of talents ) {
-      const talent = await fromUuid(uuid);
+      const talent = await CrucibleActor.#resolveGrant(this, uuid, "Talent");
       if ( !talent ) continue;
       const hasTalent = this.items.has(talent.id);
       if ( level > effectiveLevel && hasTalent ) toDelete.add(talent.id);

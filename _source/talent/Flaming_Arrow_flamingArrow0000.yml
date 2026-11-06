@@ -3,19 +3,22 @@ type: talent
 _id: flamingArrow0000
 img: icons/magic/fire/projectile-arrow-fire-red-yellow.webp
 system:
+  keywords:
+    - playstyle.ranged
+    - weapon.projectile
+    - damageType.fire
   nodes:
-    - intdex1
+    - dex3a
   description: >-
     <p>You take time to light and loose an arrow covered in flammable pitch.
-    This shot takes longer but is very damaging to either creatures or
-    structures.</p>
+    This shot takes longer but is very damaging to creatures and structures.</p>
   actions:
     - id: flamingArrow
       name: Flaming Arrow
       img: icons/magic/fire/projectile-arrow-fire-red-yellow.webp
       condition: ''
       description: >-
-        <p>You loose a <strong>Empowered</strong> ranged strike using a
+        <p>You loose an @Rule[action.empowered] ranged strike using a
         <strong>Projectile</strong> weapon which deals <strong>Fire</strong>
         damage upon impact.</p>
       cost:
@@ -39,16 +42,9 @@ system:
         - ranged
         - empowered
         - fire
-      summon:
-        actorUuid: null
-        permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
+      summon: null
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: projectile
 effects: []
 folder: zksJqmFhNaGTWekG
 ownership:
@@ -59,11 +55,11 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.356'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.0
+  systemVersion: 0.10.2
   createdTime: 1772307160132
-  modifiedTime: 1773514792575
-  lastModifiedBy: WRGzDgYAt3ZuX6TU
+  modifiedTime: 1789490820941
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 sort: 0
 _key: '!items!flamingArrow0000'

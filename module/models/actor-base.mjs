@@ -2,13 +2,28 @@ import CrucibleAction from "./action.mjs";
 import CruciblePhysicalItem from "./item-physical.mjs";
 
 /**
+ * @import {PROFICIENCIES} from "../const/proficiencies.mjs";
+ * @import {DocumentHTMLEmbedConfig} from "@client/applications/ux/text-editor.mjs";
+ */
+
+/**
+ * @typedef CrucibleTrainingRankData
+ * @property {number} initial    Points granted by creation options or other features.
+ * @property {number} talents    Points contributed by owned talents.
+ * @property {number} increases  Points allocated with Proficiency Points.
+ * @property {number} bonus      Point adjustment from Active Effects or other transient sources.
+ * @property {number} total      The sum of every contribution, before the training cap is applied.
+ * @property {number} points     The effective point total, being `total` clamped to this Actor's training cap.
+ * @property {number} value      The training rank attained at that point total.
+ */
+
+/**
  * @typedef CrucibleActorEquipment
  * @property {CrucibleItem} armor
  * @property {CrucibleActorEquippedWeapons} weapons
  * @property {CrucibleItem[]} toolbelt
  * @property {number} accessorySlots
  * @property {number} toolbeltSlots
- * @property {boolean} canFreeMove
  * @property {boolean} unarmored
  */
 
@@ -16,6 +31,7 @@ import CruciblePhysicalItem from "./item-physical.mjs";
  * @typedef CrucibleActorEquippedWeapons
  * @property {CrucibleItem} mainhand
  * @property {CrucibleItem} offhand
+ * @property {CrucibleItem[]} natural  Equipped natural weapons, which occupy no slot
  * @property {{mainhand: CrucibleItem|null, offhand: CrucibleItem|null}} dropped  Dropped weapons by prior slot
  * @property {boolean} heavyOffhand   Whether a one-handed heavy weapon may be wielded in the off-hand
  * @property {number} freeHands
@@ -78,10 +94,18 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
       obj[ability.id] = new fields.SchemaField({
         base: new fields.NumberField({...requiredInteger, initial: 0, min: 0, max: 3}),
         increases: new fields.NumberField({...requiredInteger, initial: 0, min: 0, max: 12}),
-        bonus: new fields.NumberField({...requiredInteger, initial: 0, min: 0})
+        bonus: new fields.NumberField({...requiredInteger, initial: 0})
       }, {label: ability.label});
       return obj;
     }, {}));
+
+    // Training
+    schema.training = new fields.TypedObjectField(new fields.SchemaField({
+      initial: new fields.NumberField({...requiredInteger, initial: 0, min: 0, persisted: false}),
+      talents: new fields.NumberField({...requiredInteger, initial: 0, min: 0, persisted: false}),
+      increases: new fields.NumberField({...requiredInteger, initial: 0, min: 0}),
+      bonus: new fields.NumberField({...requiredInteger, initial: 0})
+    }), {validateKey: key => key in SYSTEM.PROFICIENCIES});
 
     // Defenses
     schema.defenses = new fields.SchemaField(Object.values(SYSTEM.DEFENSES).reduce((obj, defense) => {
@@ -113,7 +137,7 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     schema.movement = new fields.SchemaField({
       sizeBonus: new fields.NumberField({...requiredInteger, initial: 0}),
       strideBonus: new fields.NumberField({...requiredInteger, initial: 0}),
-      engagementBonus: new fields.NumberField({...requiredInteger, initial: 0}),
+      engagementBonus: new fields.NumberField({...requiredInteger, initial: 0}), // A count of enemies, not a distance
       grappleBonus: new fields.NumberField({...requiredInteger, initial: 0, persisted: false}),
       blockerStrength: new fields.NumberField({...requiredInteger, initial: 0, persisted: false})
     });
@@ -130,6 +154,17 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
   /** @override */
   static LOCALIZATION_PREFIXES = ["ACTOR"];
 
+  /**
+   * The Handlebars template path used to render an @Embed block for this Actor.
+   */
+  static EMBED_TEMPLATE = "systems/crucible/templates/embeds/actor.hbs";
+
+  /**
+   * The details field holding the Item which defines this creature's biology, such as its size and stride.
+   * @type {"ancestry"|"taxonomy"|undefined}
+   */
+  static biologyName;
+
   /* -------------------------------------------- */
   /*  Derived Data Attributes                     */
   /* -------------------------------------------- */
@@ -142,7 +177,7 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
 
   /**
    * Actor hook functions which apply to this Actor.
-   * @type {Object<string, {item: CrucibleItem, fn: Function}[]>}
+   * @type {Object<string, {item: CrucibleItem, fn: Function, affix?: CrucibleActiveEffect}[]>}
    */
   actorHooks = this.actorHooks;
 
@@ -189,8 +224,8 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
   talentNodes = this.talentNodes;
 
   /**
-   * Prepared training data for the Actor.
-   * @type {Record<keyof TRAINING_TYPES, 0|1|2|3>}
+   * Training ranks for the Actor, layered the same way as ability scores.
+   * @type {Record<keyof typeof PROFICIENCIES, CrucibleTrainingRankData>}
    */
   training = this.training;
 
@@ -245,7 +280,7 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
    * @returns {boolean}
    */
   get hasFreeMove() {
-    return this.equipment.canFreeMove && !this.parent.status.hasMoved;
+    return this.movement.canFreeMove && !this.parent.status.hasMoved;
   }
 
   /**
@@ -266,6 +301,7 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
    */
   prepareBaseData() {
     this.#clear();
+    this.#prepareBaseTraining();
     this._prepareDetails();
     this._prepareBaseMovement();
     this.details.progression = this._configureProgression(); // Affected by base size
@@ -283,7 +319,7 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
       this[name] ||= {};
       for ( const k in this[name] ) delete this[name][k];
     };
-    const objects = ["actions", "actorHooks", "equipment", "rollBonuses", "talentNodes", "training", "skills"];
+    const objects = ["actions", "actorHooks", "equipment", "rollBonuses", "talentNodes", "skills"];
     for ( const name of objects ) createOrEmpty(name);
     this.talentIds ||= new Set();
     this.talentIds.clear();
@@ -301,6 +337,18 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     this.permanentTalentIds.clear();
     Object.assign(this.rollBonuses, {damage: {}, boons: {}, banes: {}});
     if ( this.status === null ) this.status = {};
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Ensure every configured training type is represented, since only purchased ranks exist in source data.
+   */
+  #prepareBaseTraining() {
+    const {element} = this.schema.fields.training;
+    for ( const id in SYSTEM.PROFICIENCIES ) {
+      this.training[id] ??= element.initialize(element.getInitialValue(), this);
+    }
   }
 
   /* -------------------------------------------- */
@@ -330,7 +378,9 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
       moraleMultiplier: level < 1 ? threat : threatFactor,
       woundsMultiplier: 1.5,
       abilityMin: 1, // Excluding zero as special case
-      abilityMax: 12
+      abilityMax: 12,
+      talentTraining: true, // Adversaries decline this, allocating a level-scaled budget instead
+      trainingCap: SYSTEM.PROFICIENCY.POINTS_MAX // Unpaced by default; heroes pace it by level
     };
   }
 
@@ -375,19 +425,13 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
           maybePermanentTalentIds.add(documentId);
         }
       }
-      if ( s?.skills ) {
-        for ( const skillId of s.skills ) {
-          const {documentId} = foundry.utils.parseUuid(SYSTEM.SKILLS[skillId]?.talents[1]);
-          maybePermanentTalentIds.add(documentId);
-        }
-      }
     }
 
     // Iterate over talents
     for ( const t of talents ) {
       this.talentIds.add(t.id);
       if ( maybePermanentTalentIds.has(t.id) ) this.permanentTalentIds.add(t.id);
-      const {nodes, training, gesture, inflection, rune, iconicSpells} = t.system;
+      const {nodes, training, spellcraft, iconicSpells} = t.system;
 
       // Register hooks
       this.#registerActorHooks(t);
@@ -400,16 +444,17 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
       }
       if ( !nodes.size ) this.permanentTalentIds.add(t.id); // Manual talents
 
-      // Register training ranks
-      if ( training.type ) {
-        this.training[training.type] ??= 0;
-        this.training[training.type] = Math.max(this.training[training.type], training.rank ?? 0);
+      // Every owned talent naming a training contributes one point to it, however it was acquired
+      if ( training && details.progression.talentTraining ) {
+        const trained = this.training[training];
+        if ( trained ) trained.talents += 1;
       }
 
-      // Register spellcraft knowledge
-      if ( rune ) this.grimoire.runeIds.push(rune);
-      if ( gesture ) this.grimoire.gestureIds.push(gesture);
-      if ( inflection ) this.grimoire.inflectionIds.push(inflection);
+      // Register spellcraft knowledge, whose component type names the grimoire collection it joins
+      if ( spellcraft ) {
+        const {type} = SYSTEM.SPELL.COMPONENTS[spellcraft];
+        this.grimoire[`${type}Ids`].push(spellcraft);
+      }
       if ( iconicSpells ) this.grimoire.iconicSlots += iconicSpells;
     }
 
@@ -420,7 +465,7 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
   /* -------------------------------------------- */
 
   /**
-   * Prepare training ranks granted by owned talents or other features.
+   * Prepare training for all Actor subtypes.
    * @protected
    */
   _prepareTraining() {}
@@ -508,6 +553,9 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     const weapons = this._prepareWeapons(items.weapon);
     if ( weapons.mainhand ) this.#registerActorHooks(weapons.mainhand);
     if ( weapons.offhand ) this.#registerActorHooks(weapons.offhand);
+
+    // All affixable equipment is now known, and suppression must be resolved before any affix hook is called
+    this.#suppressAffixes([armor, weapons.mainhand, weapons.offhand, ...accessories]);
     this.parent.callActorHooks("prepareWeapons", weapons);
 
     // Step 4: Toolbelt
@@ -516,9 +564,9 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     this.parent.callActorHooks("prepareToolbelt", toolbelt);
 
     // Additional data
-    const canFreeMove = this.#canFreeMove(armor);
     const unarmored = armor.system.category === "unarmored";
-    Object.assign(this.equipment, {armor, weapons, accessories, toolbelt, canFreeMove, unarmored});
+    Object.assign(this.equipment, {armor, weapons, accessories, toolbelt, unarmored});
+    this.movement.freeMoveBlockers = this.#prepareFreeMoveBlockers(armor);
   }
 
   /* -------------------------------------------- */
@@ -548,10 +596,9 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
    * @private
    */
   _prepareArmor(armorItems) {
-    let armors = armorItems.filter(i => i.system.equipped);
+    const armors = armorItems.filter(i => i.system.equipped);
     if ( armors.length > 1 ) {
       console.warn(`Crucible | Actor [${this.parent.uuid}] ${this.name} has more than one equipped armor.`);
-      armors = armors[0];
     }
     return armors[0] || crucible.api.models.CrucibleArmorItem.getUnarmoredArmor(this.parent);
   }
@@ -584,15 +631,20 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
   /* -------------------------------------------- */
 
   /**
-   * Determine whether the Actor is able to use a free move once per round.
-   * @param {CrucibleItem} armor    The equipped Armor item.
-   * @returns {boolean}             Can the Actor use a free move?
+   * Declare reasons why the Actor may be ineligible to use a free move for the round, keyed by cause.
+   * Each value names a localization key that describes the blocking reason. Values may be left blank to un-block.
+   * Talents may waive (or declare) certain blockers in the prepareMovement hook.
+   * @param {CrucibleItem} armor                    The equipped Armor item
+   * @returns {Record<string, string>}              Free move blocking reasons
    */
-  #canFreeMove(armor) {
-    if ( this.isWeakened ) return false;
+  #prepareFreeMoveBlockers(armor) {
     const statuses = this.parent.statuses;
-    if ( statuses.has("prone") || statuses.has("slowed") ) return false;
-    return (armor.system.category !== "heavy") || this.talentIds.has("armoredefficienc");
+    return {
+      weakened: this.isWeakened ? "ACTIVE_EFFECT.STATUSES.Weakened" : "",
+      prone: statuses.has("prone") ? "ACTIVE_EFFECT.STATUSES.Prone" : "",
+      slowed: statuses.has("slowed") ? "ACTIVE_EFFECT.STATUSES.Slowed" : "",
+      heavyArmor: armor.system.category === "heavy" ? "ARMOR.CATEGORIES.Heavy" : ""
+    };
   }
 
   /* -------------------------------------------- */
@@ -690,7 +742,9 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     const ohCategory = oh?.config.category || {};
 
     // Weapon Set Metadata
-    weapons.shield = (ohCategory.id === "shieldLight") || (ohCategory.id === "shieldHeavy");
+    const isShield = c => (c?.id === "shieldLight") || (c?.id === "shieldHeavy");
+    const ohShield = isShield(ohCategory);
+    weapons.shield = ohShield || weapons.natural.some(w => isShield(w.config.category));
     weapons.twoHanded = weapons.mainhand?.system.slot === slots.TWOHAND;
     weapons.melee = !(mhCategory.ranged && ohCategory.ranged) || weapons.natural.some(w => !w.config.category.ranged);
     weapons.ranged = mhCategory.ranged || ohCategory.ranged || weapons.natural.some(w => w.config.category.ranged);
@@ -701,12 +755,13 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     weapons.freeHands = weapons.spellHands = mhOpen + ohOpen;
 
     // Talismans contribute additional spellcasting hands
-    const mhTalisman = ["talisman1", "talisman2"].includes(mhCategory.id);
+    const mhGrip = mh?.system.activeCategory || {};
+    const mhTalisman = ["talisman1", "talisman2"].includes(mhGrip.id);
     if ( mhTalisman ) {
-      weapons.spellHands += mhCategory.hands;
+      weapons.spellHands += mhGrip.hands;
       weapons.talisman = true;
     }
-    if ( "talisman1" === ohCategory.id ) {
+    if ( "talisman1" === oh?.system.activeCategory.id ) {
       weapons.spellHands += 1;
       weapons.talisman = true;
     }
@@ -726,16 +781,53 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     }
 
     // Multi weapon properties
-    weapons.dualWield = weapons.unarmed || (mh?.id && oh?.id && !weapons.shield);
+    weapons.dualWield = weapons.unarmed || (mh?.id && oh?.id && !ohShield);
     weapons.dualMelee = weapons.dualWield && !mhCategory.ranged && !ohCategory.ranged;
     weapons.dualRanged = weapons.dualWield && mhCategory.ranged && ohCategory.ranged;
     weapons.hasChoice = (weapons.natural.length > 0) || !weapons.twoHanded;
 
     // Special Properties
     weapons.reload = mhCategory.reload || ohCategory.reload;
-    weapons.slow = mh?.system.properties.has("oversized") ? 1 : 0;
-    weapons.slow += oh?.system.properties.has("oversized") ? 1 : 0;
+    weapons.slow = 0;
+    for ( const w of [mh, oh] ) {
+      if ( w?.system.properties.has("oversized") ) weapons.slow += w.system.activeCategory.hands;
+    }
     return weapons;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Suppress duplicate affixes so that each identifier takes effect once, excluding weapon affixes.
+   * The worst cursed instance prevails over any benign instance, otherwise the highest tier prevails.
+   * @param {Array<CrucibleItem|undefined>} items   Equipped items, in precedence order for tied tiers
+   */
+  #suppressAffixes(items) {
+    const prevails = (a, b) => {
+      if ( a.system.isCursed !== b.system.isCursed ) return a.system.isCursed;
+      return a.system.tier.value > b.system.tier.value;
+    };
+
+    // Identify the prevailing instance of each affix identifier
+    const candidates = [];
+    const prevailing = new Map();
+    for ( const item of items ) {
+      if ( !item?.system.constructor.AFFIXABLE ) continue;
+      if ( item.system.requiresInvestment && !item.system.invested ) continue;
+      for ( const affix of Object.values(item.system.affixes) ) {
+        const {identifier, itemTypes} = affix.system;
+        if ( (itemTypes.size === 1) && itemTypes.has("weapon") ) continue;
+        candidates.push(affix);
+        const current = prevailing.get(identifier);
+        if ( !current || prevails(affix, current) ) prevailing.set(identifier, affix);
+      }
+    }
+
+    // Suppress every other instance
+    for ( const affix of candidates ) {
+      const source = prevailing.get(affix.system.identifier);
+      if ( source !== affix ) affix.system._suppression = {reason: "AFFIX.SUPPRESSION.Duplicate", source};
+    }
   }
 
   /* -------------------------------------------- */
@@ -748,7 +840,6 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     const itemCls = /** @type {typeof CrucibleItem} */ getDocumentClass("Item");
     const data = foundry.utils.deepClone(SYSTEM.WEAPON.UNARMED_DATA);
     data.name = _loc(data.name);
-    if ( this.talentIds.has("martialartist000") ) data.system.quality = "fine"; // TODO move to talent hook
     const unarmed = new itemCls(data, {parent: this.parent});
     unarmed.prepareData(); // Needs to be explicitly called since we are in the middle of Actor preparation
     return unarmed;
@@ -781,6 +872,10 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     this.parent.callActorHooks("prepareAbilities", this.abilities);
     this.#prepareFinalAbilities();
 
+    // Training, resolved before defenses because armor proficiency alters the dodge scaling threshold
+    this.parent.callActorHooks("prepareTraining", this.training);
+    this._prepareFinalTraining();
+
     // Resource pools
     this.#prepareBaseResources();
     this.parent.callActorHooks("prepareResources", this.resources);
@@ -800,10 +895,10 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     this.parent.callActorHooks("prepareResistances", this.resistances);
     this.#prepareFinalResistances();
 
-    // Skills
+    // Skills, a named view over the skill subset of training
     this.#prepareSkills();
     this.parent.callActorHooks("prepareSkills", this.skills);
-    this.#prepareFinalSkills();
+    this.#prepareTrainingScores();
 
     // Spellcraft
     this.parent.callActorHooks("prepareGrimoire", this.grimoire);
@@ -854,7 +949,12 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
    */
   _prepareBaseMovement() {
     const m = this.movement;
+    const {size=4, stride=10, heightRatio=1.5} = this.details[this.constructor.biologyName]?.movement ?? {};
+    m.baseSize = size;
+    m.baseStride = stride;
+    m.heightRatio = heightRatio;
     m.baseEngagement = 1;
+    m.costMultipliers = {};
   }
 
   /* -------------------------------------------- */
@@ -865,15 +965,19 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
   _prepareFinalMovement() {
     const m = this.movement;
 
-    // Size and Stride
+    // Size, Height, and Stride
     m.size = m.baseSize + m.sizeBonus;
+    m.height = Math.round(m.size * m.heightRatio);
     m.stride = m.free = m.baseStride + m.strideBonus;
 
-    // Engagement
+    // Engagement: the number of enemies which may engage this creature before it counts as flanked, not a distance
     const {mainhand, offhand} = this.parent.equipment.weapons;
     if ( mainhand && mainhand.system.properties.has("engaging") ) m.engagementBonus += 1;
     if ( offhand && offhand.system.properties.has("engaging") ) m.engagementBonus += 1;
     m.engagement = m.baseEngagement + m.engagementBonus;
+
+    // Free move eligibility
+    m.canFreeMove = !Object.values(m.freeMoveBlockers).some(Boolean);
   }
 
   /* -------------------------------------------- */
@@ -915,6 +1019,9 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
       broken: this.parent.statuses.has("broken") ? "ACTIVE_EFFECT.STATUSES.Broken" : "",
       enraged: this.parent.statuses.has("enraged") ? "ACTIVE_EFFECT.STATUSES.Enraged" : ""
     };
+
+    // How many effects the actor may maintain with Focus at once; talents raise it in the prepareResources hook
+    rs.focus.maintained = 1;
   }
 
   /* -------------------------------------------- */
@@ -988,18 +1095,21 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
 
     // Armor and Dodge from equipped Armor
     const armorData = equipment.armor.system;
+    const dex = abilities.dexterity.value;
+    const {scaling} = armorData.dodge;
+    const reduction = Math.min(this.training.armor.rank, scaling); // Armored Combat proficiency
+    const dodgeScaling = scaling - reduction;
     defenses.armor.base = armorData.armor.base;
-    defenses.armor.bonus += armorData.armor.bonus;
+    defenses.armor.bonus += armorData.armor.bonus + Math.min(reduction, Math.max(scaling - dex, 0));
     defenses.dodge.base = armorData.dodge.base;
-    defenses.dodge.bonus += Math.max(abilities.dexterity.value - armorData.dodge.scaling, 0);
-    defenses.dodge.max = defenses.dodge.base + (12 - armorData.dodge.scaling);
+    defenses.dodge.bonus += Math.max(dex - dodgeScaling, 0);
+    defenses.dodge.max = defenses.dodge.base + (12 - dodgeScaling);
 
-    // Block and Parry from equipped Weapons
-    const weaponData = [];
-    if ( equipment.weapons.mainhand ) weaponData.push(equipment.weapons.mainhand.system);
-    if ( equipment.weapons.offhand ) weaponData.push(equipment.weapons.offhand.system);
-    for ( const wd of weaponData ) {
-      for ( const d of ["block", "parry"] ) defenses[d].base += wd.defense[d];
+    // Block and Parry from wielded Weapons
+    const {mainhand, offhand, natural} = equipment.weapons;
+    for ( const d of ["block", "parry"] ) {
+      for ( const w of [mainhand, offhand] ) defenses[d].base += (w?.system.defense[d] ?? 0);
+      defenses[d].base += Math.max(0, ...natural.map(w => w.system.defense[d])); // Best natural bonus only
     }
   }
 
@@ -1074,31 +1184,49 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
   }
 
   /* -------------------------------------------- */
-  /*  Skill Preparation                           */
+  /*  Training Preparation                        */
   /* -------------------------------------------- */
 
   /**
-   * Prepare skills data for all Actor subtypes.
+   * Total the training point contributions and resolve the rank each total attains.
+   * @protected
    */
-  #prepareSkills() {
-    for ( const [skillId, config] of Object.entries(SYSTEM.SKILLS) ) {
-      const rank = this.training[config.id] ?? 0;
-      const abilityBonus = this.parent.getAbilityBonus(config.abilities);
-      const skillBonus = SYSTEM.TALENT.TRAINING_RANK_VALUES[rank].bonus;
-      const enchantmentBonus = 0;
-      this.skills[skillId] = {rank, abilityBonus, skillBonus, enchantmentBonus};
+  _prepareFinalTraining() {
+    const ranks = Object.values(SYSTEM.PROFICIENCY.RANKS); // Ascending by points required
+    const cap = this.details.progression.trainingCap;
+    for ( const [id, t] of Object.entries(this.training) ) {
+      t.total = t.initial + t.talents + t.increases + t.bonus;
+      t.points = Math.clamp(t.total, 0, cap);
+      t.rank = 0;
+      for ( const rank of ranks ) {
+        if ( t.points < rank.required ) break;
+        t.rank = rank.rank;
+      }
+      t.abilityBonus = this.parent.getAbilityBonus(SYSTEM.PROFICIENCIES[id].abilities);
+      t.skillBonus = SYSTEM.PROFICIENCY.getRankBonus(t.points);
+      t.enchantmentBonus = 0;
     }
   }
 
   /* -------------------------------------------- */
 
   /**
-   * Recompute derived skill values after hooks have modified enchantmentBonus.
+   * Prepare skills data for all Actor subtypes.
    */
-  #prepareFinalSkills() {
-    for ( const skill of Object.values(this.skills) ) {
-      skill.score = skill.abilityBonus + skill.skillBonus + skill.enchantmentBonus;
-      skill.passive = SYSTEM.PASSIVE_BASE + skill.score;
+  #prepareSkills() {
+    for ( const skillId of Object.keys(SYSTEM.SKILLS) ) this.skills[skillId] = this.training[skillId];
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Recompute derived values for every training type after hooks have modified enchantmentBonus.
+   * Skills share object identity with their training, so the prepareSkills hook is accounted for here too.
+   */
+  #prepareTrainingScores() {
+    for ( const t of Object.values(this.training) ) {
+      t.score = t.abilityBonus + t.skillBonus + t.enchantmentBonus;
+      t.passive = SYSTEM.PASSIVE_BASE + t.score;
     }
   }
 
@@ -1130,6 +1258,10 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
       switch ( ad.id ) {
         case "cast":
           if ( !(this.grimoire.gestures.size && this.grimoire.runes.size) ) continue;
+          break;
+        case "convalesce":
+        case "meditate":
+          if ( !this.usesReserveResources ) continue;
           break;
         case "reload":
           if ( !w.reload ) continue;
@@ -1167,9 +1299,54 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
     if ( item.system.schema.has("equipped") && !item.system.equipped ) return;
     if ( item.system.requiresInvestment && !item.system.invested ) return;
     for ( const action of item.actions ) {
+      if ( action.affix?.isSuppressed ) continue;
       const actionId = item.type === "consumable" ? `${action.id}.${item.id}` : action.id;
       this.actions[actionId] = action.bind(this.parent);
     }
+  }
+
+  /* -------------------------------------------- */
+  /*  Embedding                                   */
+  /* -------------------------------------------- */
+
+  /** @override */
+  async toEmbed(config, _options) {
+    const block = new foundry.applications.elements.HTMLDocumentEmbedElement();
+    block.className = "block actor";
+    config.inline ??= false; // Never use figures
+    const context = await this._prepareEmbedContext(config);
+    block.innerHTML = await foundry.applications.handlebars.renderTemplate(this.constructor.EMBED_TEMPLATE, context);
+    const readaloud = block.querySelector(".readaloud");
+    if ( readaloud && game.user.isGM ) readaloud.prepend(crucible.api.chat.createChatReadaloudButton());
+    return block;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prepare the rendering context for {@link CrucibleBaseActor.EMBED_TEMPLATE}.
+   * @param {DocumentHTMLEmbedConfig} config
+   * @returns {Promise<object>}
+   * @protected
+   */
+  async _prepareEmbedContext(config) {
+    const actor = this.parent;
+    const name = config.name || actor.name;
+    const appearance = config.readaloud
+      ? config.readaloud.split("\\n").map(p => `<p>${p}</p>`).join("")
+      : this.details.biography.appearance;
+    return {
+      name,
+      img: config.image === "token" ? actor.prototypeToken.texture.src : actor.img,
+      link: actor.toAnchor({name}).outerHTML,
+      count: config.count,
+      level: this.advancement.threatLevel,
+      subtitle: "",
+      readaloud: await CONFIG.ux.TextEditor.enrichHTML(appearance, {
+        relativeTo: actor,
+        secrets: actor.isOwner
+      })
+    };
   }
 
   /* -------------------------------------------- */
@@ -1203,7 +1380,7 @@ export default class CrucibleBaseActor extends foundry.abstract.TypeDataModel {
       for ( const [hook, fn] of Object.entries(affixHooks) ) {
         if ( hook in SYSTEM.ACTOR.HOOKS ) {
           this.actorHooks[hook] ||= [];
-          this.actorHooks[hook].push({item, fn});
+          this.actorHooks[hook].push({item, fn, affix});
         }
       }
     }

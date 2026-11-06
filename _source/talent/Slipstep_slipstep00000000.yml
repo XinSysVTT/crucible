@@ -2,8 +2,13 @@ name: Slipstep
 type: talent
 img: icons/skills/movement/feet-winged-sandals-tan.webp
 system:
+  keywords:
+    - playstyle.defensive
+    - action.movement
+    - action.reaction
+    - resource.heroism
   nodes:
-    - dex2b
+    - dex2a
   description: >-
     <p>Your nimbleness allows you to occasionally perform exceptionally elusive
     maneuvers to evade harm on the battlefield.</p>
@@ -13,11 +18,11 @@ system:
       img: icons/skills/movement/feet-winged-sandals-tan.webp
       condition: An action targets you
       description: >-
-        <p>As a <strong>Reaction</strong> to an action that targets you before
-        it is confirmed, you may expend <strong>Heroism</strong> to instantly
-        move up to your <strong>Stride</strong>. The interrupted action is
-        nullified without being confirmed or applying any effects.</p><p>This
-        movement does not provoke any Disengagement.</p>
+        <p>As a @Rule[action.reaction] to an action that targets you before it
+        is confirmed, you may expend @Rule[resource.heroism] to instantly move
+        up to your @Rule[movement.stride]. The interrupted action is nullified
+        without being confirmed or applying any effects.</p><p>This movement
+        does not provoke any @Action[default reactiveStrike].</p>
       cost:
         action: 1
         focus: 0
@@ -35,17 +40,11 @@ system:
         self: false
       effects: []
       tags:
+        - reaction
         - movement
-      summon:
-        actorUuid: null
-        permanent: true
-  rune: ''
-  gesture: ''
-  inflection: ''
+      summon: null
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
+  training: athletics
 effects: []
 folder: kvXzGhvDAbUcQsXM
 ownership:
@@ -56,12 +55,12 @@ _stats:
   compendiumSource: null
   duplicateSource: null
   exportSource: null
-  coreVersion: '14.363'
+  coreVersion: '14.367'
   systemId: crucible
-  systemVersion: 0.9.5
+  systemVersion: 0.10.2
   createdTime: 1772307160146
-  modifiedTime: 1780938060820
-  lastModifiedBy: QvBFYpRRXHRBcOfP
+  modifiedTime: 1789492129728
+  lastModifiedBy: ZXJsFnFZuf21WDAk
 _id: slipstep00000000
 sort: 0
 _key: '!items!slipstep00000000'

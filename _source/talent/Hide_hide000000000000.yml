@@ -1,0 +1,95 @@
+name: Hide
+type: talent
+_id: hide000000000000
+img: icons/magic/nature/stealth-hide-eyes-green.webp
+system:
+  description: >-
+    <p>You use cover, shadow, and stillness to drop out of sight entirely, to
+    avoid detection or to lay in ambush.</p><h3 class="divider">Playtest
+    Notes</h3><p>The Stealth check resolves, marks you concealed, and that
+    concealment ends on its own once you act without the @Rule[action.subtle]
+    tag. Your Stealth result is recorded, so anyone who later @Action[default
+    search]es for you tests their Awareness against it. Crucible does not yet
+    record which creatures individually have lost track of you, so beating one
+    observer conceals you from all of them and the Gamemaster adjudicates the
+    difference. A forthcoming stealth effect will track detection per
+    creature.</p>
+  actions:
+    - id: hide
+      name: Hide
+      img: icons/magic/nature/stealth-hide-eyes-green.webp
+      condition: You are not engaged.
+      description: >-
+        <p>You make a single @Rule[skill.stealth] check against the passive
+        @Rule[skill.awareness] of the most perceptive enemy within <strong>30
+        feet</strong>, taking @Rule[dice.bane]{+1 Bane} for each further enemy
+        who might notice you. With no enemy near enough to notice you no check
+        is required. Upon a success you are concealed until you perform an
+        action which is not @Rule[action.subtle].</p>
+      cost:
+        action: 2
+        focus: 1
+        heroism: 0
+        hands: 0
+        weapon: false
+      range:
+        minimum: null
+        maximum: 30
+        weapon: false
+      target:
+        type: self
+        number: 1
+        scope: 1
+        self: false
+      effects:
+        - name: Hidden
+          scope: 1
+          result:
+            type: success
+            all: false
+          statuses: []
+          duration:
+            value: null
+            units: ''
+            expiry: null
+            expired: false
+          system:
+            changes: []
+            dot: []
+            maintenance:
+              cost: null
+              hands: 0
+            regions: []
+            summons: []
+            properties: []
+      tags:
+        - harmless
+        - subtle
+        - skill
+        - stealth
+      summon: null
+  keywords:
+    - playstyle.utility
+    - skill.stealth
+  nodes:
+    - intdex1
+  iconicSpells: 0
+  training: stealth
+effects: []
+folder: fldStealth000000
+sort: 600000
+ownership:
+  default: 0
+  AnoypGxxNIMOS0XY: 3
+flags: {}
+_stats:
+  systemId: crucible
+  systemVersion: 0.10.2
+  coreVersion: '14.367'
+  createdTime: 1788600000000
+  modifiedTime: 1789497206916
+  lastModifiedBy: ZXJsFnFZuf21WDAk
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+_key: '!items!hide000000000000'

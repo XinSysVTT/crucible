@@ -3,20 +3,17 @@ type: talent
 _id: livingBoulder000
 img: icons/magic/earth/barrier-stone-brown-green.webp
 system:
+  keywords:
+    - playstyle.spellcraft
+    - spell.elemental
+    - damageType.acid
   nodes: []
   description: >-
     <p>The @ref[actor.name]{creature} channels earth through its own physical
     mass rather than its mind. Its usage of the <strong>Rune of Earth</strong>
-    scales with <strong>Toughness</strong> instead of
-    <strong>Wisdom</strong>.</p>
+    scales with @Rule[ability.toughness] instead of @Rule[ability.wisdom].</p>
   actions: []
-  rune: ''
-  gesture: ''
-  inflection: ''
   iconicSpells: 0
-  training:
-    type: ''
-    rank: null
 effects: []
 folder: 9Ej4QwUt1yVpv4Wn
 ownership:
